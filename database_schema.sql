@@ -1,0 +1,86 @@
+-- Script de base de datos PostgreSQL para Purificadora de Agua
+-- Este script es una representación de los modelos de Django
+
+CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    password VARCHAR(128) NOT NULL,
+    last_login TIMESTAMP WITH TIME ZONE,
+    is_superuser BOOLEAN NOT NULL DEFAULT FALSE,
+    username VARCHAR(150) UNIQUE NOT NULL,
+    first_name VARCHAR(150) NOT NULL,
+    last_name VARCHAR(150) NOT NULL,
+    email VARCHAR(254) NOT NULL,
+    is_staff BOOLEAN NOT NULL DEFAULT FALSE,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    date_joined TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    role VARCHAR(10) NOT NULL DEFAULT 'CLIENT', -- ADMIN, AGENCY, CLIENT, DRIVER
+    phone VARCHAR(20),
+    address VARCHAR(255),
+    municipio VARCHAR(100)
+);
+
+CREATE TABLE IF NOT EXISTS products (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    price DECIMAL(10, 2) NOT NULL,
+    stock INTEGER NOT NULL DEFAULT 0 CHECK (stock >= 0),
+    image VARCHAR(100),
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS agencies (
+    id SERIAL PRIMARY KEY,
+    manager_id INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+    name VARCHAR(100) NOT NULL,
+    address VARCHAR(255) NOT NULL,
+    latitude DECIMAL(9, 6),
+    longitude DECIMAL(9, 6),
+    is_active BOOLEAN NOT NULL DEFAULT TRUE
+);
+
+CREATE TABLE IF NOT EXISTS inventory_logs (
+    id SERIAL PRIMARY KEY,
+    product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    quantity INTEGER NOT NULL CHECK (quantity > 0),
+    movement_type VARCHAR(3) NOT NULL, -- IN, OUT
+    reason VARCHAR(255),
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS orders (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    status VARCHAR(15) NOT NULL DEFAULT 'PENDING', -- PENDING, PREPARING, SHIPPED, DELIVERED, CANCELLED
+    total_amount DECIMAL(10, 2) NOT NULL DEFAULT 0,
+    delivery_address VARCHAR(255),
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS order_items (
+    id SERIAL PRIMARY KEY,
+    order_id INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+    product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
+    quantity INTEGER NOT NULL CHECK (quantity > 0),
+    price_at_time DECIMAL(10, 2) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS deliveries (
+    id SERIAL PRIMARY KEY,
+    order_id INTEGER NOT NULL UNIQUE REFERENCES orders(id) ON DELETE CASCADE,
+    driver_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    assigned_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    delivered_at TIMESTAMP WITH TIME ZONE,
+    notes TEXT
+);
+
+CREATE TABLE IF NOT EXISTS notifications (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    message TEXT NOT NULL,
+    is_read BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Purificadora de Agua{% endblock %}</title>
+    <!-- Google Fonts: Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/styles.css">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <i class="fa-solid fa-droplet brand-icon"></i>
+                <span class="brand-text">AquaFlow</span>
+            </div>
+            
+            <nav class="sidebar-menu">
+                <a href="#" class="menu-item active">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fa-solid fa-box"></i>
+                    <span>Productos</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fa-solid fa-cart-shopping"></i>
+                    <span>Pedidos</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fa-solid fa-warehouse"></i>
+                    <span>Inventario</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fa-solid fa-building-user"></i>
+                    <span>Agencias</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fa-solid fa-truck-ramp-box"></i>
+                    <span>Distribución</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-pill">
+                    <div class="user-avatar">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <div class="user-info">
+                        <span class="user-name">Yeison</span>
+                        <span class="user-role">Administrador</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Body -->
+        <div class="main-content">
+            <!-- Header/Navbar -->
+            <header class="navbar">
+                <div class="navbar-left">
+                    <h1 class="page-title">{% block page_title %}Dashboard de Control{% endblock %}</h1>
+                </div>
+                
+                <div class="navbar-right">
+                    <!-- Notifications -->
+                    <div class="nav-icon-btn notifications-trigger" id="notifications-btn">
+                        <i class="fa-regular fa-bell"></i>
+                        <span class="badge">3</span>
+                    </div>
+                    
+                    <!-- Quick Actions -->
+                    <button class="btn btn-primary">
+                        <i class="fa-solid fa-plus"></i> Nuevo Pedido
+                    </button>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <main class="content-body">
+                {% block content %}
+                <!-- Default beautiful demo dashboard -->
+                <div class="dashboard-grid">
+                    <!-- Stat Cards -->
+                    <div class="stat-card">
+                        <div class="card-icon blue">
+                            <i class="fa-solid fa-cubes"></i>
+                        </div>
+                        <div class="card-data">
+                            <span class="card-label">Pedidos de Hoy</span>
+                            <span class="card-value">48</span>
+                        </div>
+                        <div class="card-trend up">
+                            <i class="fa-solid fa-arrow-trend-up"></i> +12%
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="card-icon emerald">
+                            <i class="fa-solid fa-dollar-sign"></i>
+                        </div>
+                        <div class="card-data">
+                            <span class="card-label">Ingresos del Mes</span>
+                            <span class="card-value">Bs. 3,850</span>
+                        </div>
+                        <div class="card-trend up">
+                            <i class="fa-solid fa-arrow-trend-up"></i> +8.4%
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="card-icon orange">
+                            <i class="fa-solid fa-truck"></i>
+                        </div>
+                        <div class="card-data">
+                            <span class="card-label">Entregas Activas</span>
+                            <span class="card-value">7</span>
+                        </div>
+                        <div class="card-trend">
+                            <span class="trend-neutral">En ruta</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Section -->
+                <div class="dashboard-sections">
+                    <!-- Recent Orders Table -->
+                    <div class="section-card">
+                        <div class="section-header">
+                            <h3 class="section-title">Pedidos Recientes</h3>
+                            <a href="#" class="btn btn-text">Ver todos</a>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Cliente</th>
+                                        <th>Estado</th>
+                                        <th>Total</th>
+                                        <th>Fecha</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <div class="td-user">
+                                                <span class="name">Yeison</span>
+                                            </div>
+                                        </td>
+                                        <td><span class="badge badge-success">Entregado</span></td>
+                                        <td>Bs. 120.00</td>
+                                        <td>Hace 10 min</td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="td-user">
+                                                <span class="name">Carlos Gómez</span>
+                                            </div>
+                                        </td>
+                                        <td><span class="badge badge-warning">En camino</span></td>
+                                        <td>Bs. 45.00</td>
+                                        <td>Hace 35 min</td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="td-user">
+                                                <span class="name">Ana Maria</span>
+                                            </div>
+                                        </td>
+                                        <td><span class="badge badge-info">Preparando</span></td>
+                                        <td>Bs. 210.00</td>
+                                        <td>Hace 1 hora</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Products Inventory Status -->
+                    <div class="section-card">
+                        <div class="section-header">
+                            <h3 class="section-title">Estado de Stock</h3>
+                            <span class="badge badge-alert">Alertas de Stock</span>
+                        </div>
+                        
+                        <div class="product-stock-list">
+                            <div class="stock-item">
+                                <div class="stock-info">
+                                    <span class="prod-name">Bidón de Agua 20L</span>
+                                    <span class="prod-stock warning">Bajo Stock: 15 unidades</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress fill-warning" style="width: 15%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="stock-item">
+                                <div class="stock-info">
+                                    <span class="prod-name">Botella Personal 500ml</span>
+                                    <span class="prod-stock success">Estable: 350 unidades</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress fill-success" style="width: 78%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endblock %}
+            </main>
+        </div>
+    </div>
+    
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
