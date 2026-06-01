@@ -15,9 +15,17 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body>
+    <!-- Mobile Overlay -->
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
     <div class="app-container">
         <!-- Sidebar Navigation -->
-        <aside class="sidebar">
+        <aside class="sidebar" id="sidebar">
+            <!-- Close button (visible only on mobile) -->
+            <button class="sidebar-close" id="sidebar-close" title="Cerrar menú">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
             <div class="sidebar-brand">
                 <i class="fa-solid fa-droplet brand-icon"></i>
                 <span class="brand-text">AquaFlow</span>
@@ -68,8 +76,12 @@
             <!-- Header/Navbar -->
             <header class="navbar">
                 <div class="navbar-left">
-                    <h1 class="page-title">{% block page_title %}Dashboard de Control{% endblock %}</h1>
-                </div>
+                <!-- Hamburger menu toggle (visible only on mobile) -->
+                <button class="sidebar-toggle" id="sidebar-toggle" title="Abrir menú">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <h1 class="page-title">{% block page_title %}Dashboard de Control{% endblock %}</h1>
+            </div>
                 
                 <div class="navbar-right">
                     <!-- Notifications -->
@@ -80,7 +92,7 @@
                     
                     <!-- Quick Actions -->
                     <button class="btn btn-primary">
-                        <i class="fa-solid fa-plus"></i> Nuevo Pedido
+                        <i class="fa-solid fa-plus"></i> <span class="btn-label">Nuevo Pedido</span>
                     </button>
                 </div>
             </header>

@@ -836,4 +836,53 @@ document.addEventListener('DOMContentLoaded', () => {
             default: return 'info';
         }
     }
+
+    // -------------------------------------------------------------------------
+    // Responsive Sidebar Toggle (Mobile)
+    // -------------------------------------------------------------------------
+    const sidebar       = document.getElementById('sidebar');
+    const sidebarOverlay = document.getElementById('sidebar-overlay');
+    const sidebarToggle = document.getElementById('sidebar-toggle');
+    const sidebarClose  = document.getElementById('sidebar-close');
+
+    function openSidebar() {
+        sidebar.classList.add('open');
+        sidebarOverlay.classList.add('active');
+        document.body.style.overflow = 'hidden'; // prevent background scroll
+    }
+
+    function closeSidebar() {
+        sidebar.classList.remove('open');
+        sidebarOverlay.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', openSidebar);
+    }
+
+    if (sidebarClose) {
+        sidebarClose.addEventListener('click', closeSidebar);
+    }
+
+    if (sidebarOverlay) {
+        sidebarOverlay.addEventListener('click', closeSidebar);
+    }
+
+    // Close sidebar automatically when a menu item is selected on mobile
+    menuItems.forEach(item => {
+        item.addEventListener('click', () => {
+            if (window.innerWidth <= 768) {
+                closeSidebar();
+            }
+        });
+    });
+
+    // Re-enable scroll if window is resized above mobile breakpoint
+    window.addEventListener('resize', () => {
+        if (window.innerWidth > 768) {
+            closeSidebar();
+        }
+    });
 });
+
