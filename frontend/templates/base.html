@@ -193,10 +193,6 @@
 
             <!-- Page Content -->
             <main class="content-body">
-                {% block content %}{% endblock %}
-            </main>
-        </div>
-    </div>
     {% else %}
     <!-- Non-authenticated layout -->
     <div class="auth-page-wrapper">
@@ -216,7 +212,15 @@
                 {% endfor %}
             </div>
         {% endif %}
+    {% endif %}
+
         {% block content %}{% endblock %}
+
+    {% if user.is_authenticated %}
+            </main>
+        </div>
+    </div>
+    {% else %}
     </div>
     {% endif %}
 
