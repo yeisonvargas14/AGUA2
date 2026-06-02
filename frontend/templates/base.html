@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Purificadora de Agua{% endblock %}</title>
+    <meta name="description" content="AquaFlow — Sistema de Gestión de Purificadora de Agua. Pedidos, entregas y distribución en Comarapa.">
+    <title>{% block title %}AquaFlow — Purificadora de Agua{% endblock %}</title>
     <!-- Google Fonts: Outfit -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,6 +19,10 @@
     <!-- Mobile Overlay -->
     <div class="sidebar-overlay" id="sidebar-overlay"></div>
 
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    {% if user.is_authenticated %}
     <div class="app-container">
         <!-- Sidebar Navigation -->
         <aside class="sidebar" id="sidebar">
@@ -32,40 +37,102 @@
             </div>
             
             <nav class="sidebar-menu">
-                <a href="#" class="menu-item active">
-                    <i class="fa-solid fa-chart-line"></i>
-                    <span>Dashboard</span>
-                </a>
-                <a href="#" class="menu-item">
-                    <i class="fa-solid fa-box"></i>
-                    <span>Productos</span>
-                </a>
-                <a href="#" class="menu-item">
-                    <i class="fa-solid fa-cart-shopping"></i>
-                    <span>Pedidos</span>
-                </a>
-                <a href="#" class="menu-item">
-                    <i class="fa-solid fa-warehouse"></i>
-                    <span>Inventario</span>
-                </a>
-                <a href="#" class="menu-item">
-                    <i class="fa-solid fa-building-user"></i>
-                    <span>Agencias</span>
-                </a>
-                <a href="#" class="menu-item">
-                    <i class="fa-solid fa-truck-ramp-box"></i>
-                    <span>Distribución</span>
+                <!-- ADMIN Menu -->
+                {% if user.role == 'admin' %}
+                    <a href="{% url 'admin_dashboard' %}" class="menu-item {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
+                        <i class="fa-solid fa-chart-line"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="{% url 'admin_products' %}" class="menu-item {% if 'producto' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fa-solid fa-box-open"></i>
+                        <span>Productos</span>
+                    </a>
+                    <a href="{% url 'admin_users' %}" class="menu-item {% if 'user' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fa-solid fa-users-gear"></i>
+                        <span>Usuarios</span>
+                    </a>
+                    <a href="{% url 'admin_coupons' %}" class="menu-item {% if 'cupon' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fa-solid fa-tag"></i>
+                        <span>Cupones</span>
+                    </a>
+                    <a href="{% url 'admin_promotions' %}" class="menu-item {% if 'promotion' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fa-solid fa-percent"></i>
+                        <span>Promociones</span>
+                    </a>
+                    <a href="{% url 'admin_orders' %}" class="menu-item {% if 'pedido' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fa-solid fa-cart-shopping"></i>
+                        <span>Pedidos</span>
+                    </a>
+                    <a href="{% url 'admin_reports' %}" class="menu-item {% if 'report' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fa-solid fa-chart-bar"></i>
+                        <span>Reportes</span>
+                    </a>
+                    <div class="menu-divider"></div>
+                    <a href="/admin/" class="menu-item" target="_blank">
+                        <i class="fa-solid fa-screwdriver-wrench"></i>
+                        <span>Django Admin</span>
+                    </a>
+
+                <!-- AGENCY Menu -->
+                {% elif user.role == 'agency' %}
+                    <a href="{% url 'agency_dashboard' %}" class="menu-item {% if request.resolver_match.url_name == 'agency_dashboard' %}active{% endif %}">
+                        <i class="fa-solid fa-shop"></i>
+                        <span>Mi Sucursal</span>
+                    </a>
+                    <a href="{% url 'agency_create_order' %}" class="menu-item {% if request.resolver_match.url_name == 'agency_create_order' %}active{% endif %}">
+                        <i class="fa-solid fa-cart-plus"></i>
+                        <span>Registrar Venta</span>
+                    </a>
+
+                <!-- DRIVER Menu -->
+                {% elif user.role == 'driver' %}
+                    <a href="{% url 'driver_dashboard' %}" class="menu-item {% if request.resolver_match.url_name == 'driver_dashboard' %}active{% endif %}">
+                        <i class="fa-solid fa-truck-fast"></i>
+                        <span>Mis Entregas</span>
+                    </a>
+                    <a href="{% url 'driver_history' %}" class="menu-item {% if request.resolver_match.url_name == 'driver_history' %}active{% endif %}">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        <span>Historial</span>
+                    </a>
+
+                <!-- CLIENT Menu -->
+                {% else %}
+                    <a href="{% url 'client_dashboard' %}" class="menu-item {% if request.resolver_match.url_name == 'client_dashboard' %}active{% endif %}">
+                        <i class="fa-solid fa-bottle-water"></i>
+                        <span>Catálogo</span>
+                    </a>
+                    <a href="{% url 'ver_carrito' %}" class="menu-item {% if request.resolver_match.url_name == 'ver_carrito' %}active{% endif %}">
+                        <i class="fa-solid fa-cart-shopping"></i>
+                        <span>Mi Carrito</span>
+                        {% if user.cart.items.count > 0 %}
+                            <span class="badge" style="margin-left:auto;">{{ user.cart.items.count }}</span>
+                        {% endif %}
+                    </a>
+                    <a href="{% url 'historial_pedidos' %}" class="menu-item {% if request.resolver_match.url_name == 'historial_pedidos' %}active{% endif %}">
+                        <i class="fa-solid fa-receipt"></i>
+                        <span>Mis Pedidos</span>
+                    </a>
+                {% endif %}
+
+                <div class="menu-divider"></div>
+                <a href="{% url 'profile' %}" class="menu-item {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+                    <i class="fa-solid fa-user-gear"></i>
+                    <span>Mi Perfil</span>
                 </a>
             </nav>
 
             <div class="sidebar-footer">
                 <div class="user-pill">
                     <div class="user-avatar">
-                        <i class="fa-solid fa-user"></i>
+                        {% if user.avatar %}
+                            <img src="{{ user.avatar.url }}" alt="{{ user.username }}">
+                        {% else %}
+                            <i class="fa-solid fa-user"></i>
+                        {% endif %}
                     </div>
                     <div class="user-info">
-                        <span class="user-name">Yeison</span>
-                        <span class="user-role">Administrador</span>
+                        <span class="user-name">{{ user.get_full_name|default:user.username|truncatechars:18 }}</span>
+                        <span class="user-role">{{ user.get_role_display }}</span>
                     </div>
                 </div>
             </div>
@@ -76,162 +143,84 @@
             <!-- Header/Navbar -->
             <header class="navbar">
                 <div class="navbar-left">
-                <!-- Hamburger menu toggle (visible only on mobile) -->
-                <button class="sidebar-toggle" id="sidebar-toggle" title="Abrir menú">
-                    <i class="fa-solid fa-bars"></i>
-                </button>
-                <h1 class="page-title">{% block page_title %}Dashboard de Control{% endblock %}</h1>
-            </div>
-                
-                <div class="navbar-right">
-                    <!-- Notifications -->
-                    <div class="nav-icon-btn notifications-trigger" id="notifications-btn">
-                        <i class="fa-regular fa-bell"></i>
-                        <span class="badge">3</span>
-                    </div>
-                    
-                    <!-- Quick Actions -->
-                    <button class="btn btn-primary">
-                        <i class="fa-solid fa-plus"></i> <span class="btn-label">Nuevo Pedido</span>
+                    <!-- Hamburger menu toggle (visible only on mobile) -->
+                    <button class="sidebar-toggle" id="sidebar-toggle" title="Abrir menú">
+                        <i class="fa-solid fa-bars"></i>
                     </button>
+                    <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
+                </div>
+                    
+                <div class="navbar-right">
+                    <!-- Cart icon for clients -->
+                    {% if user.role == 'client' %}
+                        <a href="{% url 'ver_carrito' %}" class="nav-icon-btn" title="Mi Carrito" style="position:relative;">
+                            <i class="fa-solid fa-cart-shopping"></i>
+                            {% if user.cart.items.count > 0 %}
+                                <span class="badge">{{ user.cart.items.count }}</span>
+                            {% endif %}
+                        </a>
+                    {% endif %}
+
+                    <!-- User greeting and logout -->
+                    <div class="nav-user-info">
+                        <span class="greeting">Hola, <strong>{{ user.first_name|default:user.username }}</strong></span>
+                    </div>
+
+                    <!-- Logout Button -->
+                    <a href="{% url 'logout' %}" class="btn btn-secondary btn-sm" title="Cerrar Sesión">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                        <span class="btn-label">Salir</span>
+                    </a>
                 </div>
             </header>
 
+            <!-- Django Messages -->
+            {% if messages %}
+                <div class="messages-container">
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }}">
+                            {% if message.tags == 'success' %}<i class="fa-solid fa-circle-check"></i>
+                            {% elif message.tags == 'error' %}<i class="fa-solid fa-circle-exclamation"></i>
+                            {% elif message.tags == 'warning' %}<i class="fa-solid fa-triangle-exclamation"></i>
+                            {% elif message.tags == 'info' %}<i class="fa-solid fa-circle-info"></i>
+                            {% endif %}
+                            {{ message }}
+                            <button class="alert-close" onclick="this.parentElement.remove()">&times;</button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
             <!-- Page Content -->
             <main class="content-body">
-                {% block content %}
-                <!-- Default beautiful demo dashboard -->
-                <div class="dashboard-grid">
-                    <!-- Stat Cards -->
-                    <div class="stat-card">
-                        <div class="card-icon blue">
-                            <i class="fa-solid fa-cubes"></i>
-                        </div>
-                        <div class="card-data">
-                            <span class="card-label">Pedidos de Hoy</span>
-                            <span class="card-value">48</span>
-                        </div>
-                        <div class="card-trend up">
-                            <i class="fa-solid fa-arrow-trend-up"></i> +12%
-                        </div>
-                    </div>
-
-                    <div class="stat-card">
-                        <div class="card-icon emerald">
-                            <i class="fa-solid fa-dollar-sign"></i>
-                        </div>
-                        <div class="card-data">
-                            <span class="card-label">Ingresos del Mes</span>
-                            <span class="card-value">Bs. 3,850</span>
-                        </div>
-                        <div class="card-trend up">
-                            <i class="fa-solid fa-arrow-trend-up"></i> +8.4%
-                        </div>
-                    </div>
-
-                    <div class="stat-card">
-                        <div class="card-icon orange">
-                            <i class="fa-solid fa-truck"></i>
-                        </div>
-                        <div class="card-data">
-                            <span class="card-label">Entregas Activas</span>
-                            <span class="card-value">7</span>
-                        </div>
-                        <div class="card-trend">
-                            <span class="trend-neutral">En ruta</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Main Section -->
-                <div class="dashboard-sections">
-                    <!-- Recent Orders Table -->
-                    <div class="section-card">
-                        <div class="section-header">
-                            <h3 class="section-title">Pedidos Recientes</h3>
-                            <a href="#" class="btn btn-text">Ver todos</a>
-                        </div>
-                        <div class="table-responsive">
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>Cliente</th>
-                                        <th>Estado</th>
-                                        <th>Total</th>
-                                        <th>Fecha</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>
-                                            <div class="td-user">
-                                                <span class="name">Yeison</span>
-                                            </div>
-                                        </td>
-                                        <td><span class="badge badge-success">Entregado</span></td>
-                                        <td>Bs. 120.00</td>
-                                        <td>Hace 10 min</td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div class="td-user">
-                                                <span class="name">Carlos Gómez</span>
-                                            </div>
-                                        </td>
-                                        <td><span class="badge badge-warning">En camino</span></td>
-                                        <td>Bs. 45.00</td>
-                                        <td>Hace 35 min</td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div class="td-user">
-                                                <span class="name">Ana Maria</span>
-                                            </div>
-                                        </td>
-                                        <td><span class="badge badge-info">Preparando</span></td>
-                                        <td>Bs. 210.00</td>
-                                        <td>Hace 1 hora</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Products Inventory Status -->
-                    <div class="section-card">
-                        <div class="section-header">
-                            <h3 class="section-title">Estado de Stock</h3>
-                            <span class="badge badge-alert">Alertas de Stock</span>
-                        </div>
-                        
-                        <div class="product-stock-list">
-                            <div class="stock-item">
-                                <div class="stock-info">
-                                    <span class="prod-name">Bidón de Agua 20L</span>
-                                    <span class="prod-stock warning">Bajo Stock: 15 unidades</span>
-                                </div>
-                                <div class="progress-bar">
-                                    <div class="progress fill-warning" style="width: 15%"></div>
-                                </div>
-                            </div>
-                            
-                            <div class="stock-item">
-                                <div class="stock-info">
-                                    <span class="prod-name">Botella Personal 500ml</span>
-                                    <span class="prod-stock success">Estable: 350 unidades</span>
-                                </div>
-                                <div class="progress-bar">
-                                    <div class="progress fill-success" style="width: 78%"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                {% endblock %}
+                {% block content %}{% endblock %}
             </main>
         </div>
     </div>
-    
+    {% else %}
+    <!-- Non-authenticated layout -->
+    <div class="auth-page-wrapper">
+        <!-- Messages for auth pages -->
+        {% if messages %}
+            <div class="messages-container auth-messages">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        {% if message.tags == 'success' %}<i class="fa-solid fa-circle-check"></i>
+                        {% elif message.tags == 'error' %}<i class="fa-solid fa-circle-exclamation"></i>
+                        {% elif message.tags == 'warning' %}<i class="fa-solid fa-triangle-exclamation"></i>
+                        {% elif message.tags == 'info' %}<i class="fa-solid fa-circle-info"></i>
+                        {% endif %}
+                        {{ message }}
+                        <button class="alert-close" onclick="this.parentElement.remove()">&times;</button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        {% block content %}{% endblock %}
+    </div>
+    {% endif %}
+
     <script src="/static/js/app.js"></script>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

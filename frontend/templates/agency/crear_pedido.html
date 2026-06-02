@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Registrar Venta de Agencia - AquaFlow{% endblock %}
+{% block page_title %}Registrar Venta / Pedido Manual{% endblock %}
+
+{% block content %}
+<div class="agency-create-order-container">
+    <a href="{% url 'agency_dashboard' %}" class="btn btn-text mb-4">
+        <i class="fa-solid fa-arrow-left"></i> Volver al Panel
+    </a>
+
+    <div class="card max-width-600">
+        <h2>Registrar Pedido Manual</h2>
+        <p class="text-muted">Crea una venta directamente desde tu sucursal. El stock será descontado del inventario general.</p>
+        <hr class="divider">
+
+        <form method="post" class="mt-4">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label for="client_name"><i class="fa-solid fa-user"></i> Nombre del Cliente</label>
+                <input type="text" id="client_name" name="client_name" class="form-control" placeholder="Ej: Juan López" required>
+            </div>
+
+            <div class="form-group mt-3">
+                <label for="product"><i class="fa-solid fa-bottle-water"></i> Seleccionar Producto</label>
+                <select id="product" name="product" class="form-control" required>
+                    <option value="">-- Selecciona un producto disponible --</option>
+                    {% for p in products %}
+                        <option value="{{ p.id }}">{{ p.name }} - Bs. {{ p.price }} (Stock: {{ p.stock }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group mt-3">
+                <label for="quantity"><i class="fa-solid fa-input-numeric"></i> Cantidad</label>
+                <input type="number" id="quantity" name="quantity" value="1" min="1" class="form-control" required>
+            </div>
+
+            <div class="form-group mt-3">
+                <label for="address"><i class="fa-solid fa-location-dot"></i> Dirección de Entrega o Nota</label>
+                <input type="text" id="address" name="address" class="form-control" placeholder="Ej: Retiro en tienda, o Av. Central #10" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block mt-4">
+                <i class="fa-solid fa-cart-plus"></i> Registrar Pedido
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

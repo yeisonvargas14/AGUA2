@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block title %}Historial de Entregas - AquaFlow{% endblock %}
+{% block page_title %}Historial de Entregas{% endblock %}
+
+{% block content %}
+<div class="driver-history-container">
+    <!-- Performance Summary Card -->
+    <div class="dashboard-grid">
+        <div class="stat-card">
+            <div class="card-icon emerald">
+                <i class="fa-solid fa-clipboard-check"></i>
+            </div>
+            <div class="card-data">
+                <span class="card-label">Entregas Completadas</span>
+                <span class="card-value">{{ deliveries.count }}</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="card-icon warning">
+                <i class="fa-solid fa-star"></i>
+            </div>
+            <div class="card-data">
+                <span class="card-label">Calificación Promedio</span>
+                <span class="card-value">{{ avg_score|floatformat:1 }} / 5.0</span>
+            </div>
+            <div class="card-trend">
+                <span class="trend-neutral">Basado en {{ ratings_count }} opiniones</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- History list -->
+    <div class="card mt-4">
+        <h3>Historial de Despachos</h3>
+        <hr class="divider">
+
+        <div class="table-responsive mt-3">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Pedido #</th>
+                        <th>Cliente</th>
+                        <th>Productos</th>
+                        <th>Dirección</th>
+                        <th>Fecha Entrega</th>
+                        <th>Valoración</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for d in deliveries %}
+                        <tr>
+                            <td><strong>#{{ d.order.id }}</strong></td>
+                            <td>{{ d.order.client.get_full_name|default:d.order.client.username }}</td>
+                            <td>
+                                {% for item in d.order.items.all %}
+                                    <span class="badge badge-light">{{ item.quantity }} x {{ item.product.name }}</span>
+                                {% endfor %}
+                            </td>
+                            <td>{{ d.order.delivery_address }}</td>
+                            <td>{{ d.delivered_at|date:"d M Y, H:i" }}</td>
+                            <td>
+                                {% if d.rating %}
+                                    <div class="stars d-inline-block">
+                                        {% for i in "12345" %}
+                                            {% if d.rating.score >= forloop.counter %}
+                                                <i class="fa-solid fa-star text-warning"></i>
+                                            {% else %}
+                                                <i class="fa-regular fa-star text-muted"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                    {% if d.rating.comment %}
+                                        <div class="text-muted small italic">"{{ d.rating.comment }}"</div>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-muted small">Sin valorar aún</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted p-4">No tienes entregas completadas registradas en el sistema.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

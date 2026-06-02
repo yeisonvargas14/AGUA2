@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block title %}Catálogo de Productos - AquaFlow{% endblock %}
+{% block page_title %}Catálogo de Productos{% endblock %}
+
+{% block content %}
+<div class="catalog-section">
+    <!-- Búsqueda y Filtros -->
+    <div class="search-bar-container">
+        <form method="get" action="{% url 'client_dashboard' %}" class="search-form">
+            <div class="search-input-wrapper">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" name="q" value="{{ query }}" placeholder="Buscar productos purificados..." class="form-control search-input">
+            </div>
+            <button type="submit" class="btn btn-primary">Buscar</button>
+            {% if query %}
+                <a href="{% url 'client_dashboard' %}" class="btn btn-secondary">Limpiar</a>
+            {% endif %}
+        </form>
+    </div>
+
+    <!-- Grid de Productos -->
+    <div class="products-grid mt-4">
+        {% for product in products %}
+            <div class="product-card">
+                {% if product.promo %}
+                    <div class="promo-badge">{{ product.promo.name }} (-{{ product.promo.discount_percentage }}%)</div>
+                {% endif %}
+                
+                <div class="product-image-container">
+                    {% if product.image %}
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}">
+                    {% else %}
+                        <div class="product-placeholder">
+                            <i class="fa-solid fa-bottle-water"></i>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="product-details">
+                    <h3 class="product-name">{{ product.name }}</h3>
+                    <p class="product-desc">{{ product.description|truncatewords:15 }}</p>
+                    
+                    <div class="product-rating-inline">
+                        <div class="stars">
+                            {% for i in "12345" %}
+                                {% if product.avg_rating >= forloop.counter %}
+                                    <i class="fa-solid fa-star text-warning"></i>
+                                {% else %}
+                                    <i class="fa-regular fa-star text-muted"></i>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <span class="rating-value">({{ product.avg_rating|floatformat:1 }} / 5)</span>
+                    </div>
+
+                    <div class="product-price-section">
+                        {% if product.promo %}
+                            <span class="original-price">Bs. {{ product.price }}</span>
+                            <span class="current-price text-success">Bs. {{ product.discounted_price|floatformat:2 }}</span>
+                        {% else %}
+                            <span class="current-price">Bs. {{ product.price }}</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="product-stock-status">
+                        {% if product.stock > 0 %}
+                            <span class="badge badge-success-light">En Stock ({{ product.stock }} disp.)</span>
+                        {% else %}
+                            <span class="badge badge-danger-light">Agotado</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="product-actions mt-3">
+                        <a href="{% url 'product_detail' product.id %}" class="btn btn-text btn-block mb-2">Ver Detalles</a>
+                        {% if product.stock > 0 %}
+                            <form method="post" action="{% url 'agregar_al_carrito' product.id %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="quantity" value="1">
+                                <button type="submit" class="btn btn-primary btn-block">
+                                    <i class="fa-solid fa-cart-plus"></i> Agregar al Carrito
+                                </button>
+                            </form>
+                        {% else %}
+                            <button class="btn btn-secondary btn-block" disabled>Agotado</button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="no-results full-width">
+                <i class="fa-solid fa-circle-question text-muted mb-3"></i>
+                <h3>No se encontraron productos</h3>
+                <p>Intenta buscar con otros términos.</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

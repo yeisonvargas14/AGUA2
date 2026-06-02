@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}Cupones Personales - AquaFlow{% blocktitle %}{% endblock %}
+{% block page_title %}Administrar Cupones de Descuento{% endblock %}
+
+{% block content %}
+<div class="admin-coupons-container">
+    <div class="card">
+        <div class="section-header flex-header">
+            <h3>Cupones Personales de Clientes</h3>
+            <a href="{% url 'admin_coupon_create' %}" class="btn btn-primary">
+                <i class="fa-solid fa-plus"></i> Crear Nuevo Cupón
+            </a>
+        </div>
+        <hr class="divider">
+
+        <div class="table-responsive mt-3">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Cliente</th>
+                        <th>Descuento (%)</th>
+                        <th>Fecha de Expiración</th>
+                        <th>Estado</th>
+                        <th>Creado En</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in coupons %}
+                        <tr>
+                            <td><strong class="text-primary font-weight-bold" style="font-size: 1.1rem;">{{ c.code }}</strong></td>
+                            <td>{{ c.user_client.username }} ({{ c.user_client.get_full_name|default:"-" }})</td>
+                            <td><span class="text-success font-weight-bold">{{ c.discount_percentage }}%</span></td>
+                            <td>{{ c.expires_at|date:"d M Y, H:i" }}</td>
+                            <td>
+                                {% if c.used %}
+                                    <span class="badge badge-secondary">Usado</span>
+                                {% elif c.is_expired %}
+                                    <span class="badge badge-danger">Expirado</span>
+                                {% else %}
+                                    <span class="badge badge-success">Activo / Disponible</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ c.created_at|date:"d M Y" }}</td>
+                            <td>
+                                <a href="{% url 'admin_coupon_delete' c.id %}" class="btn btn-danger-light btn-sm" onclick="return confirm('¿Estás seguro de que deseas revocar/eliminar este cupón?');">
+                                    <i class="fa-solid fa-ban"></i> Eliminar
+                                </a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted p-4">No hay cupones personales registrados.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

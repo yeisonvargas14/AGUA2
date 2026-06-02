@@ -1,0 +1,37 @@
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    # Admin Dashboard
+    path('', views.admin_dashboard, name='admin_dashboard'),
+    
+    # Products CRUD
+    path('productos/', views.admin_products, name='admin_products'),
+    path('productos/nuevo/', views.admin_product_create, name='admin_product_create'),
+    path('productos/editar/<int:pk>/', views.admin_product_edit, name='admin_product_edit'),
+    path('productos/eliminar/<int:pk>/', views.admin_product_delete, name='admin_product_delete'),
+    
+    # Users CRUD
+    path('usuarios/', views.admin_users, name='admin_users'),
+    path('usuarios/nuevo/', views.admin_user_create, name='admin_user_create'),
+    path('usuarios/editar/<int:pk>/', views.admin_user_edit, name='admin_user_edit'),
+    path('usuarios/eliminar/<int:pk>/', views.admin_user_delete, name='admin_user_delete'),
+    
+    # Coupons CRUD
+    path('cupones/', views.admin_coupons, name='admin_coupons'),
+    path('cupones/nuevo/', views.admin_coupon_create, name='admin_coupon_create'),
+    path('cupones/eliminar/<int:pk>/', views.admin_coupon_delete, name='admin_coupon_delete'),
+    
+    # Promotions CRUD
+    path('promociones/', views.admin_promotions, name='admin_promotions'),
+    path('promociones/nuevo/', views.admin_promotion_create, name='admin_promotion_create'),
+    path('promociones/eliminar/<int:pk>/', views.admin_promotion_delete, name='admin_promotion_delete'),
+    
+    # Orders Management
+    path('pedidos/', views.admin_orders, name='admin_orders'),
+    path('pedidos/detalle/<int:pk>/', views.admin_order_detail, name='admin_order_detail'),
+    path('pedidos/asignar-repartidor/<int:pk>/', views.admin_assign_driver, name='admin_assign_driver'),
+    
+    # Reports
+    path('reportes/', views.admin_reports, name='admin_reports'),
+]

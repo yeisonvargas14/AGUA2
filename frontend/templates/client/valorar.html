@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+
+{% block title %}Valorar Pedido #{{ order.id }} - AquaFlow{% endblock %}
+{% block page_title %}Valorar Pedido #{{ order.id }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .star-rating {
+        display: flex;
+        flex-direction: row-reverse;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 5px;
+    }
+    .star-rating input {
+        display: none;
+    }
+    .star-rating label {
+        font-size: 2rem;
+        color: var(--text-muted);
+        cursor: pointer;
+        transition: color 0.2s;
+    }
+    .star-rating label:hover,
+    .star-rating label:hover ~ label,
+    .star-rating input:checked ~ label {
+        color: var(--warning);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="rating-container">
+    <a href="{% url 'historial_pedidos' %}" class="btn btn-text mb-4">
+        <i class="fa-solid fa-arrow-left"></i> Volver a Mis Pedidos
+    </a>
+
+    <div class="card">
+        <h2 class="mb-4">Tu opinión es muy importante para nosotros</h2>
+        <p class="text-muted">Por favor valora tu experiencia con este pedido para ayudarnos a mejorar.</p>
+        <hr class="divider">
+
+        <form method="post" class="rating-form mt-4">
+            {% csrf_token %}
+
+            <!-- Driver rating (if driver assigned) -->
+            {% if order.driver %}
+                <div class="driver-rating-section mb-5 bg-light p-4 rounded">
+                    <h3 class="mb-3"><i class="fa-solid fa-truck"></i> Valorar al Repartidor</h3>
+                    <div class="driver-meta mb-2">
+                        <strong>Repartidor:</strong> {{ order.driver.get_full_name|default:order.driver.username }}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Puntuación:</label>
+                        <div class="star-rating">
+                            <input type="radio" id="d-star5" name="driver_score" value="5" required />
+                            <label for="d-star5" title="5 estrellas"><i class="fa-solid fa-star"></i></label>
+                            <input type="radio" id="d-star4" name="driver_score" value="4" />
+                            <label for="d-star4" title="4 estrellas"><i class="fa-solid fa-star"></i></label>
+                            <input type="radio" id="d-star3" name="driver_score" value="3" />
+                            <label for="d-star3" title="3 estrellas"><i class="fa-solid fa-star"></i></label>
+                            <input type="radio" id="d-star2" name="driver_score" value="2" />
+                            <label for="d-star2" title="2 estrellas"><i class="fa-solid fa-star"></i></label>
+                            <input type="radio" id="d-star1" name="driver_score" value="1" />
+                            <label for="d-star1" title="1 estrella"><i class="fa-solid fa-star"></i></label>
+                        </div>
+                    </div>
+
+                    <div class="form-group mt-3">
+                        <label for="driver_comment">Comentario sobre el repartidor:</label>
+                        <textarea id="driver_comment" name="driver_comment" rows="2" class="form-control" placeholder="Ej: Muy puntual y amable..."></textarea>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Products rating -->
+            <div class="products-rating-section">
+                <h3 class="mb-4"><i class="fa-solid fa-bottle-water"></i> Valorar Productos</h3>
+                
+                {% for item in order.items.all %}
+                    <div class="product-rating-item mb-4 border-bottom pb-4">
+                        <div class="product-meta mb-2 font-weight-bold">
+                            {{ item.product.name }}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Puntuación:</label>
+                            <div class="star-rating">
+                                <input type="radio" id="p-star5-{{ item.product.id }}" name="product_score_{{ item.product.id }}" value="5" required />
+                                <label for="p-star5-{{ item.product.id }}" title="5 estrellas"><i class="fa-solid fa-star"></i></label>
+                                <input type="radio" id="p-star4-{{ item.product.id }}" name="product_score_{{ item.product.id }}" value="4" />
+                                <label for="p-star4-{{ item.product.id }}" title="4 estrellas"><i class="fa-solid fa-star"></i></label>
+                                <input type="radio" id="p-star3-{{ item.product.id }}" name="product_score_{{ item.product.id }}" value="3" />
+                                <label for="p-star3-{{ item.product.id }}" title="3 estrellas"><i class="fa-solid fa-star"></i></label>
+                                <input type="radio" id="p-star2-{{ item.product.id }}" name="product_score_{{ item.product.id }}" value="2" />
+                                <label for="p-star2-{{ item.product.id }}" title="2 estrellas"><i class="fa-solid fa-star"></i></label>
+                                <input type="radio" id="p-star1-{{ item.product.id }}" name="product_score_{{ item.product.id }}" value="1" />
+                                <label for="p-star1-{{ item.product.id }}" title="1 estrella"><i class="fa-solid fa-star"></i></label>
+                            </div>
+                        </div>
+
+                        <div class="form-group mt-3">
+                            <label for="product_comment_{{ item.product.id }}">Comentario sobre el producto:</label>
+                            <textarea id="product_comment_{{ item.product.id }}" name="product_comment_{{ item.product.id }}" rows="2" class="form-control" placeholder="Ej: Muy fresco y limpio..."></textarea>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block mt-4">
+                <i class="fa-solid fa-paper-plane"></i> Enviar Valoraciones
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

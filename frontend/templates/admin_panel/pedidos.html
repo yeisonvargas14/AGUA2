@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block title %}Administrar Pedidos - AquaFlow{% endblock %}
+{% block page_title %}Gestión de Pedidos{% endblock %}
+
+{% block content %}
+<div class="admin-orders-container">
+    <div class="card">
+        <div class="section-header flex-header">
+            <h3>Todos los Pedidos del Sistema</h3>
+            <!-- Status Filters -->
+            <div class="filter-pills">
+                <a href="{% url 'admin_orders' %}" class="filter-pill {% if not status_filter %}active{% endif %}">Todos</a>
+                <a href="?status=pending" class="filter-pill {% if status_filter == 'pending' %}active{% endif %}">Pendientes</a>
+                <a href="?status=accepted" class="filter-pill {% if status_filter == 'accepted' %}active{% endif %}">Aceptados</a>
+                <a href="?status=on_way" class="filter-pill {% if status_filter == 'on_way' %}active{% endif %}">En Camino</a>
+                <a href="?status=delivered" class="filter-pill {% if status_filter == 'delivered' %}active{% endif %}">Entregados</a>
+                <a href="?status=cancelled" class="filter-pill {% if status_filter == 'cancelled' %}active{% endif %}">Cancelados</a>
+            </div>
+        </div>
+        <hr class="divider">
+
+        <div class="table-responsive mt-3">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Pedido #</th>
+                        <th>Cliente</th>
+                        <th>Repartidor</th>
+                        <th>Agencia</th>
+                        <th>Total</th>
+                        <th>Descuento</th>
+                        <th>Estado</th>
+                        <th>Fecha</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                        <tr>
+                            <td><strong>#{{ order.id }}</strong></td>
+                            <td>{{ order.client.username }}</td>
+                            <td>{{ order.driver.username|default:"Sin asignar" }}</td>
+                            <td>{{ order.agency.name|default:"-" }}</td>
+                            <td>Bs. {{ order.total_amount|floatformat:2 }}</td>
+                            <td>
+                                {% if order.discount_amount > 0 %}
+                                    <span class="text-success">- Bs. {{ order.discount_amount|floatformat:2 }}</span>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if order.status == 'pending' %}
+                                    <span class="badge badge-warning">Pendiente</span>
+                                {% elif order.status == 'accepted' %}
+                                    <span class="badge badge-info">Aceptado</span>
+                                {% elif order.status == 'on_way' %}
+                                    <span class="badge badge-primary">En camino</span>
+                                {% elif order.status == 'delivered' %}
+                                    <span class="badge badge-success">Entregado</span>
+                                {% elif order.status == 'cancelled' %}
+                                    <span class="badge badge-danger">Cancelado</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ order.created_at|date:"d M Y, H:i" }}</td>
+                            <td>
+                                <a href="{% url 'admin_order_detail' order.id %}" class="btn btn-primary-light btn-sm" title="Ver Detalle">
+                                    <i class="fa-solid fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="9" class="text-center text-muted p-4">No se encontraron pedidos con el filtro seleccionado.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

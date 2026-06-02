@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+
+{% block title %}Panel Administrador - AquaFlow{% endblock %}
+{% block page_title %}Panel de Control General{% endblock %}
+
+{% block content %}
+<div class="admin-dashboard-container">
+    <!-- Stat Cards -->
+    <div class="dashboard-grid">
+        <div class="stat-card">
+            <div class="card-icon emerald">
+                <i class="fa-solid fa-money-bill-trend-up"></i>
+            </div>
+            <div class="card-data">
+                <span class="card-label">Ingresos Totales</span>
+                <span class="card-value">Bs. {{ total_sales|floatformat:2 }}</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="card-icon blue">
+                <i class="fa-solid fa-cart-shopping"></i>
+            </div>
+            <div class="card-data">
+                <span class="card-label">Pedidos Registrados</span>
+                <span class="card-value">{{ total_orders }}</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="card-icon orange">
+                <i class="fa-solid fa-truck-fast"></i>
+            </div>
+            <div class="card-data">
+                <span class="card-label">En Distribución</span>
+                <span class="card-value">{{ active_deliveries }}</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="card-icon red">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <div class="card-data">
+                <span class="card-label">Alertas de Stock</span>
+                <span class="card-value">{{ low_stock }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-sections mt-4">
+        <!-- Recent Orders -->
+        <div class="card section-card">
+            <div class="section-header flex-header">
+                <h3>Pedidos Recientes</h3>
+                <a href="{% url 'admin_orders' %}" class="btn btn-text">Ver todos</a>
+            </div>
+            <hr class="divider">
+            <div class="table-responsive mt-3">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Cliente</th>
+                            <th>Total</th>
+                            <th>Estado</th>
+                            <th>Fecha</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in recent_orders %}
+                            <tr>
+                                <td><strong>#{{ order.id }}</strong></td>
+                                <td>{{ order.client.username }}</td>
+                                <td>Bs. {{ order.total_amount|floatformat:2 }}</td>
+                                <td>
+                                    {% if order.status == 'pending' %}
+                                        <span class="badge badge-warning">Pendiente</span>
+                                    {% elif order.status == 'accepted' %}
+                                        <span class="badge badge-info">Aceptado</span>
+                                    {% elif order.status == 'on_way' %}
+                                        <span class="badge badge-primary">En camino</span>
+                                    {% elif order.status == 'delivered' %}
+                                        <span class="badge badge-success">Entregado</span>
+                                    {% elif order.status == 'cancelled' %}
+                                        <span class="badge badge-danger">Cancelado</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ order.created_at|date:"d M H:i" }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted p-3">No hay pedidos registrados en el sistema.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Stock Alerts -->
+        <div class="card section-card">
+            <div class="section-header">
+                <h3>Niveles Críticos de Stock</h3>
+            </div>
+            <hr class="divider">
+            <div class="stock-alerts-list mt-3">
+                {% for item in stock_alerts %}
+                    <div class="stock-item p-3 mb-2 bg-light rounded">
+                        <div class="stock-info flex-header">
+                            <span class="font-weight-bold">{{ item.name }}</span>
+                            <span class="text-danger font-weight-bold">{{ item.stock }} unidades</span>
+                        </div>
+                        <div class="progress-bar mt-2" style="height:8px; background-color:#e0e0e0; border-radius:4px; overflow:hidden;">
+                            <div class="progress fill-danger" style="width:{{ item.stock }}%; height:100%; background-color:var(--danger);"></div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <p class="text-success text-center p-3 font-weight-bold">
+                        <i class="fa-solid fa-circle-check"></i> ¡Todos los productos con stock saludable!
+                    </p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

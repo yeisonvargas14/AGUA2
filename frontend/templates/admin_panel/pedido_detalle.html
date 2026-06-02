@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalle Pedido #{{ order.id }} - AquaFlow{% endblock %}
+{% block page_title %}Detalle del Pedido #{{ order.id }}{% endblock %}
+
+{% block content %}
+<div class="order-detail-container">
+    <a href="{% url 'admin_orders' %}" class="btn btn-text mb-4">
+        <i class="fa-solid fa-arrow-left"></i> Volver a Pedidos
+    </a>
+
+    <div class="detail-grid-2col">
+        <!-- Order Info -->
+        <div class="card">
+            <h3>Información del Pedido</h3>
+            <hr class="divider">
+            <table class="data-table mt-3">
+                <tr><th>Pedido #</th><td><strong>{{ order.id }}</strong></td></tr>
+                <tr><th>Estado</th><td>
+                    {% if order.status == 'pending' %}
+                        <span class="badge badge-warning">Pendiente</span>
+                    {% elif order.status == 'accepted' %}
+                        <span class="badge badge-info">Aceptado</span>
+                    {% elif order.status == 'on_way' %}
+                        <span class="badge badge-primary">En camino</span>
+                    {% elif order.status == 'delivered' %}
+                        <span class="badge badge-success">Entregado</span>
+                    {% elif order.status == 'cancelled' %}
+                        <span class="badge badge-danger">Cancelado</span>
+                    {% endif %}
+                </td></tr>
+                <tr><th>Cliente</th><td>{{ order.client.get_full_name|default:order.client.username }} ({{ order.client.email }})</td></tr>
+                <tr><th>Dirección Entrega</th><td>{{ order.delivery_address }}</td></tr>
+                {% if order.delivery_lat %}
+                    <tr><th>Coordenadas GPS</th><td>{{ order.delivery_lat }}, {{ order.delivery_lng }}</td></tr>
+                {% endif %}
+                <tr><th>Total</th><td><strong>Bs. {{ order.total_amount|floatformat:2 }}</strong></td></tr>
+                {% if order.discount_amount > 0 %}
+                    <tr><th>Descuento</th><td class="text-success">- Bs. {{ order.discount_amount|floatformat:2 }} {% if order.coupon %} (Cupón: {{ order.coupon.code }}) {% endif %}</td></tr>
+                {% endif %}
+                <tr><th>Agencia</th><td>{{ order.agency.name|default:"Pedido directo online" }}</td></tr>
+                <tr><th>Repartidor</th><td>{{ order.driver.get_full_name|default:"Sin asignar aún" }}</td></tr>
+                <tr><th>Fecha del Pedido</th><td>{{ order.created_at|date:"d M Y, H:i" }}</td></tr>
+                <tr><th>Última Actualización</th><td>{{ order.updated_at|date:"d M Y, H:i" }}</td></tr>
+            </table>
+        </div>
+
+        <!-- Driver Assignment -->
+        <div class="card">
+            <h3>Asignar Repartidor</h3>
+            <hr class="divider">
+
+            {% if order.status in 'pending,accepted' %}
+                <form method="post" action="{% url 'admin_assign_driver' order.id %}" class="mt-3">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="driver">Seleccionar Repartidor</label>
+                        <select name="driver" id="driver" class="form-control">
+                            <option value="">-- Selecciona repartidor --</option>
+                            {% for driver in drivers %}
+                                <option value="{{ driver.id }}" {% if order.driver and order.driver.id == driver.id %}selected{% endif %}>
+                                    {{ driver.get_full_name|default:driver.username }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-success mt-3 btn-block">
+                        <i class="fa-solid fa-user-check"></i> Asignar y Cambiar a "Aceptado"
+                    </button>
+                </form>
+            {% else %}
+                <p class="mt-3 text-muted">El estado actual del pedido no permite reasignar repartidor ({{ order.get_status_display }}).</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Order Items -->
+    <div class="card mt-4">
+        <h3>Productos del Pedido</h3>
+        <hr class="divider">
+        <div class="table-responsive mt-3">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Precio Unitario</th>
+                        <th>Cantidad</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in order.items.all %}
+                        <tr>
+                            <td><strong>{{ item.product.name }}</strong></td>
+                            <td>Bs. {{ item.unit_price|floatformat:2 }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td>Bs. {{ item.subtotal|floatformat:2 }}</td>
+                        </tr>
+                    {% endfor %}
+                    <tr class="total-row">
+                        <td colspan="3" class="text-right font-weight-bold">Total:</td>
+                        <td class="font-weight-bold text-primary">Bs. {{ order.total_amount|floatformat:2 }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Ratings Section -->
+    {% if order.ratings.exists %}
+    <div class="card mt-4">
+        <h3>Valoraciones de este Pedido</h3>
+        <hr class="divider">
+        <div class="mt-3">
+            {% for rating in order.ratings.all %}
+                <div class="review-card p-3 mb-3 bg-light rounded">
+                    <div class="review-header flex-header">
+                        <span>
+                            {% if rating.product %}
+                                <strong><i class="fa-solid fa-bottle-water text-primary"></i> Producto:</strong> {{ rating.product.name }}
+                            {% elif rating.driver %}
+                                <strong><i class="fa-solid fa-truck text-warning"></i> Repartidor:</strong> {{ rating.driver.username }}
+                            {% endif %}
+                        </span>
+                        <div class="stars">
+                            {% for i in "12345" %}
+                                {% if rating.score >= forloop.counter %}
+                                    <i class="fa-solid fa-star text-warning"></i>
+                                {% else %}
+                                    <i class="fa-regular fa-star text-muted"></i>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% if rating.comment %}
+                        <p class="mt-2 italic text-muted">"{{ rating.comment }}"</p>
+                    {% endif %}
+                    <small class="text-muted">Valorado el {{ rating.created_at|date:"d M Y" }}</small>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

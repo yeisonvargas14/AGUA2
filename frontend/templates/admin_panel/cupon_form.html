@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}Crear Cupón - AquaFlow{% endblock %}
+{% block page_title %}Crear Nuevo Cupón Personal{% endblock %}
+
+{% block content %}
+<div class="coupon-form-container">
+    <a href="{% url 'admin_coupons' %}" class="btn btn-text mb-4">
+        <i class="fa-solid fa-arrow-left"></i> Volver a la Lista
+    </a>
+
+    <div class="card max-width-600">
+        <h2>Nuevo Cupón de Descuento</h2>
+        <p class="text-muted">Los cupones personales son asignados directamente a un cliente común específico y se invalidan una vez usados.</p>
+        <hr class="divider">
+
+        <form method="post" class="mt-4">
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="form-group">
+                <label for="id_code"><i class="fa-solid fa-barcode"></i> Código del Cupón *</label>
+                {% render_field form.code class="form-control" placeholder="EJ: CLIENTEVIP15" %}
+                {% if form.code.errors %}
+                    <span class="field-error">{{ form.code.errors.0 }}</span>
+                {% endif %}
+            </div>
+
+            <div class="form-group mt-3">
+                <label for="id_user_client"><i class="fa-solid fa-user"></i> Cliente Beneficiario *</label>
+                {% render_field form.user_client class="form-control" %}
+                {% if form.user_client.errors %}
+                    <span class="field-error">{{ form.user_client.errors.0 }}</span>
+                {% endif %}
+            </div>
+
+            <div class="form-grid mt-3">
+                <div class="form-group">
+                    <label for="id_discount_percentage"><i class="fa-solid fa-percent"></i> Porcentaje Descuento *</label>
+                    {% render_field form.discount_percentage class="form-control" min="1" max="100" %}
+                    {% if form.discount_percentage.errors %}
+                        <span class="field-error">{{ form.discount_percentage.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="id_expires_at"><i class="fa-solid fa-calendar-xmark"></i> Fecha de Expiración *</label>
+                    {% render_field form.expires_at class="form-control" %}
+                    {% if form.expires_at.errors %}
+                        <span class="field-error">{{ form.expires_at.errors.0 }}</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block mt-4">
+                <i class="fa-solid fa-floppy-disk"></i> Crear Cupón
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

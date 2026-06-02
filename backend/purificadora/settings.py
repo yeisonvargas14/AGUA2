@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     
     # Third party
     'rest_framework',
+    'widget_tweaks',
     
     # Local apps
     'accounts',
@@ -56,6 +57,9 @@ INSTALLED_APPS = [
     'distribution',
     'notifications',
     'core',
+    'coupons',
+    'promotions',
+    'ratings',
 ]
 
 MIDDLEWARE = [
@@ -156,3 +160,27 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR.parent / 'frontend' / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Pusher settings
+PUSHER_APP_ID = os.environ.get('PUSHER_APP_ID', '1987654')
+PUSHER_KEY = os.environ.get('PUSHER_KEY', 'a1b2c3d4e5f6g7h8i9j0')
+PUSHER_SECRET = os.environ.get('PUSHER_SECRET', 's1e2c3r4e5t6')
+PUSHER_CLUSTER = os.environ.get('PUSHER_CLUSTER', 'mt1')
+
+# Google Maps settings
+GOOGLE_MAPS_API_KEY = os.environ.get('GOOGLE_MAPS_API_KEY', '')
+
+# Email configuration (Defaults to Console for development, SMTP via Env vars)
+EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'AquaFlow <noreply@aquaflow.com>')
+
+# Auth redirects and path configuration
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'dashboard'
+LOGOUT_REDIRECT_URL = 'login'
+

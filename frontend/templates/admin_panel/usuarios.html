@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block title %}Administrar Usuarios - AquaFlow{% endblock %}
+{% block page_title %}Administrar Usuarios{% endblock %}
+
+{% block content %}
+<div class="admin-users-container">
+    <div class="card">
+        <div class="section-header flex-header">
+            <h3>Lista de Usuarios del Sistema</h3>
+            <a href="{% url 'admin_user_create' %}" class="btn btn-primary">
+                <i class="fa-solid fa-user-plus"></i> Registrar Usuario
+            </a>
+        </div>
+        <hr class="divider">
+
+        <div class="table-responsive mt-3">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Usuario</th>
+                        <th>Nombre Completo</th>
+                        <th>Email</th>
+                        <th>Rol</th>
+                        <th>Teléfono</th>
+                        <th>Municipio</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                        <tr>
+                            <td><strong>#{{ u.id }}</strong></td>
+                            <td><strong>{{ u.username }}</strong></td>
+                            <td>{{ u.get_full_name|default:"-" }}</td>
+                            <td>{{ u.email }}</td>
+                            <td>
+                                {% if u.role == 'admin' %}
+                                    <span class="badge badge-danger">Administrador</span>
+                                {% elif u.role == 'agency' %}
+                                    <span class="badge badge-warning">Agencia</span>
+                                {% elif u.role == 'driver' %}
+                                    <span class="badge badge-info">Repartidor</span>
+                                {% else %}
+                                    <span class="badge badge-success">Cliente</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ u.phone|default:"-" }}</td>
+                            <td>{{ u.municipio|default:"-" }}</td>
+                            <td>
+                                <div class="order-action-buttons">
+                                    <a href="{% url 'admin_user_edit' u.id %}" class="btn btn-primary-light btn-sm mr-2" title="Editar">
+                                        <i class="fa-solid fa-user-pen"></i>
+                                    </a>
+                                    {% if u.id != request.user.id %}
+                                        <a href="{% url 'admin_user_delete' u.id %}" class="btn btn-danger-light btn-sm" onclick="return confirm('¿Estás seguro de que deseas eliminar este usuario?');" title="Eliminar">
+                                            <i class="fa-solid fa-user-minus"></i>
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center text-muted p-4">No hay usuarios registrados en el sistema.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}Registrar Usuario - AquaFlow{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="user-form-container">
+    <a href="{% url 'admin_users' %}" class="btn btn-text mb-4">
+        <i class="fa-solid fa-arrow-left"></i> Volver a la Lista
+    </a>
+
+    <div class="card max-width-600">
+        <h2>{{ title }}</h2>
+        <p class="text-muted">Completa los datos del usuario e indica su rol en la plataforma.</p>
+        <hr class="divider">
+
+        <form method="post" class="mt-4">
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="id_username">Nombre de Usuario *</label>
+                    {% render_field form.username class="form-control" %}
+                    {% if form.username.errors %}
+                        <span class="field-error">{{ form.username.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="id_email">Correo Electrónico *</label>
+                    {% render_field form.email class="form-control" %}
+                    {% if form.email.errors %}
+                        <span class="field-error">{{ form.email.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="id_first_name">Nombre</label>
+                    {% render_field form.first_name class="form-control" %}
+                    {% if form.first_name.errors %}
+                        <span class="field-error">{{ form.first_name.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="id_last_name">Apellido</label>
+                    {% render_field form.last_name class="form-control" %}
+                    {% if form.last_name.errors %}
+                        <span class="field-error">{{ form.last_name.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="id_role">Rol del Sistema *</label>
+                    {% render_field form.role class="form-control" %}
+                    {% if form.role.errors %}
+                        <span class="field-error">{{ form.role.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="id_phone">Teléfono</label>
+                    {% render_field form.phone class="form-control" %}
+                    {% if form.phone.errors %}
+                        <span class="field-error">{{ form.phone.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="id_password">Contraseña (Nueva)</label>
+                    {% render_field form.password class="form-control" %}
+                    <p class="text-muted small mt-1">{{ form.password.help_text }}</p>
+                    {% if form.password.errors %}
+                        <span class="field-error">{{ form.password.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="id_municipio">Municipio</label>
+                    {% render_field form.municipio class="form-control" placeholder="Ej: Comarapa" %}
+                    {% if form.municipio.errors %}
+                        <span class="field-error">{{ form.municipio.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="id_address">Dirección Particular</label>
+                    {% render_field form.address class="form-control" %}
+                    {% if form.address.errors %}
+                        <span class="field-error">{{ form.address.errors.0 }}</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block mt-4">
+                <i class="fa-solid fa-floppy-disk"></i> Guardar Usuario
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

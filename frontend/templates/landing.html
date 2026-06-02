@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+
+{% block title %}Inicio - AquaFlow Purificadora de Agua{% endblock %}
+
+{% block content %}
+<div class="landing-container">
+    <!-- Public Navigation Bar -->
+    <header class="landing-header">
+        <div class="landing-nav-container">
+            <div class="landing-brand">
+                <i class="fa-solid fa-droplet brand-icon"></i>
+                <span class="brand-text">AquaFlow</span>
+            </div>
+            <nav class="landing-nav">
+                <a href="#catalogo" class="nav-link">Catálogo</a>
+                <a href="{% url 'login' %}" class="btn btn-text">Iniciar Sesión</a>
+                <a href="{% url 'register' %}" class="btn btn-primary">Registrarse</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="landing-hero">
+        <div class="hero-content">
+            <span class="hero-badge"><i class="fa-solid fa-star"></i> El agua más pura de Comarapa</span>
+            <h1>AquaFlow Purificadora</h1>
+            <p>Llevamos agua purificada y de la mejor calidad directo hasta tu hogar o negocio en Comarapa. Bidones, botellas personales y dispensadores.</p>
+            <div class="hero-actions">
+                <a href="#catalogo" class="btn btn-primary btn-lg">
+                    <i class="fa-solid fa-basket-shopping"></i> Ver Catálogo
+                </a>
+                <a href="{% url 'register' %}" class="btn btn-secondary btn-lg">
+                    Crear una Cuenta
+                </a>
+            </div>
+        </div>
+        <div class="hero-visual">
+            <div class="water-glass-card">
+                <i class="fa-solid fa-droplet clean-water-icon animate-bounce"></i>
+                <span class="water-card-title">100% Purificada</span>
+                <span class="water-card-subtitle">Filtros de Ozono y UV</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Catalog Section -->
+    <section id="catalogo" class="landing-catalog">
+        <div class="catalog-header">
+            <div class="catalog-title-group">
+                <h2>Nuestros Productos Disponibles</h2>
+                <p>Todos nuestros productos pasan por estrictos controles de calidad y purificación.</p>
+            </div>
+            
+            <!-- Search Bar -->
+            <form method="get" action="{% url 'landing' %}#catalogo" class="catalog-search-form">
+                <div class="search-input-wrapper">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" name="q" value="{{ query }}" placeholder="Buscar bidones, botellas..." class="form-control">
+                    {% if query %}
+                        <a href="{% url 'landing' %}#catalogo" class="clear-search-btn" title="Limpiar búsqueda">&times;</a>
+                    {% endif %}
+                </div>
+                <button type="submit" class="btn btn-primary">Buscar</button>
+            </form>
+        </div>
+
+        {% if products %}
+            <div class="products-grid">
+                {% for prod in products %}
+                    <div class="product-card">
+                        <!-- Product Image / Icon Placeholder -->
+                        <div class="product-card-visual">
+                            {% if prod.image %}
+                                <img src="{{ prod.image.url }}" alt="{{ prod.name }}" class="product-image">
+                            {% else %}
+                                <div class="product-placeholder">
+                                    <i class="fa-solid fa-bottle-water"></i>
+                                </div>
+                            {% endif %}
+                            
+                            <!-- Promo badge -->
+                            {% if prod.promo %}
+                                <span class="promo-badge-tag">{{ prod.promo.discount_percentage }}% OFF</span>
+                            {% endif %}
+                        </div>
+
+                        <!-- Product info -->
+                        <div class="product-card-body">
+                            <h3 class="product-name">{{ prod.name }}</h3>
+                            <p class="product-desc">{{ prod.description|default:"Agua purificada certificada y lista para consumir." }}</p>
+                            
+                            <!-- Rating -->
+                            <div class="product-rating">
+                                <div class="rating-stars">
+                                    {% if prod.avg_rating > 0 %}
+                                        <i class="fa-solid fa-star gold-star"></i>
+                                        <span class="rating-value">{{ prod.avg_rating|floatformat:1 }}</span>
+                                    {% else %}
+                                        <i class="fa-regular fa-star muted-star"></i>
+                                        <span class="rating-value text-muted">Sin valoraciones</span>
+                                    {% endif %}
+                                </div>
+                                <span class="product-stock {% if prod.stock <= 10 %}low-stock{% endif %}">
+                                    Stock: {{ prod.stock }} u.
+                                </span>
+                            </div>
+
+                            <!-- Pricing and action -->
+                            <div class="product-card-footer">
+                                <div class="product-price-wrapper">
+                                    {% if prod.promo %}
+                                        <span class="original-price">Bs. {{ prod.price }}</span>
+                                        <span class="current-price discount">Bs. {{ prod.discounted_price|floatformat:2 }}</span>
+                                    {% else %}
+                                        <span class="current-price">Bs. {{ prod.price }}</span>
+                                    {% endif %}
+                                </div>
+                                <a href="{% url 'login' %}?next={% url 'dashboard' %}" class="btn btn-primary btn-sm btn-buy">
+                                    <i class="fa-solid fa-right-to-bracket"></i> Iniciar Sesión
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="no-products-state">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                <h3>No se encontraron productos</h3>
+                <p>Prueba buscando con otros términos o vuelve más tarde.</p>
+                <a href="{% url 'landing' %}#catalogo" class="btn btn-secondary">Ver todos los productos</a>
+            </div>
+        {% endif %}
+    </section>
+
+    <!-- Public Footer -->
+    <footer class="landing-footer">
+        <div class="footer-content">
+            <div class="footer-brand-info">
+                <div class="landing-brand">
+                    <i class="fa-solid fa-droplet brand-icon"></i>
+                    <span class="brand-text">AquaFlow</span>
+                </div>
+                <p>El mejor servicio de purificación y distribución de agua en Comarapa. Calidad y salud en cada gota.</p>
+            </div>
+            <div class="footer-links">
+                <h4>Enlaces</h4>
+                <a href="#catalogo">Catálogo</a>
+                <a href="{% url 'login' %}">Iniciar Sesión</a>
+                <a href="{% url 'register' %}">Registro</a>
+            </div>
+            <div class="footer-contact">
+                <h4>Contacto</h4>
+                <p><i class="fa-solid fa-location-dot"></i> Comarapa, Santa Cruz, Bolivia</p>
+                <p><i class="fa-solid fa-phone"></i> +591 70000000</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 AquaFlow. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+</div>
+{% endblock %}

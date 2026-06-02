@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+
+{% block title %}Mi Carrito de Compras - AquaFlow{% endblock %}
+{% block page_title %}Mi Carrito de Compras{% endblock %}
+
+{% block content %}
+<div class="cart-container">
+    {% if cart.items.exists %}
+        <div class="cart-grid">
+            <!-- Items table -->
+            <div class="card cart-items-card">
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Precio Unitario</th>
+                                <th>Cantidad</th>
+                                <th>Subtotal</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in cart.items.all %}
+                                <tr>
+                                    <td>
+                                        <div class="cart-product-cell">
+                                            <div class="cart-product-img">
+                                                {% if item.product.image %}
+                                                    <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}">
+                                                {% else %}
+                                                    <i class="fa-solid fa-bottle-water text-primary"></i>
+                                                {% endif %}
+                                            </div>
+                                            <span class="product-title font-weight-bold ml-2">{{ item.product.name }}</span>
+                                        </div>
+                                    </td>
+                                    <td>Bs. {{ item.product.price }}</td>
+                                    <td>
+                                        <form method="post" action="{% url 'actualizar_carrito' item.id %}" class="qty-form">
+                                            {% csrf_token %}
+                                            <div class="input-group-qty">
+                                                <input type="number" name="quantity" value="{{ item.quantity }}" min="0" max="{{ item.product.stock }}" class="form-control qty-input-small">
+                                                <button type="submit" class="btn btn-primary-light" title="Actualizar"><i class="fa-solid fa-sync"></i></button>
+                                            </div>
+                                        </form>
+                                    </td>
+                                    <td>Bs. {{ item.subtotal|floatformat:2 }}</td>
+                                    <td>
+                                        <form method="post" action="{% url 'eliminar_del_carrito' item.id %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-danger-light" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Summary sidebar -->
+            <div class="card cart-summary-card">
+                <h3>Resumen de Compra</h3>
+                <hr class="divider">
+                
+                <div class="summary-row">
+                    <span>Subtotal</span>
+                    <strong>Bs. {{ cart.total_amount|floatformat:2 }}</strong>
+                </div>
+
+                {% if coupon %}
+                    <div class="summary-row text-success">
+                        <span>Cupón aplicado ({{ coupon.code }} -{{ coupon.discount_percentage }}%)</span>
+                        <strong>- Bs. {{ discount|floatformat:2 }}</strong>
+                    </div>
+                {% endif %}
+
+                <hr class="divider">
+
+                <div class="summary-row total-row">
+                    <span>Total a Pagar</span>
+                    <span class="total-price text-primary">Bs. {{ total|floatformat:2 }}</span>
+                </div>
+
+                <!-- Coupon apply form -->
+                <form method="post" action="{% url 'aplicar_cupon' %}" class="coupon-form mt-4">
+                    {% csrf_token %}
+                    <label for="coupon-code">¿Tienes un cupón?</label>
+                    <div class="input-group">
+                        <input type="text" id="coupon-code" name="code" class="form-control" placeholder="CÓDIGO" value="{{ coupon.code|default:'' }}">
+                        <button type="submit" class="btn btn-secondary">Aplicar</button>
+                    </div>
+                </form>
+
+                <div class="checkout-button-container mt-4">
+                    <a href="{% url 'checkout' %}" class="btn btn-primary btn-block text-center">
+                        <i class="fa-solid fa-credit-card"></i> Proceder al Pago / Dirección
+                    </a>
+                    <a href="{% url 'client_dashboard' %}" class="btn btn-text btn-block text-center mt-2">Seguir comprando</a>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="card empty-cart text-center p-5">
+            <i class="fa-solid fa-cart-shopping text-muted mb-3" style="font-size: 4rem;"></i>
+            <h2>Tu carrito está vacío</h2>
+            <p class="text-muted">Aún no has agregado productos a tu carrito. ¡Explora nuestro catálogo y empieza a comprar!</p>
+            <a href="{% url 'client_dashboard' %}" class="btn btn-primary mt-4">Explorar Catálogo</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

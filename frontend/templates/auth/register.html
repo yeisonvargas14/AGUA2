@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}Crear Cuenta - AquaFlow{% endblock %}
+{% block page_title %}Crear Cuenta{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-card register-card">
+        <div class="auth-header">
+            <i class="fa-solid fa-droplet brand-icon"></i>
+            <h2>Únete a AquaFlow</h2>
+            <p>Regístrate como cliente para empezar a pedir bidones de agua.</p>
+        </div>
+
+        <form method="post" class="auth-form">
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="id_username"><i class="fa-solid fa-user"></i> Usuario *</label>
+                    {% render_field form.username class="form-control" %}
+                    {% if form.username.errors %}
+                        <span class="field-error">{{ form.username.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="id_email"><i class="fa-solid fa-envelope"></i> Correo *</label>
+                    {% render_field form.email class="form-control" %}
+                    {% if form.email.errors %}
+                        <span class="field-error">{{ form.email.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="id_first_name"><i class="fa-solid fa-signature"></i> Nombre *</label>
+                    {% render_field form.first_name class="form-control" %}
+                    {% if form.first_name.errors %}
+                        <span class="field-error">{{ form.first_name.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="id_last_name"><i class="fa-solid fa-signature"></i> Apellido *</label>
+                    {% render_field form.last_name class="form-control" %}
+                    {% if form.last_name.errors %}
+                        <span class="field-error">{{ form.last_name.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="id_phone"><i class="fa-solid fa-phone"></i> Teléfono *</label>
+                    {% render_field form.phone class="form-control" %}
+                    {% if form.phone.errors %}
+                        <span class="field-error">{{ form.phone.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="id_municipio"><i class="fa-solid fa-location-dot"></i> Municipio *</label>
+                    {% render_field form.municipio class="form-control" placeholder="Ej: Comarapa" %}
+                    {% if form.municipio.errors %}
+                        <span class="field-error">{{ form.municipio.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="id_address"><i class="fa-solid fa-house"></i> Dirección Detallada *</label>
+                    {% render_field form.address class="form-control" %}
+                    {% if form.address.errors %}
+                        <span class="field-error">{{ form.address.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="id_password"><i class="fa-solid fa-lock"></i> Contraseña *</label>
+                    {% render_field form.password class="form-control" %}
+                    {% if form.password.errors %}
+                        <span class="field-error">{{ form.password.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="id_password_confirm"><i class="fa-solid fa-lock"></i> Confirmar Contraseña *</label>
+                    {% render_field form.password_confirm class="form-control" %}
+                    {% if form.password_confirm.errors %}
+                        <span class="field-error">{{ form.password_confirm.errors.0 }}</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block mt-4">
+                <i class="fa-solid fa-user-plus"></i> Registrarse
+            </button>
+        </form>
+
+        <div class="auth-footer">
+            <p>¿Ya tienes una cuenta? <a href="{% url 'login' %}">Inicia Sesión</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

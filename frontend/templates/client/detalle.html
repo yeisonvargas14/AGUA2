@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ product.name }} - AquaFlow{% endblock %}
+{% block page_title %}{{ product.name }}{% endblock %}
+
+{% block content %}
+<div class="product-detail-container">
+    <a href="{% url 'client_dashboard' %}" class="btn btn-text mb-4">
+        <i class="fa-solid fa-arrow-left"></i> Volver al Catálogo
+    </a>
+
+    <div class="card detail-card">
+        <div class="detail-grid">
+            <!-- Product Image -->
+            <div class="detail-image-section">
+                {% if product.image %}
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}" class="detail-img">
+                {% else %}
+                    <div class="detail-placeholder">
+                        <i class="fa-solid fa-bottle-water"></i>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Product Details info -->
+            <div class="detail-info-section">
+                {% if product.promo %}
+                    <span class="badge badge-warning mb-2">{{ product.promo.name }} (-{{ product.promo.discount_percentage }}%)</span>
+                {% endif %}
+                
+                <h2>{{ product.name }}</h2>
+                
+                <div class="product-rating-inline mt-2 mb-3">
+                    <div class="stars">
+                        {% for i in "12345" %}
+                            {% if avg_rating >= forloop.counter %}
+                                <i class="fa-solid fa-star text-warning"></i>
+                            {% else %}
+                                <i class="fa-regular fa-star text-muted"></i>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <span class="rating-value"><strong>{{ avg_rating|floatformat:1 }}</strong> de 5 ({{ ratings.count }} valoraciones)</span>
+                </div>
+
+                <p class="description">{{ product.description }}</p>
+
+                <hr class="divider">
+
+                <div class="price-stock-box mt-3">
+                    <div class="price-box">
+                        <span class="label">Precio</span>
+                        {% if product.promo %}
+                            <div class="flex-price">
+                                <span class="old-price">Bs. {{ product.price }}</span>
+                                <span class="price-val text-success">Bs. {{ product.discounted_price|floatformat:2 }}</span>
+                            </div>
+                        {% else %}
+                            <span class="price-val">Bs. {{ product.price }}</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="stock-box">
+                        <span class="label">Disponibilidad</span>
+                        {% if product.stock > 0 %}
+                            <span class="badge badge-success">En Stock ({{ product.stock }} unidades)</span>
+                        {% else %}
+                            <span class="badge badge-danger">Agotado</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if product.stock > 0 %}
+                    <form method="post" action="{% url 'agregar_al_carrito' product.id %}" class="add-cart-form mt-4">
+                        {% csrf_token %}
+                        <div class="qty-selector">
+                            <label for="quantity">Cantidad:</label>
+                            <input type="number" id="quantity" name="quantity" value="1" min="1" max="{{ product.stock }}" class="form-control qty-input">
+                        </div>
+                        <button type="submit" class="btn btn-primary mt-3">
+                            <i class="fa-solid fa-cart-plus"></i> Añadir al Carrito
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Ratings & Reviews Section -->
+    <div class="reviews-section mt-5">
+        <h3 class="mb-4">Opiniones de Clientes</h3>
+        {% for rating in ratings %}
+            <div class="card review-card mb-3">
+                <div class="review-header">
+                    <div class="user-meta">
+                        <strong>{{ rating.user_client.get_full_name|default:rating.user_client.username }}</strong>
+                        <span class="text-muted small ml-2">{{ rating.created_at|date:"d M Y" }}</span>
+                    </div>
+                    <div class="stars">
+                        {% for i in "12345" %}
+                            {% if rating.score >= forloop.counter %}
+                                <i class="fa-solid fa-star text-warning"></i>
+                            {% else %}
+                                <i class="fa-regular fa-star text-muted"></i>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% if rating.comment %}
+                    <p class="review-comment mt-2">"{{ rating.comment }}"</p>
+                {% else %}
+                    <p class="review-comment mt-2 text-muted italic">Sin comentarios.</p>
+                {% endif %}
+            </div>
+        {% empty %}
+            <p class="text-muted">Aún no hay valoraciones para este producto. Sé el primero al comprarlo.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

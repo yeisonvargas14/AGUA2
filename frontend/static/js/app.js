@@ -520,11 +520,11 @@ document.addEventListener('DOMContentLoaded', () => {
                                         <td><span class="badge badge-${getStatusClass(o.status)}">${o.status_display}</span></td>
                                         <td>
                                             <select class="order-status-select" data-id="${o.id}" style="padding:6px 10px; border-radius:8px; border:1px solid #cbd5e1; outline:none; background:#f8fafc; cursor:pointer; font-size:0.85rem; font-weight:500;">
-                                                <option value="PENDING" ${o.status === 'PENDING' ? 'selected' : ''}>Pendiente</option>
-                                                <option value="PREPARING" ${o.status === 'PREPARING' ? 'selected' : ''}>En preparación</option>
-                                                <option value="SHIPPED" ${o.status === 'SHIPPED' ? 'selected' : ''}>En camino</option>
-                                                <option value="DELIVERED" ${o.status === 'DELIVERED' ? 'selected' : ''}>Entregado</option>
-                                                <option value="CANCELLED" ${o.status === 'CANCELLED' ? 'selected' : ''}>Cancelado</option>
+                                                <option value="pending" ${o.status === 'pending' ? 'selected' : ''}>Pendiente</option>
+                                                <option value="accepted" ${o.status === 'accepted' ? 'selected' : ''}>Aceptado</option>
+                                                <option value="on_way" ${o.status === 'on_way' ? 'selected' : ''}>En camino</option>
+                                                <option value="delivered" ${o.status === 'delivered' ? 'selected' : ''}>Entregado</option>
+                                                <option value="cancelled" ${o.status === 'cancelled' ? 'selected' : ''}>Cancelado</option>
                                             </select>
                                         </td>
                                     </tr>
@@ -590,9 +590,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div>
                         <label style="display:block; font-weight:600; margin-bottom:6px; color:#475569;">Estado del Pedido</label>
                         <select id="ord-status" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; background:#fff;">
-                            <option value="PENDING">Pendiente</option>
-                            <option value="PREPARING">En preparación</option>
-                            <option value="SHIPPED">En camino</option>
+                            <option value="pending">Pendiente</option>
+                            <option value="accepted">Aceptado</option>
+                            <option value="on_way">En camino</option>
                         </select>
                     </div>
                 </div>

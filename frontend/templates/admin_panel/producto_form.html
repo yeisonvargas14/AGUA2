@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}{{ title }} - AquaFlow{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="product-form-container">
+    <a href="{% url 'admin_products' %}" class="btn btn-text mb-4">
+        <i class="fa-solid fa-arrow-left"></i> Volver a la Lista
+    </a>
+
+    <div class="card max-width-600">
+        <h2>{{ title }}</h2>
+        <p class="text-muted">Ingresa los detalles del producto purificado.</p>
+        <hr class="divider">
+
+        <form method="post" enctype="multipart/form-data" class="mt-4">
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="form-group">
+                <label for="id_name"><i class="fa-solid fa-tag"></i> Nombre del Producto *</label>
+                {% render_field form.name class="form-control" %}
+                {% if form.name.errors %}
+                    <span class="field-error">{{ form.name.errors.0 }}</span>
+                {% endif %}
+            </div>
+
+            <div class="form-group mt-3">
+                <label for="id_description"><i class="fa-solid fa-comment-dots"></i> Descripción</label>
+                {% render_field form.description class="form-control" %}
+                {% if form.description.errors %}
+                    <span class="field-error">{{ form.description.errors.0 }}</span>
+                {% endif %}
+            </div>
+
+            <div class="form-grid mt-3">
+                <div class="form-group">
+                    <label for="id_price"><i class="fa-solid fa-money-bill-1"></i> Precio (Bs.) *</label>
+                    {% render_field form.price class="form-control" %}
+                    {% if form.price.errors %}
+                        <span class="field-error">{{ form.price.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="id_stock"><i class="fa-solid fa-cubes"></i> Cantidad de Stock *</label>
+                    {% render_field form.stock class="form-control" %}
+                    {% if form.stock.errors %}
+                        <span class="field-error">{{ form.stock.errors.0 }}</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="form-group mt-3">
+                <label for="id_image"><i class="fa-solid fa-image"></i> Imagen del Producto</label>
+                {% render_field form.image class="form-control" %}
+                {% if form.image.errors %}
+                    <span class="field-error">{{ form.image.errors.0 }}</span>
+                {% endif %}
+            </div>
+
+            <div class="form-group form-check mt-4">
+                {% render_field form.is_active class="form-check-input" %}
+                <label class="form-check-label font-weight-bold" for="id_is_active">Producto Activo (Visible en Catálogo)</label>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block mt-4">
+                <i class="fa-solid fa-floppy-disk"></i> Guardar Producto
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

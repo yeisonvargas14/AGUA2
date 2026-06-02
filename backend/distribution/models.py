@@ -4,7 +4,14 @@ from orders.models import Order
 
 class Delivery(models.Model):
     order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='delivery')
-    driver = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, limit_choices_to={'role': 'DRIVER'}, related_name='deliveries')
+    driver = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        limit_choices_to={'role': 'driver'},
+        related_name='deliveries'
+    )
     assigned_at = models.DateTimeField(auto_now_add=True)
     delivered_at = models.DateTimeField(null=True, blank=True)
     notes = models.TextField(blank=True)

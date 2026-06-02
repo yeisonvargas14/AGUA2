@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block title %}Checkout - AquaFlow{% endblock %}
+{% block page_title %}Confirmar Ubicación y Pedido{% endblock %}
+
+{% block extra_css %}
+<style>
+    #map {
+        height: 400px;
+        width: 100%;
+        border-radius: var(--radius);
+        border: 2px solid var(--border);
+        margin-top: 15px;
+    }
+    .geo-feedback {
+        margin-top: 15px;
+        padding: 12px;
+        border-radius: var(--radius);
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="checkout-container">
+    <div class="cart-grid">
+        <!-- Delivery info -->
+        <div class="card checkout-card">
+            <h3>Detalles de Entrega</h3>
+            <p class="text-muted small">Por políticas de logística, tu ubicación debe estar estrictamente dentro del municipio de Comarapa.</p>
+            <hr class="divider">
+
+            <form method="post" id="checkout-form" class="mt-4">
+                {% csrf_token %}
+                <input type="hidden" name="lat" id="id_lat">
+                <input type="hidden" name="lng" id="id_lng">
+
+                <div class="form-group">
+                    <label for="id_delivery_address"><i class="fa-solid fa-map-location-dot"></i> Dirección de Entrega Detallada *</label>
+                    <textarea name="delivery_address" id="id_delivery_address" rows="3" class="form-control" placeholder="Ej: Calle Bolívar #45, frente a la plaza principal..." required>{{ user.address }}</textarea>
+                </div>
+
+                <div class="form-group mt-3">
+                    <label><i class="fa-solid fa-location-crosshairs"></i> Geolocalización en el Mapa</label>
+                    <p class="text-muted small">Haz clic en el mapa para marcar tu ubicación exacta de entrega. También intentaremos detectar tu ubicación por GPS.</p>
+                    
+                    <!-- Feedback notification -->
+                    <div id="geo-status" class="geo-feedback"></div>
+                    
+                    <div id="map"></div>
+                </div>
+
+                <button type="submit" id="btn-submit" class="btn btn-primary btn-block mt-4" disabled>
+                    <i class="fa-solid fa-circle-check"></i> Realizar Pedido
+                </button>
+            </form>
+        </div>
+
+        <!-- Checkout summary sidebar -->
+        <div class="card cart-summary-card">
+            <h3>Detalles de Pedido</h3>
+            <hr class="divider">
+            
+            <div class="checkout-items-list">
+                {% for item in cart.items.all %}
+                    <div class="checkout-item-row">
+                        <div class="item-name font-weight-bold">{{ item.product.name }}</div>
+                        <div class="item-qty-sub text-muted small">{{ item.quantity }} x Bs. {{ item.product.price }}</div>
+                        <div class="item-subtotal">Bs. {{ item.subtotal|floatformat:2 }}</div>
+                    </div>
+                    <hr class="divider-light">
+                {% endfor %}
+            </div>
+
+            <div class="summary-row mt-3">
+                <span>Subtotal</span>
+                <strong>Bs. {{ cart.total_amount|floatformat:2 }}</strong>
+            </div>
+
+            {% if coupon %}
+                <div class="summary-row text-success">
+                    <span>Cupón aplicado ({{ coupon.code }})</span>
+                    <strong>- Bs. {{ discount|floatformat:2 }}</strong>
+                </div>
+            {% endif %}
+
+            <hr class="divider">
+
+            <div class="summary-row total-row">
+                <span>Total a Pagar</span>
+                <span class="total-price text-primary">Bs. {{ total|floatformat:2 }}</span>
+            </div>
+            
+            <div class="mt-4 p-3 bg-light rounded text-center text-muted small">
+                <i class="fa-solid fa-shield-halved text-success"></i> Pago Seguro Contra-Entrega (Efectivo)
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Global parameters for maps.js
+    const GOOGLE_MAPS_API_KEY = "{{ google_maps_api_key }}";
+    const CSRF_TOKEN = "{{ csrf_token }}";
+    const VALIDATE_LOC_URL = "{% url 'api_validar_ubicacion' %}";
+    
+    // Comarapa default center
+    const DEFAULT_LAT = -17.912300;
+    const DEFAULT_LNG = -64.491200;
+</script>
+<script src="/static/js/maps.js"></script>
+<!-- Dynamically load Google Maps JS API script -->
+<script async defer src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&callback=initMap"></script>
+{% endblock %}

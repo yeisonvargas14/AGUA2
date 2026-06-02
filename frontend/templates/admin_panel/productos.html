@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block title %}Administrar Productos - AquaFlow{% endblock %}
+{% block page_title %}Administrar Productos{% endblock %}
+
+{% block content %}
+<div class="admin-products-container">
+    <div class="card">
+        <div class="section-header flex-header">
+            <h3>Catálogo de Productos del Sistema</h3>
+            <a href="{% url 'admin_product_create' %}" class="btn btn-primary">
+                <i class="fa-solid fa-plus"></i> Registrar Producto
+            </a>
+        </div>
+        <hr class="divider">
+
+        <div class="table-responsive mt-3">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Imagen</th>
+                        <th>Nombre</th>
+                        <th>Descripción</th>
+                        <th>Precio</th>
+                        <th>Stock</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in products %}
+                        <tr>
+                            <td><strong>#{{ p.id }}</strong></td>
+                            <td>
+                                <div class="cart-product-img">
+                                    {% if p.image %}
+                                        <img src="{{ p.image.url }}" alt="{{ p.name }}">
+                                    {% else %}
+                                        <i class="fa-solid fa-bottle-water text-primary"></i>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td><strong>{{ p.name }}</strong></td>
+                            <td style="max-width:250px;">{{ p.description|truncatechars:65 }}</td>
+                            <td>Bs. {{ p.price }}</td>
+                            <td>
+                                {% if p.stock <= 15 %}
+                                    <span class="text-danger font-weight-bold">{{ p.stock }} (Bajo)</span>
+                                {% else %}
+                                    <span class="text-success font-weight-bold">{{ p.stock }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if p.is_active %}
+                                    <span class="badge badge-success">Activo</span>
+                                {% else %}
+                                    <span class="badge badge-secondary">Inactivo</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="order-action-buttons">
+                                    <a href="{% url 'admin_product_edit' p.id %}" class="btn btn-primary-light btn-sm mr-2" title="Editar">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </a>
+                                    <a href="{% url 'admin_product_delete' p.id %}" class="btn btn-danger-light btn-sm" onclick="return confirm('¿Estás seguro de que deseas eliminar este producto?');" title="Eliminar">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center text-muted p-4">No hay productos registrados en el sistema.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
