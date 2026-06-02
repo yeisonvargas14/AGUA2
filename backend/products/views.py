@@ -1,10 +1,11 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from core.decorators import role_required
 from .models import Product
 from promotions.models import Promotion
 from ratings.models import Rating
 from django.db.models import Q, Avg
+from decimal import Decimal
 
 @login_required
 @role_required('client')
@@ -23,7 +24,7 @@ def catalogo_view(request):
         # Check active promotion
         promo = prod.promotions.filter(is_active=True).first()
         if promo and promo.is_current:
-            prod.discounted_price = prod.price * (1 - promo.discount_percentage / 100)
+            prod.discounted_price = prod.price * (Decimal('1') - Decimal(promo.discount_percentage) / Decimal('100'))
             prod.promo = promo
         else:
             prod.discounted_price = prod.price
@@ -42,7 +43,7 @@ def product_detail_view(request, pk):
     # Check promotions
     promo = product.promotions.filter(is_active=True).first()
     if promo and promo.is_current:
-        product.discounted_price = product.price * (1 - promo.discount_percentage / 100)
+        product.discounted_price = product.price * (Decimal('1') - Decimal(promo.discount_percentage) / Decimal('100'))
         product.promo = promo
     else:
         product.discounted_price = product.price
@@ -75,7 +76,7 @@ def landing_page(request):
         prod.avg_rating = prod.ratings.aggregate(Avg('score'))['score__avg'] or 0.0
         promo = prod.promotions.filter(is_active=True).first()
         if promo and promo.is_current:
-            prod.discounted_price = prod.price * (1 - promo.discount_percentage / 100)
+            prod.discounted_price = prod.price * (Decimal('1') - Decimal(promo.discount_percentage) / Decimal('100'))
             prod.promo = promo
         else:
             prod.discounted_price = prod.price
