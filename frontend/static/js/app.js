@@ -2,6 +2,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // -------------------------------------------------------------------------
     // Core App State & Navigation Setup
     // -------------------------------------------------------------------------
+    // Check if we are on the Admin SPA Dashboard
+    const adminDashboardContainer = document.querySelector('.admin-dashboard-container');
+    if (!adminDashboardContainer) {
+        return; // Do not initialize SPA on other pages or roles
+    }
+
     const contentBody = document.querySelector('.content-body');
     const pageTitle = document.querySelector('.page-title');
     const menuItems = document.querySelectorAll('.menu-item');
@@ -23,24 +29,27 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set up Sidebar Menu Navigation
     menuItems.forEach(item => {
         item.addEventListener('click', (e) => {
-            e.preventDefault();
-            menuItems.forEach(i => i.classList.remove('active'));
-            item.classList.add('active');
-
             const menuText = item.querySelector('span').innerText.trim().toLowerCase();
+            const spaRoutes = ['dashboard', 'productos', 'pedidos', 'inventario', 'agencias', 'distribución'];
             
-            if (menuText === 'dashboard') {
-                loadDashboard();
-            } else if (menuText === 'productos') {
-                loadProducts();
-            } else if (menuText === 'pedidos') {
-                loadOrders();
-            } else if (menuText === 'inventario') {
-                loadInventory();
-            } else if (menuText === 'agencias') {
-                loadAgencies();
-            } else if (menuText === 'distribución') {
-                loadDistribution();
+            if (spaRoutes.includes(menuText)) {
+                e.preventDefault();
+                menuItems.forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+
+                if (menuText === 'dashboard') {
+                    loadDashboard();
+                } else if (menuText === 'productos') {
+                    loadProducts();
+                } else if (menuText === 'pedidos') {
+                    loadOrders();
+                } else if (menuText === 'inventario') {
+                    loadInventory();
+                } else if (menuText === 'agencias') {
+                    loadAgencies();
+                } else if (menuText === 'distribución') {
+                    loadDistribution();
+                }
             }
         });
     });
