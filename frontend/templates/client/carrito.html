@@ -35,7 +35,7 @@
                                             <span class="product-title font-weight-bold ml-2">{{ item.product.name }}</span>
                                         </div>
                                     </td>
-                                    <td>Bs. {{ item.product.price }}</td>
+                                    <td>Bs. {{ item.price_at_time }}</td>
                                     <td>
                                         <form method="post" action="{% url 'actualizar_carrito' item.id %}" class="qty-form">
                                             {% csrf_token %}
@@ -83,22 +83,41 @@
                     <span class="total-price text-primary">Bs. {{ total|floatformat:2 }}</span>
                 </div>
 
-                <!-- Coupon apply form -->
-                <form method="post" action="{% url 'aplicar_cupon' %}" class="coupon-form mt-4">
-                    {% csrf_token %}
-                    <label for="coupon-code">¿Tienes un cupón?</label>
-                    <div class="input-group">
-                        <input type="text" id="coupon-code" name="code" class="form-control" placeholder="CÓDIGO" value="{{ coupon.code|default:'' }}">
-                        <button type="submit" class="btn btn-secondary">Aplicar</button>
-                    </div>
-                </form>
+                {% if user.is_authenticated %}
+                    <!-- Coupon apply form (authenticated clients only) -->
+                    {% if user.role == 'client' %}
+                    <form method="post" action="{% url 'aplicar_cupon' %}" class="coupon-form mt-4">
+                        {% csrf_token %}
+                        <label for="coupon-code">¿Tienes un cupón?</label>
+                        <div class="input-group">
+                            <input type="text" id="coupon-code" name="code" class="form-control" placeholder="CÓDIGO" value="{{ coupon.code|default:'' }}">
+                            <button type="submit" class="btn btn-secondary">Aplicar</button>
+                        </div>
+                    </form>
+                    {% endif %}
 
-                <div class="checkout-button-container mt-4">
-                    <a href="{% url 'checkout' %}" class="btn btn-primary btn-block text-center">
-                        <i class="fa-solid fa-credit-card"></i> Proceder al Pago / Dirección
-                    </a>
-                    <a href="{% url 'client_dashboard' %}" class="btn btn-text btn-block text-center mt-2">Seguir comprando</a>
-                </div>
+                    <div class="checkout-button-container mt-4">
+                        <a href="{% url 'checkout' %}" class="btn btn-primary btn-block text-center">
+                            <i class="fa-solid fa-credit-card"></i> Proceder al Pago / Dirección
+                        </a>
+                        <a href="{% url 'client_dashboard' %}" class="btn btn-text btn-block text-center mt-2">Seguir comprando</a>
+                    </div>
+                {% else %}
+                    <!-- CTA for anonymous users -->
+                    <div class="checkout-button-container mt-4">
+                        <p class="text-muted small mb-3">
+                            <i class="fa-solid fa-circle-info"></i>
+                            Para finalizar tu pedido debes iniciar sesión o crear una cuenta. ¡Tu carrito se conservará!
+                        </p>
+                        <a href="{% url 'login' %}?next={% url 'checkout' %}" class="btn btn-primary btn-block text-center">
+                            <i class="fa-solid fa-right-to-bracket"></i> Iniciar Sesión y Pagar
+                        </a>
+                        <a href="{% url 'register' %}" class="btn btn-secondary btn-block text-center mt-2">
+                            <i class="fa-solid fa-user-plus"></i> Crear Cuenta
+                        </a>
+                        <a href="{% url 'landing' %}" class="btn btn-text btn-block text-center mt-2">Seguir comprando</a>
+                    </div>
+                {% endif %}
             </div>
         </div>
     {% else %}
@@ -106,7 +125,11 @@
             <i class="fa-solid fa-cart-shopping text-muted mb-3" style="font-size: 4rem;"></i>
             <h2>Tu carrito está vacío</h2>
             <p class="text-muted">Aún no has agregado productos a tu carrito. ¡Explora nuestro catálogo y empieza a comprar!</p>
-            <a href="{% url 'client_dashboard' %}" class="btn btn-primary mt-4">Explorar Catálogo</a>
+            {% if user.is_authenticated %}
+                <a href="{% url 'client_dashboard' %}" class="btn btn-primary mt-4">Explorar Catálogo</a>
+            {% else %}
+                <a href="{% url 'landing' %}" class="btn btn-primary mt-4">Explorar Catálogo</a>
+            {% endif %}
         </div>
     {% endif %}
 </div>

@@ -13,6 +13,13 @@
             </div>
             <nav class="landing-nav">
                 <a href="#catalogo" class="nav-link">Catálogo</a>
+                <!-- Cart icon with badge -->
+                <a href="{% url 'ver_carrito' %}" class="nav-icon-btn landing-cart-btn" title="Mi Carrito" id="landing-cart-link">
+                    <i class="fa-solid fa-cart-shopping"></i>
+                    {% if cart_count > 0 %}
+                        <span class="badge landing-cart-badge">{{ cart_count }}</span>
+                    {% endif %}
+                </a>
                 <a href="{% url 'login' %}" class="btn btn-text">Iniciar Sesión</a>
                 <a href="{% url 'register' %}" class="btn btn-primary">Registrarse</a>
             </nav>
@@ -115,9 +122,20 @@
                                         <span class="current-price">Bs. {{ prod.price }}</span>
                                     {% endif %}
                                 </div>
-                                <a href="{% url 'login' %}?next={% url 'dashboard' %}" class="btn btn-primary btn-sm btn-buy">
-                                    <i class="fa-solid fa-right-to-bracket"></i> Iniciar Sesión
-                                </a>
+                                {% if prod.stock > 0 %}
+                                    <form method="post" action="{% url 'agregar_al_carrito' prod.id %}" class="add-cart-form">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="quantity" value="1">
+                                        <input type="hidden" name="next" value="{% url 'landing' %}#catalogo">
+                                        <button type="submit" class="btn btn-primary btn-sm btn-buy" id="add-cart-{{ prod.id }}">
+                                            <i class="fa-solid fa-cart-plus"></i> Agregar
+                                        </button>
+                                    </form>
+                                {% else %}
+                                    <span class="btn btn-secondary btn-sm btn-buy" style="opacity:0.6;cursor:not-allowed;">
+                                        <i class="fa-solid fa-ban"></i> Agotado
+                                    </span>
+                                {% endif %}
                             </div>
                         </div>
                     </div>

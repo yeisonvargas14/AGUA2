@@ -8,6 +8,7 @@ from django.contrib import messages
 from .models import User
 from django import forms
 from orders.models import Cart
+from orders.cart_helpers import transfer_cart
 
 class ClientRegisterForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Contraseña'}))
@@ -49,6 +50,9 @@ def register_view(request):
             # Ensure client has a persistent cart
             Cart.objects.get_or_create(user=user)
             
+            # Merge any anonymous cart into the new user's cart
+            transfer_cart(request, user)
+            
             login(request, user)
             messages.success(request, f"¡Bienvenido a AquaFlow, {user.first_name or user.username}!")
             return redirect('client_dashboard')
@@ -74,6 +78,8 @@ class CustomLoginView(DjangoLoginView):
             if not is_valid_superuser and user.role != role_map.get(rol_solicitado):
                 form.add_error(None, f"Esta cuenta no tiene el rol de {'Administrador' if rol_solicitado == 'admin' else 'Agencia'}.")
                 return self.form_invalid(form)
+        # Merge anonymous cart before calling super() which calls login()
+        transfer_cart(self.request, user)
         return super().form_valid(form)
 
     def get_success_url(self):

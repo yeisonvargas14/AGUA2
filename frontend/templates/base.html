@@ -121,8 +121,8 @@
                     <a href="{% url 'ver_carrito' %}" class="menu-item {% if request.resolver_match.url_name == 'ver_carrito' %}active{% endif %}">
                         <i class="fa-solid fa-cart-shopping"></i>
                         <span>Mi Carrito</span>
-                        {% if user.cart.items.count > 0 %}
-                            <span class="badge" style="margin-left:auto;">{{ user.cart.items.count }}</span>
+                        {% if cart_count > 0 %}
+                            <span class="badge" style="margin-left:auto;">{{ cart_count }}</span>
                         {% endif %}
                     </a>
                     <a href="{% url 'historial_pedidos' %}" class="menu-item {% if request.resolver_match.url_name == 'historial_pedidos' %}active{% endif %}">
@@ -172,8 +172,8 @@
                     {% if user.role == 'client' %}
                         <a href="{% url 'ver_carrito' %}" class="nav-icon-btn" title="Mi Carrito" style="position:relative;">
                             <i class="fa-solid fa-cart-shopping"></i>
-                            {% if user.cart.items.count > 0 %}
-                                <span class="badge">{{ user.cart.items.count }}</span>
+                            {% if cart_count > 0 %}
+                                <span class="badge">{{ cart_count }}</span>
                             {% endif %}
                         </a>
                     {% endif %}

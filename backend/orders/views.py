@@ -13,20 +13,25 @@ from coupons.models import Coupon
 from ratings.models import Rating
 from inventory.models import InventoryLog
 from .models import Cart, CartItem, Order, OrderItem
+from .cart_helpers import _get_or_create_cart
 from core.geo import is_inside_comarapa
 from core.pusher_service import notify_new_order
 
-@login_required
-@role_required('client')
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Cart Views — available for anonymous and authenticated users
+# ─────────────────────────────────────────────────────────────────────────────
+
 def ver_carrito(request):
-    cart, _ = Cart.objects.get_or_create(user=request.user)
-    
-    # Calculate discounts if a coupon is currently applied in session
+    """Display the current cart contents (anonymous or logged-in)."""
+    cart = _get_or_create_cart(request)
+
+    # Coupon logic only available for authenticated clients
     coupon_id = request.session.get('applied_coupon_id')
     coupon = None
     discount = Decimal('0.00')
-    
-    if coupon_id:
+
+    if coupon_id and request.user.is_authenticated:
         try:
             coupon = Coupon.objects.get(id=coupon_id, user_client=request.user, used=False)
             if coupon.is_expired:
@@ -49,20 +54,24 @@ def ver_carrito(request):
         'total': total
     })
 
-@login_required
-@role_required('client')
+
 @require_POST
 def agregar_al_carrito(request, product_id):
+    """Add a product to cart — works for anonymous and authenticated users."""
     product = get_object_or_404(Product, id=product_id, is_active=True)
     quantity = int(request.POST.get('quantity', 1))
-    
+
     if product.stock < quantity:
         messages.error(request, f"Lo sentimos, solo quedan {product.stock} unidades de {product.name}.")
-        return redirect('client_dashboard')
-        
-    cart, _ = Cart.objects.get_or_create(user=request.user)
-    cart_item, created = CartItem.objects.get_or_create(cart=cart, product=product)
-    
+        return redirect('landing')
+
+    cart = _get_or_create_cart(request)
+    cart_item, created = CartItem.objects.get_or_create(
+        cart=cart,
+        product=product,
+        defaults={'price_at_time': product.price}
+    )
+
     if not created:
         if cart_item.quantity + quantity > product.stock:
             messages.error(request, f"No puedes agregar más de {product.stock} unidades al carrito.")
@@ -70,50 +79,65 @@ def agregar_al_carrito(request, product_id):
         cart_item.quantity += quantity
     else:
         cart_item.quantity = quantity
+        cart_item.price_at_time = product.price
     cart_item.save()
-    
+
     messages.success(request, f"¡{product.name} agregado al carrito!")
+
+    # After adding, redirect back to the landing page if not logged in
+    next_url = request.POST.get('next') or request.META.get('HTTP_REFERER', '')
+    if next_url:
+        return redirect(next_url)
     return redirect('ver_carrito')
 
-@login_required
-@role_required('client')
+
 @require_POST
 def actualizar_carrito(request, item_id):
-    cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
+    """Update quantity of a cart item."""
+    cart = _get_or_create_cart(request)
+    if request.user.is_authenticated:
+        cart_item = get_object_or_404(CartItem, id=item_id, cart=cart)
+    else:
+        cart_item = get_object_or_404(CartItem, id=item_id, cart=cart)
+
     quantity = int(request.POST.get('quantity', 1))
-    
+
     if quantity <= 0:
+        name = cart_item.product.name
         cart_item.delete()
-        messages.info(request, f"{cart_item.product.name} eliminado del carrito.")
+        messages.info(request, f"{name} eliminado del carrito.")
     elif quantity > cart_item.product.stock:
         messages.error(request, f"Solo hay {cart_item.product.stock} unidades disponibles de {cart_item.product.name}.")
     else:
         cart_item.quantity = quantity
         cart_item.save()
         messages.success(request, f"Cantidad de {cart_item.product.name} actualizada.")
-        
+
     return redirect('ver_carrito')
 
-@login_required
-@role_required('client')
+
 @require_POST
 def eliminar_del_carrito(request, item_id):
-    cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
+    """Remove an item from the cart."""
+    cart = _get_or_create_cart(request)
+    cart_item = get_object_or_404(CartItem, id=item_id, cart=cart)
+    name = cart_item.product.name
     cart_item.delete()
-    messages.info(request, f"{cart_item.product.name} eliminado del carrito.")
+    messages.info(request, f"{name} eliminado del carrito.")
     return redirect('ver_carrito')
+
 
 @login_required
 @role_required('client')
 @require_POST
 def aplicar_cupon(request):
     code = request.POST.get('code', '').strip().upper()
-    cart, _ = Cart.objects.get_or_create(user=request.user)
-    
+    cart = _get_or_create_cart(request)
+
     if not cart.items.exists():
         messages.error(request, "Tu carrito está vacío.")
         return redirect('ver_carrito')
-        
+
     try:
         coupon = Coupon.objects.get(code=code, user_client=request.user, used=False)
         if coupon.is_expired:
@@ -123,18 +147,23 @@ def aplicar_cupon(request):
             messages.success(request, f"¡Cupón '{code}' de {coupon.discount_percentage}% aplicado correctamente!")
     except Coupon.DoesNotExist:
         messages.error(request, "Cupón no válido o ya utilizado.")
-        
+
     return redirect('ver_carrito')
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Checkout — requires authentication (redirect anonymous to login first)
+# ─────────────────────────────────────────────────────────────────────────────
 
 @login_required
 @role_required('client')
 def checkout_view(request):
-    cart, _ = Cart.objects.get_or_create(user=request.user)
-    
+    cart = _get_or_create_cart(request)
+
     if not cart.items.exists():
         messages.error(request, "Tu carrito está vacío.")
         return redirect('client_dashboard')
-        
+
     # Check for coupon in session
     coupon_id = request.session.get('applied_coupon_id')
     coupon = None
@@ -154,11 +183,11 @@ def checkout_view(request):
         address = request.POST.get('delivery_address', '').strip()
         lat = request.POST.get('lat')
         lng = request.POST.get('lng')
-        
+
         if not address:
             messages.error(request, "Por favor ingresa una dirección de entrega.")
             return render(request, 'client/checkout.html', {'cart': cart, 'total': total, 'coupon': coupon})
-            
+
         if not lat or not lng:
             messages.error(request, "Debes permitir la geolocalización o marcar tu ubicación en el mapa.")
             return render(request, 'client/checkout.html', {'cart': cart, 'total': total, 'coupon': coupon})
@@ -192,12 +221,12 @@ def checkout_view(request):
                 order=order,
                 product=item.product,
                 quantity=item.quantity,
-                unit_price=item.product.price
+                unit_price=item.price_at_time,
             )
             # Deduct stock
             item.product.stock -= item.quantity
             item.product.save()
-            
+
             # Log inventory movement
             InventoryLog.objects.create(
                 product=item.product,
@@ -218,23 +247,23 @@ def checkout_view(request):
 
         # Real-time Pusher Notification to drivers
         notify_new_order(order)
-        
+
         messages.success(request, f"¡Pedido #{order.id} registrado exitosamente! Está pendiente de aceptación.")
         return redirect('historial_pedidos')
 
+    from django.conf import settings as django_settings
     return render(request, 'client/checkout.html', {
         'cart': cart,
         'coupon': coupon,
         'discount': discount,
         'total': total,
-        'google_maps_api_key': settings.GOOGLE_MAPS_API_KEY
+        'google_maps_api_key': django_settings.GOOGLE_MAPS_API_KEY
     })
+
 
 @login_required
 def validate_location(request):
-    """
-    Ajax endpoint for validating location.
-    """
+    """Ajax endpoint for validating location."""
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
@@ -246,36 +275,38 @@ def validate_location(request):
             return JsonResponse({'valid': False, 'error': str(e)}, status=400)
     return JsonResponse({'valid': False}, status=405)
 
+
 @login_required
 @role_required('client')
 def historial_pedidos(request):
     orders = Order.objects.filter(client=request.user).order_by('-created_at')
-    
+
     # Check if orders have been rated
     for order in orders:
         order.rated = Rating.objects.filter(order=order, user_client=request.user).exists()
-        
+
     return render(request, 'client/mis_pedidos.html', {
         'orders': orders
     })
+
 
 @login_required
 @role_required('client')
 @require_POST
 def cancelar_pedido(request, order_id):
     order = get_object_or_404(Order, id=order_id, client=request.user)
-    
+
     if order.status != Order.Status.PENDING:
         messages.error(request, "No se puede cancelar el pedido porque ya ha sido aceptado o procesado.")
     else:
         order.status = Order.Status.CANCELLED
         order.save()
-        
+
         # Restock items
         for item in order.items.all():
             item.product.stock += item.quantity
             item.product.save()
-            
+
             # Log restock movement
             InventoryLog.objects.create(
                 product=item.product,
@@ -284,20 +315,21 @@ def cancelar_pedido(request, order_id):
                 movement_type=InventoryLog.MovementType.IN,
                 reason=f"Devolución de stock por cancelación de pedido #{order.id}"
             )
-            
+
         messages.success(request, "Pedido cancelado y stock devuelto exitosamente.")
-        
+
     return redirect('historial_pedidos')
+
 
 @login_required
 @role_required('client')
 def valorar_pedido(request, order_id):
     order = get_object_or_404(Order, id=order_id, client=request.user)
-    
+
     if order.status != Order.Status.DELIVERED:
         messages.error(request, "Solo puedes valorar pedidos que hayan sido entregados.")
         return redirect('historial_pedidos')
-        
+
     if Rating.objects.filter(order=order, user_client=request.user).exists():
         messages.warning(request, "Ya has valorado este pedido anteriormente.")
         return redirect('historial_pedidos')
@@ -306,7 +338,7 @@ def valorar_pedido(request, order_id):
         # Can rate products in the order, and driver
         driver_score = request.POST.get('driver_score')
         driver_comment = request.POST.get('driver_comment', '')
-        
+
         # Rate driver
         if driver_score and order.driver:
             Rating.objects.create(
@@ -316,7 +348,7 @@ def valorar_pedido(request, order_id):
                 score=int(driver_score),
                 comment=driver_comment
             )
-            
+
         # Rate products
         for item in order.items.all():
             prod_score = request.POST.get(f'product_score_{item.product.id}')
@@ -329,10 +361,10 @@ def valorar_pedido(request, order_id):
                     score=int(prod_score),
                     comment=prod_comment
                 )
-                
+
         messages.success(request, "¡Muchas gracias por tus valoraciones!")
         return redirect('historial_pedidos')
-        
+
     return render(request, 'client/valorar.html', {
         'order': order
     })
