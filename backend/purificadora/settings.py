@@ -196,3 +196,11 @@ LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'rol_redirect'
 LOGOUT_REDIRECT_URL = 'login'
 
+# Security cookie settings for production (active when DEBUG = False)
+CSRF_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+
