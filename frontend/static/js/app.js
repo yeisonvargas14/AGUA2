@@ -1,8 +1,60 @@
 document.addEventListener('DOMContentLoaded', () => {
     // -------------------------------------------------------------------------
-    // Core App State & Navigation Setup
+    // Responsive Sidebar Toggle (Mobile) - Global initialization
     // -------------------------------------------------------------------------
-    // Check if we are on the Admin SPA Dashboard
+    const sidebar       = document.getElementById('sidebar');
+    const sidebarOverlay = document.getElementById('sidebar-overlay');
+    const sidebarToggle = document.getElementById('sidebar-toggle');
+    const sidebarClose  = document.getElementById('sidebar-close');
+    const menuItems     = document.querySelectorAll('.menu-item');
+
+    function openSidebar() {
+        if (sidebar && sidebarOverlay) {
+            sidebar.classList.add('open');
+            sidebarOverlay.classList.add('active');
+            document.body.style.overflow = 'hidden'; // prevent background scroll
+        }
+    }
+
+    function closeSidebar() {
+        if (sidebar && sidebarOverlay) {
+            sidebar.classList.remove('open');
+            sidebarOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    }
+
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', openSidebar);
+    }
+
+    if (sidebarClose) {
+        sidebarClose.addEventListener('click', closeSidebar);
+    }
+
+    if (sidebarOverlay) {
+        sidebarOverlay.addEventListener('click', closeSidebar);
+    }
+
+    // Close sidebar automatically when a menu item is selected on mobile
+    menuItems.forEach(item => {
+        item.addEventListener('click', () => {
+            if (window.innerWidth <= 768) {
+                closeSidebar();
+            }
+        });
+    });
+
+    // Re-enable scroll if window is resized above mobile breakpoint
+    window.addEventListener('resize', () => {
+        if (window.innerWidth > 768) {
+            closeSidebar();
+        }
+    });
+
+    // -------------------------------------------------------------------------
+    // Core App State & Navigation Setup (SPA Admin Dashboard Only)
+    // -------------------------------------------------------------------------
     const adminDashboardContainer = document.querySelector('.admin-dashboard-container');
     if (!adminDashboardContainer) {
         return; // Do not initialize SPA on other pages or roles
@@ -10,7 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const contentBody = document.querySelector('.content-body');
     const pageTitle = document.querySelector('.page-title');
-    const menuItems = document.querySelectorAll('.menu-item');
+
     
     // Auto-seed database and load dashboard on initial start
     initApp();
@@ -846,52 +898,5 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Responsive Sidebar Toggle (Mobile)
-    // -------------------------------------------------------------------------
-    const sidebar       = document.getElementById('sidebar');
-    const sidebarOverlay = document.getElementById('sidebar-overlay');
-    const sidebarToggle = document.getElementById('sidebar-toggle');
-    const sidebarClose  = document.getElementById('sidebar-close');
-
-    function openSidebar() {
-        sidebar.classList.add('open');
-        sidebarOverlay.classList.add('active');
-        document.body.style.overflow = 'hidden'; // prevent background scroll
-    }
-
-    function closeSidebar() {
-        sidebar.classList.remove('open');
-        sidebarOverlay.classList.remove('active');
-        document.body.style.overflow = '';
-    }
-
-    if (sidebarToggle) {
-        sidebarToggle.addEventListener('click', openSidebar);
-    }
-
-    if (sidebarClose) {
-        sidebarClose.addEventListener('click', closeSidebar);
-    }
-
-    if (sidebarOverlay) {
-        sidebarOverlay.addEventListener('click', closeSidebar);
-    }
-
-    // Close sidebar automatically when a menu item is selected on mobile
-    menuItems.forEach(item => {
-        item.addEventListener('click', () => {
-            if (window.innerWidth <= 768) {
-                closeSidebar();
-            }
-        });
-    });
-
-    // Re-enable scroll if window is resized above mobile breakpoint
-    window.addEventListener('resize', () => {
-        if (window.innerWidth > 768) {
-            closeSidebar();
-        }
-    });
 });
 

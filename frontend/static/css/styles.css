@@ -1452,4 +1452,34 @@ body {
     }
 }
 
+/* =====================================================================
+   ADDITIONAL RESPONSIVE RULES & UTILITIES
+   ===================================================================== */
+.card {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--card-shadow);
+    margin-bottom: 24px;
+}
+
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 12px !important;
+    }
+    .page-header .btn {
+        width: 100% !important;
+        justify-content: center !important;
+    }
+    .resp-grid {
+        grid-template-columns: 1fr !important;
+    }
+    .form-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+
 
