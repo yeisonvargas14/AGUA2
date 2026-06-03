@@ -37,6 +37,13 @@
             </div>
             
             <nav class="sidebar-menu">
+                <!-- Global Home Link -->
+                <a href="{% url 'landing' %}" class="menu-item {% if request.resolver_match.url_name == 'landing' %}active{% endif %}">
+                    <i class="fa-solid fa-house"></i>
+                    <span>Inicio (Pág. Principal)</span>
+                </a>
+                <div class="menu-divider"></div>
+
                 <!-- ADMIN Menu -->
                 {% if user.role == 'admin' %}
                     <a href="{% url 'admin_dashboard' %}" class="menu-item {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">

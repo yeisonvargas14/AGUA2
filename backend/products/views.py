@@ -60,9 +60,6 @@ def product_detail_view(request, pk):
     })
 
 def landing_page(request):
-    if request.user.is_authenticated:
-        return redirect('dashboard')
-        
     query = request.GET.get('q', '')
     products = Product.objects.filter(is_active=True)
     
