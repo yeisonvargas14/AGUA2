@@ -36,7 +36,13 @@
 
             <div class="form-group">
                 <label for="id_password"><i class="fa-solid fa-lock"></i> Contraseña</label>
-                {% render_field form.password class="form-control" placeholder="Ingresa tu contraseña" id="id_password" %}
+                <div class="password-wrapper" style="position: relative;">
+                    {% render_field form.password class="form-control" placeholder="Ingresa tu contraseña" id="id_password" style="padding-right: 42px;" %}
+                    <button type="button" id="toggle-password" aria-label="Mostrar contraseña" 
+                            style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text-secondary); font-size: 16px; display: flex; align-items: center; justify-content: center; z-index: 10; padding: 4px;">
+                        <i class="fa-regular fa-eye-slash" id="toggle-password-icon"></i>
+                    </button>
+                </div>
                 {% if form.password.errors %}
                     <span class="field-error">{{ form.password.errors.0 }}</span>
                 {% endif %}
@@ -77,4 +83,31 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const togglePassword = document.getElementById('toggle-password');
+    const passwordInput = document.getElementById('id_password');
+    const passwordIcon = document.getElementById('toggle-password-icon');
+
+    if (togglePassword && passwordInput) {
+        togglePassword.addEventListener('click', function() {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            
+            if (type === 'password') {
+                passwordIcon.classList.remove('fa-eye');
+                passwordIcon.classList.add('fa-eye-slash');
+                togglePassword.setAttribute('aria-label', 'Mostrar contraseña');
+            } else {
+                passwordIcon.classList.remove('fa-eye-slash');
+                passwordIcon.classList.add('fa-eye');
+                togglePassword.setAttribute('aria-label', 'Ocultar contraseña');
+            }
+        });
+    }
+});
+</script>
 {% endblock %}
