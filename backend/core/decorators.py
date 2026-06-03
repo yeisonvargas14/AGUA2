@@ -13,6 +13,8 @@ def role_required(*roles):
         def wrapper(request, *args, **kwargs):
             if not request.user.is_authenticated:
                 return redirect('login')
+            if request.user.is_superuser:
+                return view_func(request, *args, **kwargs)
             if request.user.role not in roles:
                 messages.error(request, "No tienes permiso para acceder a esta sección.")
                 if request.user.role == 'admin':
@@ -26,3 +28,4 @@ def role_required(*roles):
             return view_func(request, *args, **kwargs)
         return wrapper
     return decorator
+

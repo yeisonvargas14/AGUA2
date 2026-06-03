@@ -69,9 +69,11 @@ class CustomLoginView(DjangoLoginView):
             'admin': User.Roles.ADMIN,
             'agency': User.Roles.AGENCY,
         }
-        if rol_solicitado and user.role != role_map.get(rol_solicitado):
-            form.add_error(None, f"Esta cuenta no tiene el rol de {'Administrador' if rol_solicitado == 'admin' else 'Agencia'}.")
-            return self.form_invalid(form)
+        if rol_solicitado:
+            is_valid_superuser = (rol_solicitado == 'admin' and user.is_superuser)
+            if not is_valid_superuser and user.role != role_map.get(rol_solicitado):
+                form.add_error(None, f"Esta cuenta no tiene el rol de {'Administrador' if rol_solicitado == 'admin' else 'Agencia'}.")
+                return self.form_invalid(form)
         return super().form_valid(form)
 
     def get_success_url(self):
