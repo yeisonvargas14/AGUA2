@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}Cambiar Contraseña - AquaFlow{% endblock %}
+{% block page_title %}Cambiar Contraseña{% endblock %}
+
+{% block content %}
+<div style="max-width:480px;margin:0 auto;">
+    <div class="card" style="padding:2rem;">
+        <h3 style="margin:0 0 1.5rem;font-weight:700;"><i class="fa-solid fa-key"></i> Cambiar Contraseña</h3>
+        <form method="post" class="auth-form">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+                <div class="alert alert-error">{% for e in form.non_field_errors %}<p>{{ e }}</p>{% endfor %}</div>
+            {% endif %}
+            {% for field in form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {% render_field field class="form-control" %}
+                {% if field.errors %}<span class="field-error">{{ field.errors.0 }}</span>{% endif %}
+            </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary btn-block">
+                <i class="fa-solid fa-floppy-disk"></i> Guardar nueva contraseña
+            </button>
+            <a href="{% url 'agency_dashboard' %}" class="btn btn-secondary btn-block" style="margin-top:.75rem;">
+                Cancelar
+            </a>
+        </form>
+    </div>
+</div>
+{% endblock %}

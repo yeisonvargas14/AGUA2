@@ -63,6 +63,10 @@
                         <i class="fa-solid fa-cart-shopping"></i>
                         <span>Pedidos</span>
                     </a>
+                    <a href="{% url 'admin_agencies' %}" class="menu-item {% if 'agency' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fa-solid fa-shop"></i>
+                        <span>Agencias</span>
+                    </a>
                     <a href="{% url 'admin_reports' %}" class="menu-item {% if 'report' in request.resolver_match.url_name %}active{% endif %}">
                         <i class="fa-solid fa-chart-bar"></i>
                         <span>Reportes</span>
@@ -75,14 +79,20 @@
 
                 <!-- AGENCY Menu -->
                 {% elif user.role == 'agency' %}
+                    {% with agency=request.user.agencia %}
                     <a href="{% url 'agency_dashboard' %}" class="menu-item {% if request.resolver_match.url_name == 'agency_dashboard' %}active{% endif %}">
                         <i class="fa-solid fa-shop"></i>
-                        <span>Mi Sucursal</span>
+                        <span>{% if agency %}{{ agency.nombre_empresa|truncatechars:18 }}{% else %}Mi Sucursal{% endif %}</span>
                     </a>
                     <a href="{% url 'agency_create_order' %}" class="menu-item {% if request.resolver_match.url_name == 'agency_create_order' %}active{% endif %}">
                         <i class="fa-solid fa-cart-plus"></i>
                         <span>Registrar Venta</span>
                     </a>
+                    <a href="{% url 'agency_change_password' %}" class="menu-item {% if request.resolver_match.url_name == 'agency_change_password' %}active{% endif %}">
+                        <i class="fa-solid fa-key"></i>
+                        <span>Cambiar Contraseña</span>
+                    </a>
+                    {% endwith %}
 
                 <!-- DRIVER Menu -->
                 {% elif user.role == 'driver' %}

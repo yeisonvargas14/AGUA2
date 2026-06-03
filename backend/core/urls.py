@@ -34,4 +34,11 @@ urlpatterns = [
     
     # Reports
     path('reportes/', views.admin_reports, name='admin_reports'),
+
+    # Agencies Management
+    path('agencias/', views.admin_agencies, name='admin_agencies'),
+    path('agencias/nueva/', views.admin_agency_create, name='admin_agency_create'),
+    path('agencias/<int:pk>/', views.admin_agency_detail, name='admin_agency_detail'),
+    path('agencias/<int:pk>/editar/', views.admin_agency_edit, name='admin_agency_edit'),
+    path('agencias/<int:pk>/toggle/', views.admin_agency_toggle_active, name='admin_agency_toggle_active'),
 ]

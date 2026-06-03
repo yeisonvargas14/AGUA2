@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestión de Agencias - AquaFlow Admin{% endblock %}
+{% block page_title %}Agencias{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+    <div>
+        <h2 style="margin:0;font-size:1.5rem;font-weight:700;">Gestión de Agencias</h2>
+        <p style="margin:0;opacity:.7;font-size:.9rem;">{{ agencies|length }} agencia{{ agencies|length|pluralize:",s" }} registrada{{ agencies|length|pluralize:",s" }}</p>
+    </div>
+    <a href="{% url 'admin_agency_create' %}" class="btn btn-primary">
+        <i class="fa-solid fa-plus"></i> Nueva Agencia
+    </a>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="data-table" id="agencies-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Empresa</th>
+                    <th>Usuario</th>
+                    <th>Teléfono</th>
+                    <th>Email</th>
+                    <th>Pedidos</th>
+                    <th>Monto Total</th>
+                    <th>Creación</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ag in agencies %}
+                <tr>
+                    <td>{{ ag.id }}</td>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:.75rem;">
+                            {% if ag.logo %}
+                                <img src="{{ ag.logo.url }}" alt="{{ ag.nombre_empresa }}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;">
+                            {% else %}
+                                <span style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#4338ca);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;">{{ ag.nombre_empresa|first|upper }}</span>
+                            {% endif %}
+                            <div>
+                                <strong>{{ ag.nombre_empresa }}</strong>
+                                <div style="font-size:.8rem;opacity:.6;">{{ ag.direccion|truncatechars:30 }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td><code>{{ ag.usuario.username }}</code></td>
+                    <td>{{ ag.telefono }}</td>
+                    <td>{{ ag.email_contacto }}</td>
+                    <td><span class="badge" style="background:rgba(99,102,241,.15);color:#6366f1;">{{ ag.total_pedidos|default:0 }}</span></td>
+                    <td><strong>Bs {{ ag.monto_total|default:0|floatformat:2 }}</strong></td>
+                    <td style="font-size:.85rem;">{{ ag.fecha_creacion|date:"d/m/Y" }}</td>
+                    <td>
+                        {% if ag.activa %}
+                            <span class="badge badge-success"><i class="fa-solid fa-circle-check"></i> Activa</span>
+                        {% else %}
+                            <span class="badge badge-danger"><i class="fa-solid fa-circle-xmark"></i> Inactiva</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+                            <a href="{% url 'admin_agency_detail' ag.pk %}" class="btn btn-sm btn-secondary" title="Ver detalle">
+                                <i class="fa-solid fa-eye"></i>
+                            </a>
+                            <a href="{% url 'admin_agency_edit' ag.pk %}" class="btn btn-sm btn-secondary" title="Editar">
+                                <i class="fa-solid fa-pen"></i>
+                            </a>
+                            <a href="{% url 'admin_agency_toggle_active' ag.pk %}"
+                               class="btn btn-sm {% if ag.activa %}btn-warning{% else %}btn-success{% endif %}"
+                               title="{% if ag.activa %}Desactivar{% else %}Activar{% endif %}"
+                               onclick="return confirm('¿Confirmar cambio de estado?')">
+                                {% if ag.activa %}
+                                    <i class="fa-solid fa-ban"></i>
+                                {% else %}
+                                    <i class="fa-solid fa-check"></i>
+                                {% endif %}
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="10" style="text-align:center;padding:3rem;opacity:.5;">
+                        <i class="fa-solid fa-shop" style="font-size:2rem;display:block;margin-bottom:.75rem;"></i>
+                        No hay agencias registradas aún.
+                        <br><a href="{% url 'admin_agency_create' %}" class="btn btn-primary" style="margin-top:1rem;">Crear primera agencia</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -19,6 +19,7 @@ from promotions.models import Promotion
 from ratings.models import Rating
 from inventory.models import InventoryLog
 from distribution.models import Delivery
+from agencies.models import Agency
 
 # =====================================================================
 # ADMIN DASHBOARD
@@ -703,3 +704,205 @@ def api_deliveries(request):
         return JsonResponse(data, safe=False)
     except Exception as e:
         return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
+
+# =====================================================================
+# ADMIN AGENCIES CRUD
+# =====================================================================
+
+class AgencyCreateForm(forms.Form):
+    username = forms.CharField(
+        max_length=150,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre de usuario'})
+    )
+    email = forms.EmailField(
+        widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Correo electrónico'})
+    )
+    nombre_empresa = forms.CharField(
+        max_length=200,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre de la empresa'})
+    )
+    direccion = forms.CharField(
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Dirección completa'})
+    )
+    telefono = forms.CharField(
+        max_length=20,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '591-XXXXXXX'})
+    )
+    email_contacto = forms.EmailField(
+        required=False,
+        widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email de contacto (opcional)'})
+    )
+    notas_internas = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Notas internas (opcional)'})
+    )
+    logo = forms.ImageField(required=False)
+    latitud = forms.DecimalField(
+        required=False, max_digits=9, decimal_places=6,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.000001', 'placeholder': 'Latitud (opcional)'})
+    )
+    longitud = forms.DecimalField(
+        required=False, max_digits=9, decimal_places=6,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.000001', 'placeholder': 'Longitud (opcional)'})
+    )
+
+
+class AgencyEditForm(forms.ModelForm):
+    class Meta:
+        model = Agency
+        fields = ['nombre_empresa', 'direccion', 'telefono', 'email_contacto', 'notas_internas', 'logo', 'latitud', 'longitud', 'activa']
+        widgets = {
+            'nombre_empresa': forms.TextInput(attrs={'class': 'form-control'}),
+            'direccion': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+            'telefono': forms.TextInput(attrs={'class': 'form-control'}),
+            'email_contacto': forms.EmailInput(attrs={'class': 'form-control'}),
+            'notas_internas': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+            'logo': forms.FileInput(attrs={'class': 'form-control'}),
+            'latitud': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.000001'}),
+            'longitud': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.000001'}),
+            'activa': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+
+def _send_agency_credentials_email(email, username, password, reset_url):
+    """Sends login credentials to the new agency via email."""
+    from django.core.mail import send_mail
+    subject = "Bienvenido a AquaFlow — Credenciales de acceso a tu agencia"
+    body = (
+        f"Hola,\n\n"
+        f"El administrador de AquaFlow ha creado tu cuenta de agencia.\n\n"
+        f"Tus credenciales de acceso son:\n"
+        f"  Usuario: {username}\n"
+        f"  Contraseña: {password}\n\n"
+        f"Puedes ingresar en: https://aquaflow.up.railway.app/login/\n"
+        f"Te recomendamos cambiar tu contraseña en: {reset_url}\n\n"
+        f"Si tienes alguna duda, contacta al administrador.\n\n"
+        f"-- Equipo AquaFlow"
+    )
+    send_mail(subject, body, None, [email], fail_silently=True)
+
+
+@login_required
+@role_required('admin')
+def admin_agencies(request):
+    """List all agencies with order totals."""
+    agencies = Agency.objects.select_related('usuario').annotate(
+        total_pedidos=Count('agency_orders'),
+        monto_total=Sum('agency_orders__total_amount')
+    ).order_by('-fecha_creacion')
+    return render(request, 'admin_panel/agencias.html', {'agencies': agencies})
+
+
+@login_required
+@role_required('admin')
+def admin_agency_create(request):
+    """Create a new agency user + agency profile and send credentials email."""
+    import secrets
+    if request.method == 'POST':
+        form = AgencyCreateForm(request.POST, request.FILES)
+        if form.is_valid():
+            d = form.cleaned_data
+            # Validate unique username
+            if User.objects.filter(username=d['username']).exists():
+                form.add_error('username', 'Este nombre de usuario ya está en uso.')
+                return render(request, 'admin_panel/agencia_form.html', {'form': form, 'title': 'Crear Nueva Agencia'})
+
+            # Generate random password
+            raw_password = secrets.token_urlsafe(10)
+
+            # Create user with agency role
+            user = User.objects.create_user(
+                username=d['username'],
+                email=d['email'],
+                password=raw_password,
+                role=User.Roles.AGENCY,
+                is_staff=False,
+                is_superuser=False,
+            )
+
+            # Determine contact email
+            email_contacto = d.get('email_contacto') or d['email']
+
+            # Create agency profile
+            agency = Agency(
+                usuario=user,
+                nombre_empresa=d['nombre_empresa'],
+                direccion=d['direccion'],
+                telefono=d['telefono'],
+                email_contacto=email_contacto,
+                notas_internas=d.get('notas_internas', ''),
+                latitud=d.get('latitud'),
+                longitud=d.get('longitud'),
+            )
+            if request.FILES.get('logo'):
+                agency.logo = request.FILES['logo']
+            agency.save()
+
+            # Build password reset URL for the email
+            from django.urls import reverse
+            reset_url = request.build_absolute_uri(reverse('password_reset'))
+
+            # Send credentials email
+            _send_agency_credentials_email(email_contacto, user.username, raw_password, reset_url)
+
+            messages.success(
+                request,
+                f"Agencia '{agency.nombre_empresa}' creada. Se enviaron las credenciales a {email_contacto}."
+            )
+            return redirect('admin_agencies')
+    else:
+        form = AgencyCreateForm()
+    return render(request, 'admin_panel/agencia_form.html', {'form': form, 'title': 'Crear Nueva Agencia'})
+
+
+@login_required
+@role_required('admin')
+def admin_agency_detail(request, pk):
+    """View agency detail, orders, and statistics."""
+    agency = get_object_or_404(Agency, pk=pk)
+    orders = Order.objects.filter(agency=agency).order_by('-created_at')
+    total_pedidos = orders.count()
+    monto_total = orders.filter(status=Order.Status.DELIVERED).aggregate(
+        s=Sum('total_amount'))['s'] or Decimal('0.00')
+    promedio = (monto_total / total_pedidos) if total_pedidos else Decimal('0.00')
+    return render(request, 'admin_panel/agencia_detalle.html', {
+        'agency': agency,
+        'orders': orders,
+        'total_pedidos': total_pedidos,
+        'monto_total': monto_total,
+        'promedio': promedio,
+        'maps_key': __import__('os').environ.get('GOOGLE_MAPS_API_KEY', ''),
+    })
+
+
+@login_required
+@role_required('admin')
+def admin_agency_edit(request, pk):
+    """Edit agency details (not the linked user)."""
+    agency = get_object_or_404(Agency, pk=pk)
+    if request.method == 'POST':
+        form = AgencyEditForm(request.POST, request.FILES, instance=agency)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Agencia '{agency.nombre_empresa}' actualizada.")
+            return redirect('admin_agency_detail', pk=agency.pk)
+    else:
+        form = AgencyEditForm(instance=agency)
+    return render(request, 'admin_panel/agencia_form.html', {
+        'form': form,
+        'title': f'Editar Agencia — {agency.nombre_empresa}',
+        'agency': agency,
+    })
+
+
+@login_required
+@role_required('admin')
+def admin_agency_toggle_active(request, pk):
+    """Toggle agency active/inactive."""
+    agency = get_object_or_404(Agency, pk=pk)
+    agency.activa = not agency.activa
+    agency.save()
+    estado = 'activada' if agency.activa else 'desactivada'
+    messages.success(request, f"Agencia '{agency.nombre_empresa}' {estado} exitosamente.")
+    return redirect('admin_agencies')

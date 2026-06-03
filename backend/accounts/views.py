@@ -60,18 +60,50 @@ def register_view(request):
 
 class CustomLoginView(DjangoLoginView):
     template_name = 'auth/login.html'
-    
+
+    def form_valid(self, form):
+        """Check that the role button used matches the user's actual role."""
+        rol_solicitado = self.request.POST.get('rol', '')  # 'admin', 'agency', or ''
+        user = form.get_user()
+        role_map = {
+            'admin': User.Roles.ADMIN,
+            'agency': User.Roles.AGENCY,
+        }
+        if rol_solicitado and user.role != role_map.get(rol_solicitado):
+            form.add_error(None, f"Esta cuenta no tiene el rol de {'Administrador' if rol_solicitado == 'admin' else 'Agencia'}.")
+            return self.form_invalid(form)
+        return super().form_valid(form)
+
     def get_success_url(self):
         user = self.request.user
         messages.success(self.request, f"¡Hola de nuevo, {user.first_name or user.username}!")
-        if user.role == User.Roles.ADMIN:
-            return reverse('admin_dashboard')
-        elif user.role == User.Roles.AGENCY:
-            return reverse('agency_dashboard')
-        elif user.role == User.Roles.DRIVER:
-            return reverse('driver_dashboard')
-        else:
-            return reverse('client_dashboard')
+        return reverse('rol_redirect')
+
+
+@login_required
+def rol_redirect(request):
+    """Central redirect after login based on role and agency status."""
+    user = request.user
+    if user.role == User.Roles.ADMIN or user.is_superuser:
+        return redirect('admin_dashboard')
+    elif user.role == User.Roles.AGENCY:
+        try:
+            agency = user.agencia
+            if not agency.activa:
+                from django.contrib.auth import logout
+                logout(request)
+                messages.error(request, "Su cuenta está desactivada. Contacte al administrador.")
+                return redirect('login')
+        except Exception:
+            from django.contrib.auth import logout
+            logout(request)
+            messages.error(request, "No tienes una agencia asignada. Contacta al administrador.")
+            return redirect('login')
+        return redirect('agency_dashboard')
+    elif user.role == User.Roles.DRIVER:
+        return redirect('driver_dashboard')
+    else:
+        return redirect('client_dashboard')
 
 def logout_view(request):
     logout(request)

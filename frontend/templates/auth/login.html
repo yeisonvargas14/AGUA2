@@ -6,27 +6,29 @@
 
 {% block content %}
 <div class="auth-wrapper">
-    <div class="auth-card">
+    <div class="auth-card" style="max-width:440px;">
         <div class="auth-header">
             <i class="fa-solid fa-droplet brand-icon"></i>
             <h2>¡Bienvenido a AquaFlow!</h2>
             <p>Ingresa tus credenciales para acceder a tu panel.</p>
         </div>
 
-        <form method="post" class="auth-form">
+        <form method="post" class="auth-form" id="login-form">
             {% csrf_token %}
-            
+
             {% if form.non_field_errors %}
-                <div class="alert alert-danger">
+                <div class="alert alert-error">
+                    <i class="fa-solid fa-circle-exclamation"></i>
                     {% for error in form.non_field_errors %}
-                        <p>{{ error }}</p>
+                        <span>{{ error }}</span>
                     {% endfor %}
+                    <button class="alert-close" onclick="this.parentElement.remove()">&times;</button>
                 </div>
             {% endif %}
 
             <div class="form-group">
                 <label for="id_username"><i class="fa-solid fa-user"></i> Nombre de Usuario</label>
-                {% render_field form.username class="form-control" placeholder="Ingresa tu usuario" %}
+                {% render_field form.username class="form-control" placeholder="Ingresa tu usuario" id="id_username" %}
                 {% if form.username.errors %}
                     <span class="field-error">{{ form.username.errors.0 }}</span>
                 {% endif %}
@@ -34,15 +36,34 @@
 
             <div class="form-group">
                 <label for="id_password"><i class="fa-solid fa-lock"></i> Contraseña</label>
-                {% render_field form.password class="form-control" placeholder="Ingresa tu contraseña" %}
+                {% render_field form.password class="form-control" placeholder="Ingresa tu contraseña" id="id_password" %}
                 {% if form.password.errors %}
                     <span class="field-error">{{ form.password.errors.0 }}</span>
                 {% endif %}
             </div>
 
-            <button type="submit" class="btn btn-primary btn-block">
+            <!-- Hidden rol field, updated by JS when clicking role buttons -->
+            <input type="hidden" name="rol" id="rol-input" value="">
+
+            <!-- Primary login button (clients / drivers) -->
+            <button type="submit" class="btn btn-primary btn-block" id="btn-login-normal"
+                    onclick="document.getElementById('rol-input').value=''">
                 <i class="fa-solid fa-right-to-bracket"></i> Iniciar Sesión
             </button>
+
+            <!-- Role-specific buttons -->
+            <div class="role-btn-group" style="display:flex;gap:0.75rem;margin-top:0.75rem;">
+                <button type="submit" class="btn btn-secondary btn-block"
+                        onclick="document.getElementById('rol-input').value='admin'"
+                        style="background:linear-gradient(135deg,#6c3de8,#4c1d95);color:#fff;">
+                    <i class="fa-solid fa-screwdriver-wrench"></i> Como Admin
+                </button>
+                <button type="submit" class="btn btn-secondary btn-block"
+                        onclick="document.getElementById('rol-input').value='agency'"
+                        style="background:linear-gradient(135deg,#0ea5e9,#0369a1);color:#fff;">
+                    <i class="fa-solid fa-shop"></i> Como Agencia
+                </button>
+            </div>
         </form>
 
         <div class="auth-footer">

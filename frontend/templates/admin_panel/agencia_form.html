@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}{{ title }} - AquaFlow Admin{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div style="max-width:720px;margin:0 auto;">
+    <div class="card">
+        <div class="card-header" style="padding:1.5rem 1.5rem 0;">
+            <h3 style="margin:0;font-weight:700;">{{ title }}</h3>
+            {% if agency %}
+                <p style="opacity:.6;margin:.25rem 0 0;">Modificando: <strong>{{ agency.nombre_empresa }}</strong> — usuario <code>{{ agency.usuario.username }}</code></p>
+            {% endif %}
+        </div>
+        <div style="padding:1.5rem;">
+            <form method="post" enctype="multipart/form-data" class="auth-form">
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-error">
+                        {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+                    </div>
+                {% endif %}
+
+                {% if not agency %}
+                {# Create form: user credentials #}
+                <div class="form-section-title" style="font-weight:600;color:var(--color-primary);margin-bottom:1rem;border-bottom:1px solid rgba(255,255,255,.1);padding-bottom:.5rem;">
+                    <i class="fa-solid fa-user-shield"></i> Credenciales del Usuario
+                </div>
+                <div class="form-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                    <div class="form-group">
+                        <label for="{{ form.username.id_for_label }}">Usuario *</label>
+                        {{ form.username }}
+                        {% if form.username.errors %}<span class="field-error">{{ form.username.errors.0 }}</span>{% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.email.id_for_label }}">Email del usuario *</label>
+                        {{ form.email }}
+                        {% if form.email.errors %}<span class="field-error">{{ form.email.errors.0 }}</span>{% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="form-section-title" style="font-weight:600;color:var(--color-primary);margin:1.5rem 0 1rem;border-bottom:1px solid rgba(255,255,255,.1);padding-bottom:.5rem;">
+                    <i class="fa-solid fa-shop"></i> Datos de la Agencia
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.nombre_empresa.id_for_label }}">Nombre de la empresa *</label>
+                    {{ form.nombre_empresa }}
+                    {% if form.nombre_empresa.errors %}<span class="field-error">{{ form.nombre_empresa.errors.0 }}</span>{% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.direccion.id_for_label }}">Dirección *</label>
+                    {{ form.direccion }}
+                    {% if form.direccion.errors %}<span class="field-error">{{ form.direccion.errors.0 }}</span>{% endif %}
+                </div>
+
+                <div class="form-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                    <div class="form-group">
+                        <label for="{{ form.telefono.id_for_label }}">Teléfono *</label>
+                        {{ form.telefono }}
+                        {% if form.telefono.errors %}<span class="field-error">{{ form.telefono.errors.0 }}</span>{% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.email_contacto.id_for_label }}">Email de contacto</label>
+                        {{ form.email_contacto }}
+                        {% if form.email_contacto.errors %}<span class="field-error">{{ form.email_contacto.errors.0 }}</span>{% endif %}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.notas_internas.id_for_label }}">Notas internas (admin)</label>
+                    {{ form.notas_internas }}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.logo.id_for_label }}">Logo de la agencia</label>
+                    {{ form.logo }}
+                    {% if agency and agency.logo %}
+                        <div style="margin-top:.5rem;">
+                            <img src="{{ agency.logo.url }}" alt="Logo actual" style="height:60px;border-radius:8px;">
+                            <span style="font-size:.8rem;opacity:.6;margin-left:.5rem;">Logo actual</span>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                    <div class="form-group">
+                        <label for="{{ form.latitud.id_for_label }}">Latitud (GPS)</label>
+                        {{ form.latitud }}
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.longitud.id_for_label }}">Longitud (GPS)</label>
+                        {{ form.longitud }}
+                    </div>
+                </div>
+
+                {% if agency %}
+                <div class="form-group" style="display:flex;align-items:center;gap:.75rem;">
+                    {{ form.activa }}
+                    <label for="{{ form.activa.id_for_label }}" style="margin:0;cursor:pointer;">Agencia activa</label>
+                </div>
+                {% endif %}
+
+                <div style="display:flex;gap:1rem;margin-top:2rem;">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        {% if agency %}Guardar Cambios{% else %}Crear Agencia y Enviar Credenciales{% endif %}
+                    </button>
+                    <a href="{% url 'admin_agencies' %}" class="btn btn-secondary">
+                        <i class="fa-solid fa-arrow-left"></i> Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

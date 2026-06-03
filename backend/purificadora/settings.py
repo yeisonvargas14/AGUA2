@@ -181,6 +181,6 @@ DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'AquaFlow <noreply@aqu
 
 # Auth redirects and path configuration
 LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = 'dashboard'
+LOGIN_REDIRECT_URL = 'rol_redirect'
 LOGOUT_REDIRECT_URL = 'login'
 
