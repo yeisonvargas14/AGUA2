@@ -26,14 +26,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (sidebarToggle) {
         sidebarToggle.addEventListener('click', openSidebar);
+        sidebarToggle.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            openSidebar();
+        }, { passive: false });
     }
 
     if (sidebarClose) {
         sidebarClose.addEventListener('click', closeSidebar);
+        sidebarClose.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            closeSidebar();
+        }, { passive: false });
     }
 
     if (sidebarOverlay) {
         sidebarOverlay.addEventListener('click', closeSidebar);
+        sidebarOverlay.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            closeSidebar();
+        }, { passive: false });
     }
 
     // Close sidebar automatically when a menu item is selected on mobile
