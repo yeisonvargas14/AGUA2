@@ -31,6 +31,8 @@
                     {% if product.image %}
                         {% if "sachet_250ml" in product.image.name %}
                             <img src="{% static 'images/sachet_250ml.png' %}" alt="{{ product.name }}">
+                        {% elif "bidon_20l" in product.image.name %}
+                            <img src="{% static 'images/bidon_20l.jpg' %}" alt="{{ product.name }}">
                         {% else %}
                             <img src="{{ product.image.url }}" alt="{{ product.name }}">
                         {% endif %}
