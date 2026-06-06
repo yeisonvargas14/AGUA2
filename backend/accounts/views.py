@@ -11,21 +11,40 @@ from orders.models import Cart
 from orders.cart_helpers import transfer_cart
 
 class ClientRegisterForm(forms.ModelForm):
-    password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Contraseña'}))
-    password_confirm = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Confirmar Contraseña'}))
+    full_name = forms.CharField(
+        max_length=250,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre Completo'}),
+        label="Nombre Completo"
+    )
+    password = forms.CharField(
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Contraseña'}),
+        label="Contraseña"
+    )
+    password_confirm = forms.CharField(
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Confirmar Contraseña'}),
+        label="Confirmar Contraseña"
+    )
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'first_name', 'last_name', 'phone', 'address', 'municipio']
+        fields = ['email', 'phone', 'address', 'municipio']
         widgets = {
-            'username': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre de usuario'}),
             'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Correo electrónico'}),
-            'first_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre'}),
-            'last_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Apellido'}),
-            'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Teléfono'}),
+            'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Celular'}),
             'address': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Dirección'}),
             'municipio': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Municipio (ej: Comarapa)'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if 'phone' in self.fields:
+            self.fields['phone'].label = 'Celular'
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if User.objects.filter(email=email).exists():
+            raise forms.ValidationError("Este correo ya está registrado.")
+        return email
 
     def clean(self):
         cleaned_data = super().clean()
@@ -35,6 +54,27 @@ class ClientRegisterForm(forms.ModelForm):
         if password != password_confirm:
             raise forms.ValidationError("Las contraseñas no coinciden.")
         return cleaned_data
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        full_name = self.cleaned_data.get('full_name', '').strip()
+        
+        # Split full name into first_name and last_name
+        parts = full_name.split(' ', 1)
+        if len(parts) > 1:
+            user.first_name = parts[0]
+            user.last_name = parts[1]
+        else:
+            user.first_name = full_name
+            user.last_name = ''
+            
+        # Set username to match email (or random, or email username) to satisfy unique/non-null constraints if any,
+        # but since USERNAME_FIELD is 'email', we can just use the email prefix or the email itself
+        user.username = user.email
+
+        if commit:
+            user.save()
+        return user
 
 def register_view(request):
     if request.user.is_authenticated:
@@ -54,7 +94,7 @@ def register_view(request):
             transfer_cart(request, user)
             
             login(request, user)
-            messages.success(request, f"¡Bienvenido a Agua de Mesa Santiago, {user.first_name or user.username}!")
+            messages.success(request, f"¡Bienvenido a Agua de Mesa Santiago, {user.first_name}! Tu cuenta ha sido creada.")
             return redirect('client_dashboard')
         else:
             messages.error(request, "Error en el registro. Por favor verifica los datos.")

@@ -13,10 +13,28 @@ class User(AbstractUser):
         choices=Roles.choices,
         default=Roles.CLIENT
     )
+    email = models.EmailField(unique=True, verbose_name="Correo electrónico")
+    username = models.CharField(
+        max_length=150,
+        unique=True,
+        blank=True,
+        null=True,
+        verbose_name="Nombre de usuario"
+    )
     phone = models.CharField(max_length=20, blank=True)
     address = models.CharField(max_length=255, blank=True)
     municipio = models.CharField(max_length=100, blank=True, help_text="Ej: Comarapa")
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
 
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = [] # Username is no longer required for superusers by default, email is main field
+
+    @property
+    def full_name(self):
+        """Returns the first_name and last_name joined by space, or email if not set."""
+        name = f"{self.first_name} {self.last_name}".strip()
+        return name if name else self.email
+
     def __str__(self):
-        return f"{self.username} ({self.get_role_display()})"
+        return f"{self.full_name} ({self.get_role_display()})"
+
