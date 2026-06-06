@@ -1,4 +1,4 @@
-﻿{% extends 'base.html' %}
+{% extends 'base.html' %}
 
 {% block title %}Catálogo de Productos - Agua de Mesa Santiago{% endblock %}
 {% block page_title %}Catálogo de Productos{% endblock %}
@@ -29,7 +29,11 @@
                 
                 <div class="product-image-container">
                     {% if product.image %}
-                        <img src="{{ product.image.url }}" alt="{{ product.name }}">
+                        {% if "sachet_250ml" in product.image.name %}
+                            <img src="{% static 'images/sachet_250ml.png' %}" alt="{{ product.name }}">
+                        {% else %}
+                            <img src="{{ product.image.url }}" alt="{{ product.name }}">
+                        {% endif %}
                     {% else %}
                         <div class="product-placeholder">
                             <i class="fa-solid fa-bottle-water"></i>

@@ -79,7 +79,11 @@
                         <!-- Product Image / Icon Placeholder -->
                         <div class="product-card-visual">
                             {% if prod.image %}
-                                <img src="{{ prod.image.url }}" alt="{{ prod.name }}" class="product-image">
+                                {% if "sachet_250ml" in prod.image.name %}
+                                    <img src="{% static 'images/sachet_250ml.png' %}" alt="{{ prod.name }}" class="product-image">
+                                {% else %}
+                                    <img src="{{ prod.image.url }}" alt="{{ prod.name }}" class="product-image">
+                                {% endif %}
                             {% else %}
                                 <div class="product-placeholder">
                                     <i class="fa-solid fa-bottle-water"></i>
