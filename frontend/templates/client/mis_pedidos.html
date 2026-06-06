@@ -1,4 +1,4 @@
-﻿{% extends 'base.html' %}
+{% extends 'base.html' %}
 
 {% block title %}Mis Pedidos - Agua de Mesa Santiago{% endblock %}
 {% block page_title %}Mis Pedidos{% endblock %}
@@ -58,13 +58,17 @@
                                         
                                         {% if order.status == 'delivered' %}
                                             {% if order.rated %}
-                                                <span class="text-success small"><i class="fa-solid fa-star"></i> Valoración enviada</span>
+                                                <span class="text-success small me-2"><i class="fa-solid fa-star"></i> Valoración enviada</span>
                                             {% else %}
-                                                <a href="{% url 'valorar_pedido' order.id %}" class="btn btn-warning-light btn-sm font-weight-bold">
-                                                    <i class="fa-regular fa-star"></i> Valorar Pedido
+                                                <a href="{% url 'valorar_pedido' order.id %}" class="btn btn-warning-light btn-sm font-weight-bold me-2">
+                                                    <i class="fa-regular fa-star"></i> Valorar
                                                 </a>
                                             {% endif %}
                                         {% endif %}
+
+                                        <a href="{% url 'detalle_pedido' order.id %}" class="btn btn-primary-light btn-sm">
+                                            <i class="fa-solid fa-eye"></i> Ver detalle
+                                        </a>
                                     </div>
                                 </td>
                             </tr>

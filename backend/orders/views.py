@@ -368,3 +368,23 @@ def valorar_pedido(request, order_id):
     return render(request, 'client/valorar.html', {
         'order': order
     })
+
+
+@login_required
+@role_required('client')
+def detalle_pedido(request, order_id):
+    """Show full order detail for the client who owns it."""
+    order = get_object_or_404(Order, id=order_id, client=request.user)
+    items = order.items.select_related('product').all()
+    return render(request, 'client/detalle_pedido.html', {
+        'order': order,
+        'items': items,
+    })
+
+
+@login_required
+@role_required('client')
+def client_orders(request):
+    """Alias for historial_pedidos — canonical URL /mis-pedidos/."""
+    return historial_pedidos(request)
+
