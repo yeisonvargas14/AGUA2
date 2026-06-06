@@ -1,5 +1,5 @@
 /**
- * AquaFlow — Google Maps + Geolocation for Checkout
+ * Agua de Mesa Santiago — Google Maps + Geolocation for Checkout
  * Validates the user is within the Comarapa municipality delivery zone.
  */
 

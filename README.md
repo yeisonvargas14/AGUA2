@@ -1,4 +1,4 @@
-# 💧 AquaFlow — Sistema de Gestión de Purificadora de Agua
+﻿# 💧 Agua de Mesa Santiago — Sistema de Gestión de Purificadora de Agua
 
 Sistema completo de gestión y distribución de agua purificada para el municipio de Comarapa, Santa Cruz, Bolivia. Permite la gestión de pedidos, entregas, inventario, cupones, promociones y valoraciones con roles diferenciados para administradores, agencias, repartidores y clientes.
 

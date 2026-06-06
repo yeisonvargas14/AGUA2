@@ -1,4 +1,4 @@
-# Diagnóstico Inicial del Sistema — AquaFlow
+﻿# Diagnóstico Inicial del Sistema — Agua de Mesa Santiago
 
 ## 1. Causa Raíz del Error: `Unexpected token '<'`
 El error en la consola del navegador:

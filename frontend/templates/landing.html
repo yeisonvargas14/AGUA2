@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Inicio - AquaFlow Purificadora de Agua{% endblock %}
+{% block title %}Inicio - Agua de Mesa Santiago{% endblock %}
 
 {% block content %}
 <div class="landing-container">
@@ -8,8 +9,8 @@
     <header class="landing-header">
         <div class="landing-nav-container">
             <div class="landing-brand">
-                <i class="fa-solid fa-droplet brand-icon"></i>
-                <span class="brand-text">AquaFlow</span>
+                <img src="{% static 'images/logo.jpg' %}" alt="Agua de Mesa Santiago" class="brand-logo-img" style="height:38px;">
+                <span class="brand-text">Agua Santiago</span>
             </div>
             <nav class="landing-nav">
                 <a href="#catalogo" class="nav-link">Catálogo</a>
@@ -30,7 +31,7 @@
     <section class="landing-hero">
         <div class="hero-content">
             <span class="hero-badge"><i class="fa-solid fa-star"></i> El agua más pura de Comarapa</span>
-            <h1>AquaFlow Purificadora</h1>
+            <h1>Agua de Mesa Santiago</h1>
             <p>Llevamos agua purificada y de la mejor calidad directo hasta tu hogar o negocio en Comarapa. Bidones, botellas personales y dispensadores.</p>
             <div class="hero-actions">
                 <a href="#catalogo" class="btn btn-primary btn-lg">
@@ -156,8 +157,8 @@
         <div class="footer-content">
             <div class="footer-brand-info">
                 <div class="landing-brand">
-                    <i class="fa-solid fa-droplet brand-icon"></i>
-                    <span class="brand-text">AquaFlow</span>
+                    <img src="{% static 'images/logo.jpg' %}" alt="Agua de Mesa Santiago" class="brand-logo-img" style="height:38px;">
+                    <span class="brand-text">Agua Santiago</span>
                 </div>
                 <p>El mejor servicio de purificación y distribución de agua en Comarapa. Calidad y salud en cada gota.</p>
             </div>
@@ -174,7 +175,7 @@
             </div>
         </div>
         <div class="footer-bottom">
-            <p>&copy; 2026 AquaFlow. Todos los derechos reservados.</p>
+            <p>&copy; 2026 Agua de Mesa Santiago. Todos los derechos reservados.</p>
         </div>
     </footer>
 </div>

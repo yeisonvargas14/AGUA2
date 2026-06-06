@@ -1,15 +1,16 @@
 {% extends 'base.html' %}
 {% load widget_tweaks %}
+{% load static %}
 
-{% block title %}Iniciar Sesión - AquaFlow{% endblock %}
+{% block title %}Iniciar Sesión - Agua de Mesa Santiago{% endblock %}
 {% block page_title %}Iniciar Sesión{% endblock %}
 
 {% block content %}
 <div class="auth-wrapper">
     <div class="auth-card" style="max-width:440px;">
         <div class="auth-header">
-            <i class="fa-solid fa-droplet brand-icon"></i>
-            <h2>¡Bienvenido a AquaFlow!</h2>
+            <img src="{% static 'images/logo.jpg' %}" alt="Agua de Mesa Santiago" class="brand-logo-img">
+            <h2>¡Bienvenido a Agua de Mesa Santiago!</h2>
             <p>Ingresa tus credenciales para acceder a tu panel.</p>
         </div>
 

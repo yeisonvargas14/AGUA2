@@ -768,17 +768,17 @@ class AgencyEditForm(forms.ModelForm):
 def _send_agency_credentials_email(email, username, password, reset_url):
     """Sends login credentials to the new agency via email."""
     from django.core.mail import send_mail
-    subject = "Bienvenido a AquaFlow — Credenciales de acceso a tu agencia"
+    subject = "Bienvenido a Agua de Mesa Santiago — Credenciales de acceso a tu agencia"
     body = (
         f"Hola,\n\n"
-        f"El administrador de AquaFlow ha creado tu cuenta de agencia.\n\n"
+        f"El administrador de Agua de Mesa Santiago ha creado tu cuenta de agencia.\n\n"
         f"Tus credenciales de acceso son:\n"
         f"  Usuario: {username}\n"
         f"  Contraseña: {password}\n\n"
         f"Puedes ingresar en: https://aquaflow.up.railway.app/login/\n"
         f"Te recomendamos cambiar tu contraseña en: {reset_url}\n\n"
         f"Si tienes alguna duda, contacta al administrador.\n\n"
-        f"-- Equipo AquaFlow"
+        f"-- Equipo Agua de Mesa Santiago"
     )
     send_mail(subject, body, None, [email], fail_silently=True)
 

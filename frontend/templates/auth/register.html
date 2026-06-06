@@ -1,15 +1,16 @@
 {% extends 'base.html' %}
 {% load widget_tweaks %}
+{% load static %}
 
-{% block title %}Crear Cuenta - AquaFlow{% endblock %}
+{% block title %}Crear Cuenta - Agua de Mesa Santiago{% endblock %}
 {% block page_title %}Crear Cuenta{% endblock %}
 
 {% block content %}
 <div class="auth-wrapper">
     <div class="auth-card register-card">
         <div class="auth-header">
-            <i class="fa-solid fa-droplet brand-icon"></i>
-            <h2>Únete a AquaFlow</h2>
+            <img src="{% static 'images/logo.jpg' %}" alt="Agua de Mesa Santiago" class="brand-logo-img">
+            <h2>Únete a Agua de Mesa Santiago</h2>
             <p>Regístrate como cliente para empezar a pedir bidones de agua.</p>
         </div>
 

@@ -1,4 +1,4 @@
-from django.core.management.base import BaseCommand
+﻿from django.core.management.base import BaseCommand
 from django.utils import timezone
 from decimal import Decimal
 from accounts.models import User
@@ -37,7 +37,7 @@ class Command(BaseCommand):
             defaults={
                 'email': 'admin@aquaflow.com',
                 'first_name': 'Administrador',
-                'last_name': 'AquaFlow',
+                'last_name': 'Santiago',
                 'role': User.Roles.ADMIN,
                 'phone': '+591 70000001',
                 'address': 'Calle Central 100, Comarapa',

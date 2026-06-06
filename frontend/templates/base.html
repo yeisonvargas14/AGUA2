@@ -1,10 +1,13 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="AquaFlow — Sistema de Gestión de Purificadora de Agua. Pedidos, entregas y distribución en Comarapa.">
-    <title>{% block title %}AquaFlow — Purificadora de Agua{% endblock %}</title>
+    <meta name="description" content="Agua de Mesa Santiago — Sistema de Gestión de Purificadora de Agua. Pedidos, entregas y distribución en Comarapa.">
+    <title>{% block title %}Agua de Mesa Santiago — Purificadora de Agua{% endblock %}</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/jpeg" href="{% static 'images/logo.jpg' %}">
     <!-- Google Fonts: Outfit -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -32,8 +35,8 @@
             </button>
 
             <div class="sidebar-brand">
-                <i class="fa-solid fa-droplet brand-icon"></i>
-                <span class="brand-text">AquaFlow</span>
+                <img src="{% static 'images/logo.jpg' %}" alt="Agua de Mesa Santiago" class="brand-logo-img">
+                <span class="brand-text">Agua Santiago</span>
             </div>
             
             <nav class="sidebar-menu">

@@ -54,7 +54,7 @@ def register_view(request):
             transfer_cart(request, user)
             
             login(request, user)
-            messages.success(request, f"¡Bienvenido a AquaFlow, {user.first_name or user.username}!")
+            messages.success(request, f"¡Bienvenido a Agua de Mesa Santiago, {user.first_name or user.username}!")
             return redirect('client_dashboard')
         else:
             messages.error(request, "Error en el registro. Por favor verifica los datos.")
