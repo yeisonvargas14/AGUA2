@@ -906,3 +906,189 @@ def admin_agency_toggle_active(request, pk):
     estado = 'activada' if agency.activa else 'desactivada'
     messages.success(request, f"Agencia '{agency.nombre_empresa}' {estado} exitosamente.")
     return redirect('admin_agencies')
+
+
+# =====================================================================
+# REPARTIDORES (DRIVERS) CRUD & HISTORY
+# =====================================================================
+from accounts.models import DriverProfile
+
+class DriverCreateForm(forms.Form):
+    username = forms.CharField(
+        max_length=150,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre de usuario'})
+    )
+    email = forms.EmailField(
+        widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Correo electrónico'})
+    )
+    first_name = forms.CharField(
+        max_length=150,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre'})
+    )
+    last_name = forms.CharField(
+        max_length=150,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Apellido'})
+    )
+    vehicle = forms.ChoiceField(
+        choices=DriverProfile.VEHICLE_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    phone = forms.CharField(
+        max_length=20,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Celular/Teléfono'})
+    )
+    active = forms.BooleanField(
+        required=False,
+        initial=True,
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
+    )
+
+
+class DriverEditForm(forms.ModelForm):
+    class Meta:
+        model = DriverProfile
+        fields = ['vehicle', 'phone', 'active']
+        widgets = {
+            'vehicle': forms.Select(attrs={'class': 'form-control'}),
+            'phone': forms.TextInput(attrs={'class': 'form-control'}),
+            'active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+
+@login_required
+@role_required('admin')
+def admin_drivers(request):
+    """List all drivers with completed deliveries counts and avg rating."""
+    drivers = User.objects.filter(role=User.Roles.DRIVER).select_related('driver_profile')
+    
+    # Pre-populate DriverProfile if missing
+    for d in drivers:
+        if not hasattr(d, 'driver_profile'):
+            DriverProfile.objects.create(user=d, phone=d.phone or '')
+            
+    # Calculate today deliveries count and populate avg ratings
+    from django.utils import timezone
+    today_start = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    for d in drivers:
+        d.delivered_today = d.deliveries.filter(delivered_at__gte=today_start).count()
+        ratings = Rating.objects.filter(driver=d)
+        d.driver_profile.rating_avg = ratings.aggregate(Avg('score'))['score__avg'] or 0.0
+        d.driver_profile.save()
+
+    return render(request, 'admin_panel/repartidores.html', {'drivers': drivers})
+
+
+@login_required
+@role_required('admin')
+def admin_driver_create(request):
+    """Create driver user + driver profile and send credential email."""
+    if request.method == 'POST':
+        form = DriverCreateForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data['username']
+            email = form.cleaned_data['email']
+            first_name = form.cleaned_data['first_name']
+            last_name = form.cleaned_data['last_name']
+            vehicle = form.cleaned_data['vehicle']
+            phone = form.cleaned_data['phone']
+            active = form.cleaned_data['active']
+
+            # Generate random password
+            import secrets
+            password = secrets.token_urlsafe(8)
+
+            user = User.objects.create_user(
+                username=username,
+                email=email,
+                first_name=first_name,
+                last_name=last_name,
+                role=User.Roles.DRIVER,
+                password=password
+            )
+            
+            DriverProfile.objects.create(
+                user=user,
+                vehicle=vehicle,
+                phone=phone,
+                active=active
+            )
+
+            # Send Email
+            from django.core.mail import send_mail
+            subject = "Bienvenido a Agua de Mesa Santiago — Credenciales de acceso Repartidor"
+            body = (
+                f"Hola {first_name},\n\n"
+                f"El administrador de Agua de Mesa Santiago ha creado tu cuenta de Repartidor.\n\n"
+                f"Tus credenciales de acceso son:\n"
+                f"  Usuario (Email): {email}\n"
+                f"  Contraseña: {password}\n\n"
+                f"Puedes ingresar en: https://web-production-9424d.up.railway.app/login/\n\n"
+                f"-- Equipo Agua de Mesa Santiago"
+            )
+            send_mail(subject, body, None, [email], fail_silently=True)
+
+            messages.success(
+                request,
+                f"Repartidor '{user.full_name}' creado. Contraseña autogenerada: {password}"
+            )
+            return redirect('admin_drivers')
+    else:
+        form = DriverCreateForm()
+    return render(request, 'admin_panel/repartidor_form.html', {'form': form, 'title': 'Registrar Nuevo Repartidor'})
+
+
+@login_required
+@role_required('admin')
+def admin_driver_edit(request, pk):
+    """Edit driver profile attributes."""
+    driver_user = get_object_or_404(User, pk=pk, role=User.Roles.DRIVER)
+    profile, _ = DriverProfile.objects.get_or_create(user=driver_user)
+    
+    if request.method == 'POST':
+        form = DriverEditForm(request.POST, instance=profile)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Perfil del repartidor '{driver_user.full_name}' actualizado.")
+            return redirect('admin_drivers')
+    else:
+        form = DriverEditForm(instance=profile)
+        
+    return render(request, 'admin_panel/repartidor_form.html', {
+        'form': form,
+        'title': f'Editar Repartidor — {driver_user.full_name}',
+        'driver': driver_user
+    })
+
+
+@login_required
+@role_required('admin')
+def admin_driver_toggle(request, pk):
+    """Toggle driver active/inactive."""
+    driver_user = get_object_or_404(User, pk=pk, role=User.Roles.DRIVER)
+    profile, _ = DriverProfile.objects.get_or_create(user=driver_user)
+    profile.active = not profile.active
+    profile.save()
+    estado = 'activado' if profile.active else 'desactivado'
+    messages.success(request, f"Repartidor '{driver_user.full_name}' {estado} exitosamente.")
+    return redirect('admin_drivers')
+
+
+@login_required
+@role_required('admin')
+def admin_driver_history(request, pk):
+    """View deliveries history for a specific driver."""
+    driver_user = get_object_or_404(User, pk=pk, role=User.Roles.DRIVER)
+    deliveries = driver_user.deliveries.all().order_by('-assigned_at')
+    
+    # Calculate delivery stats
+    total_deliveries = deliveries.count()
+    completed_deliveries = deliveries.filter(order__status=Order.Status.DELIVERED).count()
+    
+    return render(request, 'admin_panel/repartidor_historial.html', {
+        'driver': driver_user,
+        'deliveries': deliveries,
+        'total_deliveries': total_deliveries,
+        'completed_deliveries': completed_deliveries,
+    })
+

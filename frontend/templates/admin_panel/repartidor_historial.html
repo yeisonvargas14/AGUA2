@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block title %}Historial de {{ driver.full_name }} - Agua de Mesa Santiago{% endblock %}
+{% block page_title %}Historial de Entregas{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{% url 'admin_drivers' %}" class="btn btn-secondary-light">
+        <i class="fa-solid fa-arrow-left"></i> Volver a Repartidores
+    </a>
+</div>
+
+<div class="row mb-4">
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <div class="user-avatar mb-3" style="width: 80px; height: 80px; font-size: 2.5rem; background: var(--primary-light); color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+                <h4>{{ driver.full_name }}</h4>
+                <p class="text-muted mb-2">{{ driver.email }}</p>
+                <div class="mb-3">
+                    {% if driver.driver_profile.vehicle == 'moto' %}
+                        <span class="badge badge-info"><i class="fa-solid fa-motorcycle"></i> Motocicleta</span>
+                    {% elif driver.driver_profile.vehicle == 'auto' %}
+                        <span class="badge badge-primary"><i class="fa-solid fa-car"></i> Automóvil</span>
+                    {% else %}
+                        <span class="badge badge-secondary"><i class="fa-solid fa-bicycle"></i> Bicicleta</span>
+                    {% endif %}
+                </div>
+                <hr>
+                <div class="row text-center mt-3">
+                    <div class="col-6">
+                        <h3 class="mb-0 font-weight-bold text-primary">{{ total_deliveries }}</h3>
+                        <small class="text-muted">Asignadas</small>
+                    </div>
+                    <div class="col-6">
+                        <h3 class="mb-0 font-weight-bold text-success">{{ completed_deliveries }}</h3>
+                        <small class="text-muted">Entregadas</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fa-solid fa-clock-rotate-left me-2"></i> Registro de Entregas</h5>
+            </div>
+            <div class="table-responsive p-0">
+                <table class="table mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-3">Pedido</th>
+                            <th>Cliente</th>
+                            <th>Asignado</th>
+                            <th>Entregado</th>
+                            <th>Estado</th>
+                            <th class="pe-3">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for del in deliveries %}
+                            <tr>
+                                <td class="ps-3"><strong>#{{ del.order.id }}</strong></td>
+                                <td>{{ del.order.client.full_name }}</td>
+                                <td style="font-size: 0.85rem;">{{ del.assigned_at|date:"d/m/Y H:i" }}</td>
+                                <td style="font-size: 0.85rem;">
+                                    {% if del.delivered_at %}
+                                        {{ del.delivered_at|date:"d/m/Y H:i" }}
+                                    {% else %}
+                                        <span class="text-muted">Pendiente</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if del.order.status == 'pending' %}
+                                        <span class="badge badge-warning">Pendiente</span>
+                                    {% elif del.order.status == 'accepted' %}
+                                        <span class="badge badge-info">Aceptado</span>
+                                    {% elif del.order.status == 'on_way' %}
+                                        <span class="badge badge-primary">En camino</span>
+                                    {% elif del.order.status == 'delivered' %}
+                                        <span class="badge badge-success">Entregado</span>
+                                    {% else %}
+                                        <span class="badge badge-danger">Cancelado</span>
+                                    {% endif %}
+                                </td>
+                                <td class="pe-3">
+                                    <a href="{% url 'admin_order_detail' del.order.id %}" class="btn btn-sm btn-primary-light">
+                                        <i class="fa-solid fa-eye"></i> Detalles
+                                    </a>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted p-4">No se registran entregas en el historial.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -38,3 +38,31 @@ class User(AbstractUser):
     def __str__(self):
         return f"{self.full_name} ({self.get_role_display()})"
 
+
+class DriverProfile(models.Model):
+    VEHICLE_CHOICES = [
+        ('moto', 'Motocicleta'),
+        ('auto', 'Automóvil'),
+        ('bicicleta', 'Bicicleta'),
+    ]
+    
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name='driver_profile'
+    )
+    vehicle = models.CharField(
+        max_length=20,
+        choices=VEHICLE_CHOICES,
+        default='moto'
+    )
+    phone = models.CharField(max_length=20, blank=True)
+    active = models.BooleanField(default=True)
+    rating_avg = models.FloatField(default=0.0)
+    current_latitude = models.DecimalField(max_digits=10, decimal_places=6, null=True, blank=True)
+    current_longitude = models.DecimalField(max_digits=10, decimal_places=6, null=True, blank=True)
+
+    def __str__(self):
+        return f"Perfil de Repartidor: {self.user.full_name} ({self.get_vehicle_display()})"
+
+

@@ -41,4 +41,12 @@ urlpatterns = [
     path('agencias/<int:pk>/', views.admin_agency_detail, name='admin_agency_detail'),
     path('agencias/<int:pk>/editar/', views.admin_agency_edit, name='admin_agency_edit'),
     path('agencias/<int:pk>/toggle/', views.admin_agency_toggle_active, name='admin_agency_toggle_active'),
+
+    # Repartidores (Drivers) Management
+    path('repartidores/', views.admin_drivers, name='admin_drivers'),
+    path('repartidores/crear/', views.admin_driver_create, name='admin_driver_create'),
+    path('repartidores/editar/<int:pk>/', views.admin_driver_edit, name='admin_driver_edit'),
+    path('repartidores/toggle/<int:pk>/', views.admin_driver_toggle, name='admin_driver_toggle_active'),
+    path('repartidores/historial/<int:pk>/', views.admin_driver_history, name='admin_driver_history'),
 ]
+
