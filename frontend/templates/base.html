@@ -26,23 +26,22 @@
     <div id="toast-container" class="toast-container"></div>
 
     {% if request.resolver_match.url_name == 'landing' %}
-        <!-- Standalone landing layout -->
-        {% if messages %}
-            <div class="messages-container" style="max-width: 1200px; margin: 20px auto; padding: 0 24px;">
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }}">
-                        {% if message.tags == 'success' %}<i class="fa-solid fa-circle-check"></i>
-                        {% elif message.tags == 'error' %}<i class="fa-solid fa-circle-exclamation"></i>
-                        {% elif message.tags == 'warning' %}<i class="fa-solid fa-triangle-exclamation"></i>
-                        {% elif message.tags == 'info' %}<i class="fa-solid fa-circle-info"></i>
-                        {% endif %}
-                        {{ message }}
-                        <button class="alert-close" onclick="this.parentElement.remove()">&times;</button>
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
-        {% block content %}{% endblock %}
+        <div class="landing-wrapper">
+            {% if messages %}
+                <div class="messages-container" style="max-width: 1200px; margin: 20px auto; padding: 0 24px;">
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }}">
+                            {% if message.tags == 'success' %}<i class="fa-solid fa-circle-check"></i>
+                            {% elif message.tags == 'error' %}<i class="fa-solid fa-circle-exclamation"></i>
+                            {% elif message.tags == 'warning' %}<i class="fa-solid fa-triangle-exclamation"></i>
+                            {% elif message.tags == 'info' %}<i class="fa-solid fa-circle-info"></i>
+                            {% endif %}
+                            {{ message }}
+                            <button class="alert-close" onclick="this.parentElement.remove()">&times;</button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
     {% elif user.is_authenticated %}
     <div class="app-container">
         <!-- Sidebar Navigation -->
@@ -56,7 +55,7 @@
                 <img src="{% static 'images/logo.jpg' %}" alt="Agua de Mesa Santiago" class="brand-logo-img">
                 <span class="brand-text">Agua Santiago</span>
             </div>
-            
+
             <nav class="sidebar-menu">
                 <!-- Global Home Link -->
                 <a href="{% url 'landing' %}" class="menu-item {% if request.resolver_match.url_name == 'landing' %}active{% endif %}">
@@ -191,7 +190,7 @@
                     </button>
                     <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
                 </div>
-                    
+                
                 <div class="navbar-right">
                     <!-- Cart icon for clients -->
                     {% if user.role == 'client' %}
@@ -216,7 +215,6 @@
                 </div>
             </header>
 
-            <!-- Django Messages -->
             {% if messages %}
                 <div class="messages-container">
                     {% for message in messages %}
@@ -233,15 +231,9 @@
                 </div>
             {% endif %}
 
-            <!-- Page Content -->
             <main class="content-body">
-                {% block content %}{% endblock %}
-            </main>
-        </div>
-    </div>
     {% else %}
         {% if request.resolver_match.url_name == 'ver_carrito' %}
-            <!-- Public Cart Page (clean layout, no flex-center wrapper) -->
             <div class="public-cart-wrapper" style="min-height: 100vh; padding: 20px; background-color: var(--bg-primary);">
                 {% if messages %}
                     <div class="messages-container" style="max-width: 1200px; margin: 0 auto 20px auto;">
@@ -258,10 +250,7 @@
                         {% endfor %}
                     </div>
                 {% endif %}
-                {% block content %}{% endblock %}
-            </div>
         {% else %}
-            <!-- Non-authenticated layout (Auth Pages) -->
             <div class="auth-page-wrapper">
                 {% if messages %}
                     <div class="messages-container auth-messages">
@@ -278,9 +267,19 @@
                         {% endfor %}
                     </div>
                 {% endif %}
-                {% block content %}{% endblock %}
-            </div>
         {% endif %}
+    {% endif %}
+
+                {% block content %}{% endblock %}
+
+    {% if request.resolver_match.url_name == 'landing' %}
+        </div>
+    {% elif user.is_authenticated %}
+            </main>
+        </div>
+    </div>
+    {% else %}
+        </div>
     {% endif %}
 
     <script src="/static/js/app.js"></script>
