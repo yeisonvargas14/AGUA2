@@ -4,7 +4,7 @@ from core.decorators import role_required
 from .models import Product, Category
 from promotions.models import Promotion
 from ratings.models import Rating
-from django.db.models import Q, Avg
+from django.db.models import Q, Avg, Prefetch
 from decimal import Decimal
 
 @login_required
@@ -29,8 +29,10 @@ def catalogo_view(request):
             prod.discounted_price = prod.price
             prod.promo = None
 
-    # Group products by category for template
-    categories = Category.objects.all().prefetch_related('products')
+    # Group active products by category for template
+    categories = Category.objects.all().prefetch_related(
+        Prefetch('products', queryset=Product.objects.filter(is_active=True))
+    )
 
     return render(request, 'client/catalogo.html', {
         'products': products,
@@ -82,7 +84,9 @@ def landing_page(request):
             prod.discounted_price = prod.price
             prod.promo = None
 
-    categories = Category.objects.all().prefetch_related('products')
+    categories = Category.objects.all().prefetch_related(
+        Prefetch('products', queryset=Product.objects.filter(is_active=True))
+    )
 
     return render(request, 'landing.html', {
         'products': products,
