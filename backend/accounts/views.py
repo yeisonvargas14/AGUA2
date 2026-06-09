@@ -34,8 +34,8 @@ def register_view(request):
             Cart.objects.get_or_create(user=user)
             transfer_cart(request, user)
 
-            login(request, user)
-            messages.success(request, f"¡Bienvenido a Agua de Mesa Santiago, {user.first_name}! Tu cuenta ha sido creada.")
+            login(request, user, backend='accounts.backends.TelefonoBackend')
+            messages.success(request, f"¡Bienvenido a Agua de Mesa Santiago, {user.first_name}! Tu cuenta ha sido creada exitosamente.")
             return redirect('client_dashboard')
         else:
             messages.error(request, "Error en el registro. Por favor verifica los datos.")
