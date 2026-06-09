@@ -32,24 +32,24 @@
                     <div class="promo-badge">{{ product.promo.name }} (-{{ product.promo.discount_percentage }}%)</div>
                 {% endif %}
                 
-                <div class="product-image-container">
+                <div class="product-card-visual product-image-container">
                     {% if product.image %}
                         {% if "sachet_250ml" in product.image.name or "sachet" in product.name|lower %}
-                            <img src="{% static 'images/sachet_250ml.png' %}" alt="{{ product.name }}">
+                            <img class="product-image" src="{% static 'images/sachet_250ml.png' %}" alt="{{ product.name }}">
                         {% elif "bidon_20l" in product.image.name or "20l" in product.name|lower %}
-                            <img src="{% static 'images/bidon_20l.jpg' %}" alt="{{ product.name }}">
+                            <img class="product-image" src="{% static 'images/bidon_20l.jpg' %}" alt="{{ product.name }}">
                         {% elif "bidon_10l" in product.image.name or "10l" in product.name|lower %}
-                            <img src="{% static 'images/bidon_10l.jpg' %}" alt="{{ product.name }}">
+                            <img class="product-image" src="{% static 'images/bidon_10l.jpg' %}" alt="{{ product.name }}">
                         {% else %}
-                            <img src="{{ product.image.url }}" alt="{{ product.name }}">
+                            <img class="product-image" src="{{ product.image.url }}" alt="{{ product.name }}">
                         {% endif %}
                     {% else %}
                         {% if "sachet" in product.name|lower %}
-                            <img src="{% static 'images/sachet_250ml.png' %}" alt="{{ product.name }}">
+                            <img class="product-image" src="{% static 'images/sachet_250ml.png' %}" alt="{{ product.name }}">
                         {% elif "10l" in product.name|lower %}
-                            <img src="{% static 'images/bidon_10l.jpg' %}" alt="{{ product.name }}">
+                            <img class="product-image" src="{% static 'images/bidon_10l.jpg' %}" alt="{{ product.name }}">
                         {% elif "20l" in product.name|lower %}
-                            <img src="{% static 'images/bidon_20l.jpg' %}" alt="{{ product.name }}">
+                            <img class="product-image" src="{% static 'images/bidon_20l.jpg' %}" alt="{{ product.name }}">
                         {% else %}
                             <div class="product-placeholder">
                                 <i class="fa-solid fa-bottle-water"></i>
