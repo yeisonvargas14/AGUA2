@@ -19,9 +19,11 @@
         </form>
     </div>
 
-    <!-- Grid de Productos -->
-    <div class="products-grid mt-4">
-        {% for product in products %}
+    <!-- Grid de Productos agrupados por categoría -->
+    {% for category in categories %}
+        <h3 class="category-title">{{ category.name }}</h3>
+        <div class="products-grid mt-4">
+            {% for product in category.products.all %}
             <div class="product-card">
                 {% if product.promo %}
                     <div class="promo-badge">{{ product.promo.name }} (-{{ product.promo.discount_percentage }}%)</div>
@@ -101,13 +103,14 @@
                     </div>
                 </div>
             </div>
-        {% empty %}
+            {% empty %}
             <div class="no-results full-width">
                 <i class="fa-solid fa-circle-question text-muted mb-3"></i>
                 <h3>No se encontraron productos</h3>
                 <p>Intenta buscar con otros términos.</p>
             </div>
-        {% endfor %}
-    </div>
+            {% endfor %}
+        </div>
+    {% endfor %}
 </div>
 {% endblock %}

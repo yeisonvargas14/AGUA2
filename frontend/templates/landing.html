@@ -72,9 +72,11 @@
             </form>
         </div>
 
-        {% if products %}
-            <div class="products-grid">
-                {% for prod in products %}
+        {% if categories %}
+            {% for category in categories %}
+                <h3 class="category-title">{{ category.name }}</h3>
+                <div class="products-grid">
+                    {% for prod in category.products.all %}
                     <div class="product-card">
                         <!-- Product Image / Icon Placeholder -->
                         <div class="product-card-visual">
@@ -155,7 +157,8 @@
                         </div>
                     </div>
                 {% endfor %}
-            </div>
+                </div>
+            {% endfor %}
         {% else %}
             <div class="no-products-state">
                 <i class="fa-solid fa-circle-exclamation"></i>
