@@ -5,6 +5,7 @@
 
 let map;
 let marker;
+let comarapaZone;
 let selectedLat = null;
 let selectedLng = null;
 
@@ -14,7 +15,7 @@ function initMap() {
 
     map = new google.maps.Map(document.getElementById('map'), {
         center: comarapaCenter,
-        zoom: 13,
+        zoom: 14,
         mapTypeId: 'roadmap',
         styles: [
             { featureType: 'poi', elementType: 'labels', stylers: [{ visibility: 'off' }] },
@@ -23,16 +24,12 @@ function initMap() {
     });
 
     // Draw the delivery zone polygon on the map
-    const comarapaZone = new google.maps.Polygon({
+    comarapaZone = new google.maps.Polygon({
         paths: [
-            { lat: -17.915000, lng: -64.515000 },
-            { lat: -17.895000, lng: -64.510000 },
-            { lat: -17.880000, lng: -64.495000 },
-            { lat: -17.882000, lng: -64.475000 },
-            { lat: -17.900000, lng: -64.460000 },
-            { lat: -17.920000, lng: -64.465000 },
-            { lat: -17.935000, lng: -64.485000 },
-            { lat: -17.930000, lng: -64.505000 },
+            { lat: -17.905, lng: -64.545 },
+            { lat: -17.905, lng: -64.515 },
+            { lat: -17.935, lng: -64.515 },
+            { lat: -17.935, lng: -64.545 }
         ],
         strokeColor: '#6366f1',
         strokeOpacity: 0.8,
@@ -98,6 +95,24 @@ function placeMarker(lat, lng) {
 }
 
 function validateLocation(lat, lng) {
+    const latLng = new google.maps.LatLng(lat, lng);
+    const isInside = google.maps.geometry && google.maps.geometry.poly ? 
+        google.maps.geometry.poly.containsLocation(latLng, comarapaZone) : true;
+    
+    const submitBtn = document.getElementById('btn-submit');
+
+    if (!isInside) {
+        showGeoFeedback(
+            '<i class="fa-solid fa-circle-exclamation"></i> <strong>Fuera del área de cobertura:</strong> Estás fuera de la zona de entrega. Solo servimos en la zona urbana de Comarapa.',
+            'danger'
+        );
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fa-solid fa-ban"></i> Fuera del área de entrega';
+        }
+        return;
+    }
+
     showGeoFeedback('Validando si tu ubicación está dentro de Comarapa...', 'info');
 
     fetch(VALIDATE_LOC_URL, {
@@ -110,11 +125,9 @@ function validateLocation(lat, lng) {
     })
     .then(response => response.json())
     .then(data => {
-        const submitBtn = document.getElementById('btn-submit');
-
         if (data.valid) {
             showGeoFeedback(
-                '<i class="fa-solid fa-circle-check"></i> ¡Ubicación válida! Estás dentro del municipio de Comarapa. Puedes continuar con tu pedido.',
+                '<i class="fa-solid fa-circle-check"></i> ¡Ubicación válida! Estás dentro de la zona urbana de Comarapa. Puedes continuar con tu pedido.',
                 'success'
             );
             if (submitBtn) {
@@ -123,7 +136,7 @@ function validateLocation(lat, lng) {
             }
         } else {
             showGeoFeedback(
-                '<i class="fa-solid fa-circle-exclamation"></i> <strong>Fuera del área de cobertura:</strong> Tu ubicación no está dentro del municipio de Comarapa. El servicio de entrega a domicilio solo está disponible en este municipio. Por favor, contacta a una agencia cercana.',
+                '<i class="fa-solid fa-circle-exclamation"></i> <strong>Fuera del área de cobertura:</strong> Tu ubicación no está dentro de la zona comercial de Comarapa. El servicio de entrega a domicilio solo está disponible en este sector.',
                 'danger'
             );
             if (submitBtn) {

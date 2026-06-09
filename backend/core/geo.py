@@ -1,17 +1,14 @@
+from django.conf import settings
+
 # Geofencing validation for Comarapa, Santa Cruz, Bolivia
 
 # Defined bounding box/polygon for Comarapa delivery zone
-COMARAPA_POLYGON = [
-    (-17.915000, -64.515000),
-    (-17.895000, -64.510000),
-    (-17.880000, -64.495000),
-    (-17.882000, -64.475000),
-    (-17.900000, -64.460000),
-    (-17.920000, -64.465000),
-    (-17.935000, -64.485000),
-    (-17.930000, -64.505000),
-    (-17.915000, -64.515000)  # Close the polygon loop
-]
+COMARAPA_POLYGON = getattr(settings, 'COMARAPA_POLYGON', [
+    (-17.905, -64.545),
+    (-17.905, -64.515),
+    (-17.935, -64.515),
+    (-17.935, -64.545)
+])
 
 def point_in_polygon(lat, lng, polygon):
     """

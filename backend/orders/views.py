@@ -282,10 +282,11 @@ def validate_location(request):
                 request.session['delivery_lat'] = str(lat)
                 request.session['delivery_lng'] = str(lng)
             
-            return JsonResponse({'valid': valid})
+            message = "Ubicación válida." if valid else "Ubicación fuera de la zona de entrega urbana de Comarapa."
+            return JsonResponse({'valid': valid, 'message': message})
         except Exception as e:
-            return JsonResponse({'valid': False, 'error': str(e)}, status=400)
-    return JsonResponse({'valid': False}, status=405)
+            return JsonResponse({'valid': False, 'message': str(e)}, status=400)
+    return JsonResponse({'valid': False, 'message': 'Método no permitido.'}, status=405)
 
 
 @login_required

@@ -1,4 +1,4 @@
-﻿{% extends 'base.html' %}
+{% extends 'base.html' %}
 
 {% block title %}Checkout - Agua de Mesa Santiago{% endblock %}
 {% block page_title %}Confirmar Ubicación y Pedido{% endblock %}
@@ -107,10 +107,10 @@
     const VALIDATE_LOC_URL = "{% url 'api_validar_ubicacion' %}";
     
     // Comarapa default center
-    const DEFAULT_LAT = -17.912300;
-    const DEFAULT_LNG = -64.491200;
+    const DEFAULT_LAT = -17.920000;
+    const DEFAULT_LNG = -64.530000;
 </script>
 <script src="/static/js/maps.js"></script>
 <!-- Dynamically load Google Maps JS API script -->
-<script async defer src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&callback=initMap"></script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=geometry&callback=initMap"></script>
 {% endblock %}

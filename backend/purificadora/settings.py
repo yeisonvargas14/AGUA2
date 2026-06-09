@@ -210,3 +210,12 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 USE_X_FORWARDED_HOST = True
 USE_X_FORWARDED_PORT = True
 
+# Geofencing validation polygon for Comarapa delivery zone
+COMARAPA_POLYGON = [
+    (-17.905, -64.545),
+    (-17.905, -64.515),
+    (-17.935, -64.515),
+    (-17.935, -64.545)
+]
+
+
