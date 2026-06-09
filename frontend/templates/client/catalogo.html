@@ -33,9 +33,9 @@
                 
                 <div class="product-image-container">
                     {% if product.image %}
-                        {% if "sachet_250ml" in product.image.name %}
+                        {% if "sachet_250ml" in product.image.name or "sachet" in product.name|lower %}
                             <img src="{% static 'images/sachet_250ml.png' %}" alt="{{ product.name }}">
-                        {% elif "bidon_20l" in product.image.name %}
+                        {% elif "bidon_20l" in product.image.name or "20l" in product.name|lower %}
                             <img src="{% static 'images/bidon_20l.jpg' %}" alt="{{ product.name }}">
                         {% elif "bidon_10l" in product.image.name or "10l" in product.name|lower %}
                             <img src="{% static 'images/bidon_10l.jpg' %}" alt="{{ product.name }}">
@@ -43,7 +43,9 @@
                             <img src="{{ product.image.url }}" alt="{{ product.name }}">
                         {% endif %}
                     {% else %}
-                        {% if "10l" in product.name|lower %}
+                        {% if "sachet" in product.name|lower %}
+                            <img src="{% static 'images/sachet_250ml.png' %}" alt="{{ product.name }}">
+                        {% elif "10l" in product.name|lower %}
                             <img src="{% static 'images/bidon_10l.jpg' %}" alt="{{ product.name }}">
                         {% elif "20l" in product.name|lower %}
                             <img src="{% static 'images/bidon_20l.jpg' %}" alt="{{ product.name }}">
