@@ -519,6 +519,21 @@ body {
     font-weight: 600;
 }
 
+/* Mobile scroll fix */
+html, body {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    height: auto !important;
+    min-height: 100vh !important;
+    position: static !important;
+    -webkit-overflow-scrolling: touch;
+}
+
+.content-body, main, .wrapper {
+    overflow-y: visible !important;
+    height: auto !important;
+}
+
 .progress-bar {
     width: 100%;
     height: 8px;

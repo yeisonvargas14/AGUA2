@@ -1,80 +1,24 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.views import LoginView as DjangoLoginView
 from django.contrib.auth.decorators import login_required
-from django.views.generic import CreateView
-from django.urls import reverse_lazy, reverse
+from django.urls import reverse
 from django.contrib import messages
-from .models import User
+from django.utils import timezone
+from datetime import timedelta
 from django import forms
+from .models import User, PasswordResetCode
+from .forms import (
+    ClientRegisterForm,
+    TelefonoAuthenticationForm,
+    PasswordResetRequestForm,
+    PasswordResetVerifyForm,
+    SetNewPasswordForm,
+)
+from .utils import send_whatsapp_code
 from orders.models import Cart
 from orders.cart_helpers import transfer_cart
 
-class ClientRegisterForm(forms.ModelForm):
-    full_name = forms.CharField(
-        max_length=250,
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre Completo'}),
-        label="Nombre Completo"
-    )
-    password = forms.CharField(
-        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Contraseña'}),
-        label="Contraseña"
-    )
-    password_confirm = forms.CharField(
-        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Confirmar Contraseña'}),
-        label="Confirmar Contraseña"
-    )
-
-    class Meta:
-        model = User
-        fields = ['email', 'phone', 'address', 'municipio']
-        widgets = {
-            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Correo electrónico'}),
-            'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Celular'}),
-            'address': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Dirección'}),
-            'municipio': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Municipio (ej: Comarapa)'}),
-        }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if 'phone' in self.fields:
-            self.fields['phone'].label = 'Celular'
-
-    def clean_email(self):
-        email = self.cleaned_data.get('email')
-        if User.objects.filter(email=email).exists():
-            raise forms.ValidationError("Este correo ya está registrado.")
-        return email
-
-    def clean(self):
-        cleaned_data = super().clean()
-        password = cleaned_data.get("password")
-        password_confirm = cleaned_data.get("password_confirm")
-
-        if password != password_confirm:
-            raise forms.ValidationError("Las contraseñas no coinciden.")
-        return cleaned_data
-
-    def save(self, commit=True):
-        user = super().save(commit=False)
-        full_name = self.cleaned_data.get('full_name', '').strip()
-        
-        # Split full name into first_name and last_name
-        parts = full_name.split(' ', 1)
-        if len(parts) > 1:
-            user.first_name = parts[0]
-            user.last_name = parts[1]
-        else:
-            user.first_name = full_name
-            user.last_name = ''
-            
-        # Set username to match email (or random, or email username) to satisfy unique/non-null constraints if any,
-        # but since USERNAME_FIELD is 'email', we can just use the email prefix or the email itself
-        user.username = user.email
-
-        if commit:
-            user.save()
-        return user
 
 def register_view(request):
     if request.user.is_authenticated:
@@ -86,13 +30,10 @@ def register_view(request):
             user.role = User.Roles.CLIENT
             user.set_password(form.cleaned_data['password'])
             user.save()
-            
-            # Ensure client has a persistent cart
+
             Cart.objects.get_or_create(user=user)
-            
-            # Merge any anonymous cart into the new user's cart
             transfer_cart(request, user)
-            
+
             login(request, user)
             messages.success(request, f"¡Bienvenido a Agua de Mesa Santiago, {user.first_name}! Tu cuenta ha sido creada.")
             return redirect('client_dashboard')
@@ -102,12 +43,13 @@ def register_view(request):
         form = ClientRegisterForm()
     return render(request, 'auth/register.html', {'form': form})
 
+
 class CustomLoginView(DjangoLoginView):
     template_name = 'auth/login.html'
+    authentication_form = TelefonoAuthenticationForm
 
     def form_valid(self, form):
-        """Check that the role button used matches the user's actual role."""
-        rol_solicitado = self.request.POST.get('rol', '')  # 'admin', 'agency', or ''
+        rol_solicitado = self.request.POST.get('rol', '')
         user = form.get_user()
         role_map = {
             'admin': User.Roles.ADMIN,
@@ -118,14 +60,86 @@ class CustomLoginView(DjangoLoginView):
             if not is_valid_superuser and user.role != role_map.get(rol_solicitado):
                 form.add_error(None, f"Esta cuenta no tiene el rol de {'Administrador' if rol_solicitado == 'admin' else 'Agencia'}.")
                 return self.form_invalid(form)
-        # Merge anonymous cart before calling super() which calls login()
         transfer_cart(self.request, user)
         return super().form_valid(form)
 
     def get_success_url(self):
         user = self.request.user
-        messages.success(self.request, f"¡Hola de nuevo, {user.first_name or user.username}!")
+        messages.success(self.request, f"¡Hola de nuevo, {user.first_name or user.username or user.telefono}!")
         return reverse('rol_redirect')
+
+
+def password_reset_request_view(request):
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+    if request.method == 'POST':
+        form = PasswordResetRequestForm(request.POST)
+        if form.is_valid():
+            telefono = form.cleaned_data['telefono']
+            user = User.objects.get(telefono=telefono)
+            codigo = ''.join(__import__('random').choices('0123456789', k=6))
+            expira_en = timezone.now() + timedelta(minutes=10)
+            reset_code = PasswordResetCode.objects.create(
+                user=user,
+                telefono=telefono,
+                codigo=codigo,
+                expira_en=expira_en
+            )
+            send_whatsapp_code(telefono, codigo)
+            request.session['password_reset_code_id'] = reset_code.id
+            messages.success(request, 'Se ha enviado un código de recuperación por WhatsApp.')
+            return redirect('password_reset_verify')
+    else:
+        form = PasswordResetRequestForm()
+    return render(request, 'auth/password_reset.html', {'form': form})
+
+
+def password_reset_verify_view(request):
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+    reset_code_id = request.session.get('password_reset_code_id')
+    if not reset_code_id:
+        return redirect('password_reset')
+    reset_code = get_object_or_404(PasswordResetCode, pk=reset_code_id)
+    if request.method == 'POST':
+        form = PasswordResetVerifyForm(request.POST)
+        if form.is_valid():
+            codigo = form.cleaned_data['codigo'].strip()
+            if reset_code.codigo == codigo and reset_code.is_valid():
+                request.session['password_reset_user_id'] = reset_code.user_id
+                return redirect('password_reset_confirm')
+            form.add_error('codigo', 'Código incorrecto o expirado.')
+    else:
+        form = PasswordResetVerifyForm()
+    return render(request, 'auth/password_reset_verify.html', {'form': form})
+
+
+def password_reset_confirm_view(request):
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+    user_id = request.session.get('password_reset_user_id')
+    reset_code_id = request.session.get('password_reset_code_id')
+    if not user_id or not reset_code_id:
+        return redirect('password_reset')
+    reset_code = get_object_or_404(PasswordResetCode, pk=reset_code_id)
+    if request.method == 'POST':
+        form = SetNewPasswordForm(request.POST)
+        if form.is_valid():
+            if not reset_code.is_valid():
+                form.add_error(None, 'El código ya no es válido. Solicita uno nuevo.')
+            else:
+                user = get_object_or_404(User, pk=user_id)
+                user.set_password(form.cleaned_data['password'])
+                user.save()
+                reset_code.usado = True
+                reset_code.save()
+                request.session.pop('password_reset_user_id', None)
+                request.session.pop('password_reset_code_id', None)
+                messages.success(request, 'Tu contraseña se ha restablecido correctamente.')
+                return redirect('password_reset_complete')
+    else:
+        form = SetNewPasswordForm()
+    return render(request, 'auth/password_reset_confirm.html', {'form': form})
 
 
 @login_required
@@ -176,12 +190,12 @@ def dashboard_router(request):
 class ProfileForm(forms.ModelForm):
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'email', 'phone', 'address', 'municipio', 'avatar']
+        fields = ['first_name', 'last_name', 'email', 'telefono', 'address', 'municipio', 'avatar']
         widgets = {
             'first_name': forms.TextInput(attrs={'class': 'form-control'}),
             'last_name': forms.TextInput(attrs={'class': 'form-control'}),
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
-            'phone': forms.TextInput(attrs={'class': 'form-control'}),
+            'telefono': forms.TextInput(attrs={'class': 'form-control'}),
             'address': forms.TextInput(attrs={'class': 'form-control'}),
             'municipio': forms.TextInput(attrs={'class': 'form-control'}),
             'avatar': forms.FileInput(attrs={'class': 'form-control'}),

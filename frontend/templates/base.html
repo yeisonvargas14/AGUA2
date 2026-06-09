@@ -42,6 +42,7 @@
                 {% endfor %}
             </div>
         {% endif %}
+        {% block content %}{% endblock %}
     {% elif user.is_authenticated %}
     <div class="app-container">
         <!-- Sidebar Navigation -->
@@ -234,6 +235,10 @@
 
             <!-- Page Content -->
             <main class="content-body">
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
     {% else %}
         {% if request.resolver_match.url_name == 'ver_carrito' %}
             <!-- Public Cart Page (clean layout, no flex-center wrapper) -->
@@ -253,10 +258,11 @@
                         {% endfor %}
                     </div>
                 {% endif %}
+                {% block content %}{% endblock %}
+            </div>
         {% else %}
             <!-- Non-authenticated layout (Auth Pages) -->
             <div class="auth-page-wrapper">
-                <!-- Messages for auth pages -->
                 {% if messages %}
                     <div class="messages-container auth-messages">
                         {% for message in messages %}
@@ -272,19 +278,9 @@
                         {% endfor %}
                     </div>
                 {% endif %}
+                {% block content %}{% endblock %}
+            </div>
         {% endif %}
-    {% endif %}
-
-    {% block content %}{% endblock %}
-
-    {% if request.resolver_match.url_name == 'landing' %}
-        <!-- Standalone landing layout -->
-    {% elif user.is_authenticated %}
-            </main>
-        </div>
-    </div>
-    {% else %}
-        </div>
     {% endif %}
 
     <script src="/static/js/app.js"></script>

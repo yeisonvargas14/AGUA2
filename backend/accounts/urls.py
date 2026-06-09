@@ -11,22 +11,9 @@ urlpatterns = [
     path('perfil/', views.profile_view, name='profile'),
     
     # Password Reset
-    path('recuperar-contrasena/', auth_views.PasswordResetView.as_view(
-        template_name='auth/password_reset.html',
-        email_template_name='auth/password_reset_email.html',
-        subject_template_name='auth/password_reset_subject.txt',
-        success_url='/recuperar-contrasena/enviado/'
-    ), name='password_reset'),
-    
-    path('recuperar-contrasena/enviado/', auth_views.PasswordResetDoneView.as_view(
-        template_name='auth/password_reset_done.html'
-    ), name='password_reset_done'),
-    
-    path('recuperar-contrasena/confirmar/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(
-        template_name='auth/password_reset_confirm.html',
-        success_url='/recuperar-contrasena/completado/'
-    ), name='password_reset_confirm'),
-    
+    path('recuperar-contrasena/', views.password_reset_request_view, name='password_reset'),
+    path('recuperar-contrasena/verificar/', views.password_reset_verify_view, name='password_reset_verify'),
+    path('recuperar-contrasena/confirmar/', views.password_reset_confirm_view, name='password_reset_confirm'),
     path('recuperar-contrasena/completado/', auth_views.PasswordResetCompleteView.as_view(
         template_name='auth/password_reset_complete.html'
     ), name='password_reset_complete'),

@@ -149,6 +149,15 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 AUTH_USER_MODEL = 'accounts.User'
+AUTHENTICATION_BACKENDS = [
+    'accounts.backends.TelefonoBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+# Twilio WhatsApp recovery settings
+TWILIO_ACCOUNT_SID = os.environ.get('TWILIO_ACCOUNT_SID', '')
+TWILIO_AUTH_TOKEN = os.environ.get('TWILIO_AUTH_TOKEN', '')
+TWILIO_WHATSAPP_FROM = os.environ.get('TWILIO_WHATSAPP_FROM', '')
 
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/

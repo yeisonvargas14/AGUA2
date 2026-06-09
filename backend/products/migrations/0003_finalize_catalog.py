@@ -133,12 +133,11 @@ def finalize_catalog(apps, schema_editor):
     # Delete products not in desired list
     for prod in Product.objects.all():
         if prod.name not in desired_names:
-            # remove explicitly unwanted names listed by user
-            if prod.name in ['Botella de Agua 500ml (Pack x6)', '10 Litros de Agua de Mesa Santíago']:
+            try:
                 prod.delete()
-            else:
-                # delete any product not in desired list per user instruction
-                prod.delete()
+            except models.ProtectedError:
+                # Keep products that are referenced in orders or other protected relations
+                continue
 
 
 def reverse_func(apps, schema_editor):

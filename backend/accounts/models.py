@@ -13,7 +13,20 @@ class User(AbstractUser):
         choices=Roles.choices,
         default=Roles.CLIENT
     )
-    email = models.EmailField(unique=True, verbose_name="Correo electrónico")
+    telefono = models.CharField(
+        max_length=20,
+        unique=True,
+        blank=True,
+        null=True,
+        verbose_name="Celular",
+        help_text="Número de celular usado para iniciar sesión"
+    )
+    email = models.EmailField(
+        unique=True,
+        blank=True,
+        null=True,
+        verbose_name="Correo electrónico"
+    )
     username = models.CharField(
         max_length=150,
         unique=True,
@@ -21,13 +34,12 @@ class User(AbstractUser):
         null=True,
         verbose_name="Nombre de usuario"
     )
-    phone = models.CharField(max_length=20, blank=True)
     address = models.CharField(max_length=255, blank=True)
     municipio = models.CharField(max_length=100, blank=True, help_text="Ej: Comarapa")
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
 
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = [] # Username is no longer required for superusers by default, email is main field
+    USERNAME_FIELD = 'telefono'
+    REQUIRED_FIELDS = []
 
     @property
     def full_name(self):
@@ -37,6 +49,31 @@ class User(AbstractUser):
 
     def __str__(self):
         return f"{self.full_name} ({self.get_role_display()})"
+
+
+class PasswordResetCode(models.Model):
+    user = models.ForeignKey(
+        'accounts.User',
+        on_delete=models.CASCADE,
+        related_name='password_reset_codes'
+    )
+    telefono = models.CharField(max_length=20)
+    codigo = models.CharField(max_length=6)
+    creado_en = models.DateTimeField(auto_now_add=True)
+    expira_en = models.DateTimeField()
+    usado = models.BooleanField(default=False)
+
+    class Meta:
+        indexes = [models.Index(fields=['telefono', 'codigo'])]
+        verbose_name = 'Código de Recuperación'
+        verbose_name_plural = 'Códigos de Recuperación'
+
+    def __str__(self):
+        return f"Código {self.codigo} para {self.telefono}"
+
+    def is_valid(self):
+        from django.utils import timezone
+        return (not self.usado) and (timezone.now() <= self.expira_en)
 
 
 class DriverProfile(models.Model):

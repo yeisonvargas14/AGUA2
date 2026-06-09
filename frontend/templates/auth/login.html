@@ -28,8 +28,8 @@
             {% endif %}
 
             <div class="form-group">
-                <label for="id_username"><i class="fa-solid fa-user"></i> Nombre de Usuario</label>
-                {% render_field form.username class="form-control" placeholder="Ingresa tu usuario" id="id_username" %}
+                <label for="id_username"><i class="fa-solid fa-phone"></i> Celular</label>
+                {% render_field form.username class="form-control" placeholder="Ingresa tu celular" id="id_username" %}
                 {% if form.username.errors %}
                     <span class="field-error">{{ form.username.errors.0 }}</span>
                 {% endif %}

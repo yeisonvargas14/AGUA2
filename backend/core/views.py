@@ -141,14 +141,14 @@ class UserForm(forms.ModelForm):
     
     class Meta:
         model = User
-        fields = ['username', 'email', 'first_name', 'last_name', 'role', 'phone', 'address', 'municipio']
+        fields = ['username', 'telefono', 'email', 'first_name', 'last_name', 'role', 'address', 'municipio']
         widgets = {
             'username': forms.TextInput(attrs={'class': 'form-control'}),
+            'telefono': forms.TextInput(attrs={'class': 'form-control'}),
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
             'first_name': forms.TextInput(attrs={'class': 'form-control'}),
             'last_name': forms.TextInput(attrs={'class': 'form-control'}),
             'role': forms.Select(attrs={'class': 'form-control'}),
-            'phone': forms.TextInput(attrs={'class': 'form-control'}),
             'address': forms.TextInput(attrs={'class': 'form-control'}),
             'municipio': forms.TextInput(attrs={'class': 'form-control'}),
         }
@@ -918,6 +918,10 @@ class DriverCreateForm(forms.Form):
         max_length=150,
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre de usuario'})
     )
+    telefono = forms.CharField(
+        max_length=20,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '+591 7xxxxxxx'})
+    )
     email = forms.EmailField(
         widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Correo electrónico'})
     )
@@ -964,7 +968,7 @@ def admin_drivers(request):
     # Pre-populate DriverProfile if missing
     for d in drivers:
         if not hasattr(d, 'driver_profile'):
-            DriverProfile.objects.create(user=d, phone=d.phone or '')
+            DriverProfile.objects.create(user=d, phone=d.telefono or '')
             
     # Calculate today deliveries count and populate avg ratings
     from django.utils import timezone
@@ -987,6 +991,7 @@ def admin_driver_create(request):
         form = DriverCreateForm(request.POST)
         if form.is_valid():
             username = form.cleaned_data['username']
+            telefono = form.cleaned_data['telefono']
             email = form.cleaned_data['email']
             first_name = form.cleaned_data['first_name']
             last_name = form.cleaned_data['last_name']
@@ -1000,6 +1005,7 @@ def admin_driver_create(request):
 
             user = User.objects.create_user(
                 username=username,
+                telefono=telefono,
                 email=email,
                 first_name=first_name,
                 last_name=last_name,
