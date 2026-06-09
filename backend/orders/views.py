@@ -1,7 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseForbidden
+from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
 from django.utils import timezone
 import json
@@ -58,6 +59,10 @@ def ver_carrito(request):
 @require_POST
 def agregar_al_carrito(request, product_id):
     """Add a product to cart — works for anonymous and authenticated users."""
+    if not request.session.get('location_valid', False):
+        if not (request.user.is_authenticated and request.user.role in ['admin', 'agency']):
+            return HttpResponseForbidden("No estás en la zona de entrega")
+
     product = get_object_or_404(Product, id=product_id, is_active=True)
     quantity = int(request.POST.get('quantity', 1))
 
@@ -261,7 +266,7 @@ def checkout_view(request):
     })
 
 
-@login_required
+@csrf_exempt
 def validate_location(request):
     """Ajax endpoint for validating location."""
     if request.method == 'POST':
@@ -270,6 +275,13 @@ def validate_location(request):
             lat = data.get('lat')
             lng = data.get('lng')
             valid = is_inside_comarapa(lat, lng)
+            
+            # Save location validation in session
+            request.session['location_valid'] = valid
+            if valid:
+                request.session['delivery_lat'] = str(lat)
+                request.session['delivery_lng'] = str(lng)
+            
             return JsonResponse({'valid': valid})
         except Exception as e:
             return JsonResponse({'valid': False, 'error': str(e)}, status=400)

@@ -72,6 +72,8 @@
             </form>
         </div>
 
+        <div id="geo-status" class="alert mt-3" style="display:none; padding: 15px; border-radius: 8px; font-weight: 500; text-align: center; margin-bottom: 20px;"></div>
+
         {% if categories %}
             {% for category in categories %}
                 <h3 class="category-title">{{ category.name }}</h3>
@@ -144,7 +146,7 @@
                                         {% csrf_token %}
                                         <input type="hidden" name="quantity" value="1">
                                         <input type="hidden" name="next" value="{% url 'landing' %}#catalogo">
-                                        <button type="submit" class="btn btn-primary btn-sm btn-buy" id="add-cart-{{ prod.id }}">
+                                        <button type="submit" class="btn btn-primary btn-sm btn-buy add-to-cart-btn" id="add-cart-{{ prod.id }}">
                                             <i class="fa-solid fa-cart-plus"></i> Agregar
                                         </button>
                                     </form>
@@ -196,4 +198,106 @@
         </div>
     </footer>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const geoStatus = document.getElementById("geo-status");
+        const addToCartBtns = document.querySelectorAll(".add-to-cart-btn");
+
+        function updateUI(valid, message) {
+            geoStatus.style.display = "block";
+            if (valid) {
+                geoStatus.style.backgroundColor = "#d1fae5";
+                geoStatus.style.color = "#065f46";
+                geoStatus.style.border = "1px solid #6ee7b7";
+                geoStatus.innerHTML = `✅ ${message || "Estás en Comarapa. Puedes realizar pedidos."}`;
+                addToCartBtns.forEach(btn => {
+                    btn.disabled = false;
+                    btn.style.opacity = "1";
+                    btn.style.cursor = "pointer";
+                });
+            } else {
+                geoStatus.style.backgroundColor = "#fee2e2";
+                geoStatus.style.color = "#991b1b";
+                geoStatus.style.border = "1px solid #fca5a5";
+                geoStatus.innerHTML = `❌ ${message || "Lo sentimos, solo atendemos en Comarapa. No puedes agregar productos al carrito."}`;
+                addToCartBtns.forEach(btn => {
+                    btn.disabled = true;
+                    btn.style.opacity = "0.5";
+                    btn.style.cursor = "not-allowed";
+                });
+            }
+        }
+
+        function showInfo(message) {
+            geoStatus.style.display = "block";
+            geoStatus.style.backgroundColor = "#dbeafe";
+            geoStatus.style.color = "#1e3a5f";
+            geoStatus.style.border = "1px solid #bfdbfe";
+            geoStatus.innerHTML = message;
+        }
+
+        // Check cache in sessionStorage (30 mins validity)
+        const cachedValid = sessionStorage.getItem("location_valid");
+        const cachedTime = sessionStorage.getItem("location_timestamp");
+        const cacheDuration = 30 * 60 * 1000; // 30 minutes
+
+        if (cachedValid !== null && cachedTime !== null && (Date.now() - parseInt(cachedTime)) < cacheDuration) {
+            const isValid = cachedValid === "true";
+            updateUI(isValid, isValid ? "Estás en Comarapa. Puedes realizar pedidos (Ubicación verificada)." : "Lo sentimos, solo atendemos en Comarapa. No puedes agregar productos al carrito.");
+            return;
+        }
+
+        // Get CSRF Token from cookie or form
+        let csrfToken = "";
+        const csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (csrfInput) {
+            csrfToken = csrfInput.value;
+        }
+
+        if (navigator.geolocation) {
+            showInfo('<i class="fa-solid fa-spinner fa-spin"></i> Detectando tu ubicación para verificar cobertura...');
+            navigator.geolocation.getCurrentPosition(
+                function(pos) {
+                    const lat = pos.coords.latitude;
+                    const lng = pos.coords.longitude;
+                    
+                    fetch("/api/validate-location/", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-CSRFToken": csrfToken
+                        },
+                        body: JSON.stringify({ lat: lat, lng: lng })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        sessionStorage.setItem("location_valid", data.valid ? "true" : "false");
+                        sessionStorage.setItem("location_timestamp", Date.now().toString());
+                        updateUI(data.valid, data.valid ? "Estás en Comarapa. Puedes realizar pedidos." : "Lo sentimos, solo atendemos en Comarapa. No puedes agregar productos al carrito.");
+                    })
+                    .catch(err => {
+                        console.error("Error validating location:", err);
+                        showInfo("Error al verificar ubicación. Por favor, recarga la página.");
+                    });
+                },
+                function(err) {
+                    console.warn("Geolocation error:", err.message);
+                    showInfo('<i class="fa-solid fa-triangle-exclamation"></i> Necesitamos tu ubicación para verificar si puedes hacer pedidos. Por favor, activa la geolocalización.');
+                    // Disable buttons by default since we can't verify
+                    addToCartBtns.forEach(btn => {
+                        btn.disabled = true;
+                        btn.style.opacity = "0.5";
+                        btn.style.cursor = "not-allowed";
+                    });
+                },
+                { timeout: 10000, maximumAge: 0 }
+            );
+        } else {
+            showInfo("Tu navegador no soporta geolocalización para verificar cobertura.");
+        }
+    });
+</script>
 {% endblock %}

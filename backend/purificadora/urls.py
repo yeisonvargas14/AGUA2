@@ -5,12 +5,14 @@ from django.conf.urls.static import static
 
 from products import views as products_views
 from core import views as core_views
+from orders import views as orders_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     
     # Landing Page
     path('', products_views.landing_page, name='landing'),
+    path('api/validate-location/', orders_views.validate_location, name='api_validate_location'),
     
     # Auth & Accounts
     path('', include('accounts.urls')),
