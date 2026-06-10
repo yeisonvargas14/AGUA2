@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}¡Pedido Registrado con Éxito! - Agua de Mesa Santiago{% endblock %}
+{% block page_title %}Pedido Exitoso{% endblock %}
+
+{% block content %}
+<div class="success-container" style="max-width: 600px; margin: 50px auto; padding: 20px; text-align: center;">
+    <div class="card success-card" style="background: #fff; padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); border: 1px solid #e2e8f0;">
+        <div class="success-icon-wrapper" style="width: 80px; height: 80px; background: #d1fae5; color: #10b981; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px auto; font-size: 2.5rem;">
+            <i class="fa-solid fa-circle-check"></i>
+        </div>
+        
+        <h2 style="font-weight: bold; color: #1e293b; margin-bottom: 8px;">¡Muchas gracias por tu compra!</h2>
+        <p class="text-muted" style="margin-bottom: 24px;">Tu pedido ha sido recibido y ya está siendo procesado por nuestro equipo.</p>
+        
+        <div class="order-details-box" style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 30px; text-align: left; border: 1px solid #e2e8f0;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                <span class="text-muted" style="font-weight: 500;">Número de Pedido:</span>
+                <strong style="color: var(--primary);">#{{ order.id }}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                <span class="text-muted" style="font-weight: 500;">Estado del Pedido:</span>
+                <span class="badge badge-warning" style="background-color: #fef3c7; color: #92400e; padding: 4px 8px; border-radius: 4px; font-weight: 600;">{{ order.get_status_display }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                <span class="text-muted" style="font-weight: 500;">Dirección de Entrega:</span>
+                <strong style="max-width: 250px; text-align: right; word-wrap: break-word;">{{ order.delivery_address }}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                <span class="text-muted" style="font-weight: 500;">Total a Pagar (Efectivo):</span>
+                <strong style="color: #1e293b; font-size: 1.1rem;">Bs. {{ order.total_amount|floatformat:2 }}</strong>
+            </div>
+        </div>
+
+        <div class="actions-wrapper">
+            <a href="{% url 'client_orders' %}" class="btn btn-primary btn-block" style="width: 100%; padding: 14px; border-radius: 8px; font-weight: bold; display: block; text-decoration: none; text-align: center; margin-bottom: 12px;">
+                <i class="fa-solid fa-clock-rotate-left"></i> Ver Mis Pedidos (Seguimiento)
+            </a>
+            <a href="{% url 'client_dashboard' %}" class="btn btn-text btn-block" style="width: 100%; padding: 10px; display: block; text-decoration: none; text-align: center; color: #64748b; font-weight: 600;">
+                Volver al Catálogo
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

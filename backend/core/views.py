@@ -13,7 +13,7 @@ from django import forms
 from core.decorators import role_required
 from accounts.models import User
 from products.models import Product
-from orders.models import Order, OrderItem
+from orders.models import Order, OrderItem, OrderLog
 from coupons.models import Coupon
 from promotions.models import Promotion
 from ratings.models import Rating
@@ -299,9 +299,12 @@ def admin_orders(request):
     if status_filter:
         orders = orders.filter(status=status_filter)
         
+    from django.conf import settings as django_settings
     return render(request, 'admin_panel/pedidos.html', {
         'orders': orders,
-        'status_filter': status_filter
+        'status_filter': status_filter,
+        'pusher_key': django_settings.PUSHER_KEY,
+        'pusher_cluster': django_settings.PUSHER_CLUSTER
     })
 
 @login_required
@@ -322,6 +325,7 @@ def admin_assign_driver(request, pk):
         driver_id = request.POST.get('driver')
         driver = get_object_or_404(User, id=driver_id, role=User.Roles.DRIVER)
         
+        old_status = order.status
         order.driver = driver
         order.status = Order.Status.ACCEPTED
         order.save()
@@ -331,6 +335,18 @@ def admin_assign_driver(request, pk):
             order=order,
             defaults={'driver': driver}
         )
+        
+        # Log to OrderLog
+        OrderLog.objects.create(
+            order=order,
+            estado_anterior=old_status,
+            estado_nuevo=Order.Status.ACCEPTED,
+            changed_by=request.user,
+            nota=f"Pedido asignado al repartidor '{driver.get_full_name() or driver.username}' por el Administrador."
+        )
+
+        # Simulate WhatsApp
+        print(f"[SIMULACIÓN WHATSAPP] Notificación de pedido #{order.id} ACEPTADO enviada al cliente {order.client.telefono}")
         
         messages.success(request, f"Pedido #{order.id} asignado al repartidor '{driver.get_full_name() or driver.username}'.")
     return redirect('admin_order_detail', pk=order.id)
@@ -628,8 +644,18 @@ def api_order_status(request, pk):
             if new_status not in Order.Status.values:
                 return JsonResponse({"status": "error", "message": "Estado no válido"}, status=400)
             
+            old_status = order.status
             order.status = new_status
             order.save()
+
+            # Log to OrderLog
+            OrderLog.objects.create(
+                order=order,
+                estado_anterior=old_status,
+                estado_nuevo=new_status,
+                changed_by=request.user if request.user.is_authenticated else None,
+                nota="Actualizado vía API del Administrador."
+            )
 
             # Sync delivery details
             if new_status in [Order.Status.ACCEPTED, Order.Status.ON_WAY]:
@@ -642,6 +668,9 @@ def api_order_status(request, pk):
                 from django.utils import timezone
                 delivery.delivered_at = timezone.now()
                 delivery.save()
+
+            # Simulate WhatsApp notification
+            print(f"[SIMULACIÓN WHATSAPP] Notificación de estado actualizado para pedido #{order.id} a '{order.get_status_display()}' enviada al cliente {order.client.telefono}")
 
             return JsonResponse({"status": "success"})
     except Exception as e:

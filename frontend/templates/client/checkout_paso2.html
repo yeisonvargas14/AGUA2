@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+
+{% block title %}Identificación de Cliente - Agua de Mesa Santiago{% endblock %}
+{% block page_title %}Paso 2: Registro o Iniciar Sesión{% endblock %}
+
+{% block extra_css %}
+<style>
+    .auth-tabs-container {
+        max-width: 500px;
+        margin: 40px auto;
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+    }
+    .tabs-header {
+        display: flex;
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    .tab-btn {
+        flex: 1;
+        padding: 16px;
+        text-align: center;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        background: none;
+        color: #64748b;
+        transition: all 0.2s;
+    }
+    .tab-btn.active {
+        color: var(--primary);
+        background: #fff;
+        border-bottom: 3px solid var(--primary);
+    }
+    .tab-content {
+        padding: 30px;
+    }
+    .tab-pane {
+        display: none;
+    }
+    .tab-pane.active {
+        display: block;
+    }
+    .form-group {
+        margin-bottom: 20px;
+    }
+    .form-group label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 6px;
+        color: #334155;
+    }
+    .form-group input {
+        width: 100%;
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid #cbd5e1;
+        font-size: 1rem;
+        transition: border-color 0.2s;
+    }
+    .form-group input:focus {
+        border-color: var(--primary);
+        outline: none;
+    }
+    .checkout-progress {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 30px;
+        background: #f8fafc;
+        padding: 15px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        max-width: 1200px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .progress-step {
+        flex: 1;
+        text-align: center;
+        font-weight: 600;
+        color: #94a3b8;
+    }
+    .progress-step.active {
+        color: var(--primary);
+    }
+    .progress-step.completed {
+        color: #10b981;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="checkout-container" style="max-width: 1200px; margin: 0 auto; padding: 20px;">
+    
+    <!-- Progress Indicator -->
+    <div class="checkout-progress">
+        <div class="progress-step completed">
+            <i class="fa-solid fa-circle-check"></i> 1. Envío y Ubicación
+        </div>
+        <div class="progress-step active">
+            <i class="fa-solid fa-lock"></i> 2. Registro / Identificación
+        </div>
+    </div>
+
+    <div class="auth-tabs-container">
+        <div class="tabs-header">
+            <button class="tab-btn active" onclick="switchTab('login-tab')">
+                <i class="fa-solid fa-right-to-bracket"></i> Iniciar Sesión
+            </button>
+            <button class="tab-btn" onclick="switchTab('register-tab')">
+                <i class="fa-solid fa-user-plus"></i> Registrarse
+            </button>
+        </div>
+
+        <div class="tab-content">
+            <!-- Form Iniciar Sesión -->
+            <div id="login-tab" class="tab-pane active">
+                <h3 style="margin-bottom: 20px; font-weight: bold; color: #1e293b;">Bienvenido de nuevo</h3>
+                <p class="text-muted small" style="margin-bottom: 24px;">Ingresa tus credenciales para confirmar tu pedido.</p>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="login">
+                    
+                    <div class="form-group">
+                        <label for="login-telefono">Número de Celular</label>
+                        <input type="text" id="login-telefono" name="telefono" placeholder="Ej: 70000000" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="login-password">Contraseña</label>
+                        <input type="password" id="login-password" name="password" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block" style="width:100%; padding:14px; border-radius:8px; font-weight:bold; margin-top: 10px;">
+                        <i class="fa-solid fa-credit-card"></i> Iniciar Sesión y Completar Pedido
+                    </button>
+                </form>
+            </div>
+
+            <!-- Form Registrarse -->
+            <div id="register-tab" class="tab-pane">
+                <h3 style="margin-bottom: 20px; font-weight: bold; color: #1e293b;">Crear Cuenta</h3>
+                <p class="text-muted small" style="margin-bottom: 24px;">Regístrate rápidamente con tu celular para finalizar tu compra.</p>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="register">
+                    
+                    <div class="form-group">
+                        <label for="register-name">Nombre Completo</label>
+                        <input type="text" id="register-name" name="nombre_completo" placeholder="Ej: Juan Pérez" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="register-telefono">Número de Celular (Celular único)</label>
+                        <input type="text" id="register-telefono" name="telefono" placeholder="Ej: 70000000" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="register-password">Contraseña</label>
+                        <input type="password" id="register-password" name="password" placeholder="Mínimo 6 caracteres" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="register-password-confirm">Confirmar Contraseña</label>
+                        <input type="password" id="register-password-confirm" name="password_confirm" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-secondary btn-block" style="width:100%; padding:14px; border-radius:8px; font-weight:bold; margin-top: 10px;">
+                        <i class="fa-solid fa-user-plus"></i> Registrarse y Completar Pedido
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function switchTab(tabId) {
+        // Toggle tab panes
+        document.querySelectorAll('.tab-pane').forEach(pane => {
+            pane.classList.remove('active');
+        });
+        document.getElementById(tabId).classList.add('active');
+
+        // Toggle buttons
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        // Find button that triggers this tab
+        if (tabId === 'login-tab') {
+            document.querySelectorAll('.tab-btn')[0].classList.add('active');
+        } else {
+            document.querySelectorAll('.tab-btn')[1].classList.add('active');
+        }
+    }
+</script>
+{% endblock %}

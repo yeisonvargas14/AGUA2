@@ -1,4 +1,4 @@
-﻿{% extends 'base.html' %}
+{% extends 'base.html' %}
 
 {% block title %}Administrar Pedidos - Agua de Mesa Santiago{% endblock %}
 {% block page_title %}Gestión de Pedidos{% endblock %}
@@ -80,4 +80,108 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://js.pusher.com/8.0.1/pusher.min.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const PUSHER_KEY = "{{ pusher_key }}";
+        const PUSHER_CLUSTER = "{{ pusher_cluster }}";
+
+        function showToast(type, text) {
+            let container = document.querySelector(".messages-container");
+            if (!container) {
+                container = document.createElement("div");
+                container.className = "messages-container";
+                container.style.position = "fixed";
+                container.style.top = "20px";
+                container.style.right = "20px";
+                container.style.zIndex = "9999";
+                container.style.width = "320px";
+                document.body.appendChild(container);
+            }
+            const alertDiv = document.createElement("div");
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.style.marginBottom = "10px";
+            alertDiv.style.boxShadow = "0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)";
+            alertDiv.style.borderRadius = "8px";
+            alertDiv.style.border = "none";
+            alertDiv.style.color = "#fff";
+            alertDiv.style.display = "flex";
+            alertDiv.style.alignItems = "center";
+            alertDiv.style.gap = "10px";
+            alertDiv.style.padding = "16px";
+            
+            if (type === 'success') {
+                alertDiv.style.backgroundColor = "#10B981";
+            } else {
+                alertDiv.style.backgroundColor = "#6366f1"; // Indigo for info/new orders
+            }
+            
+            let icon = '<i class="fa-solid fa-bell"></i>';
+            alertDiv.innerHTML = `${icon} <span style="flex-grow:1;font-weight:500;">${text}</span> <button class="alert-close" style="color:#fff;background:none;border:none;font-size:1.2rem;cursor:pointer;" onclick="this.parentElement.remove()">&times;</button>`;
+            container.appendChild(alertDiv);
+            
+            setTimeout(() => {
+                alertDiv.style.transition = "opacity 0.5s ease-out";
+                alertDiv.style.opacity = '0';
+                setTimeout(() => alertDiv.remove(), 500);
+            }, 5000);
+        }
+
+        if (PUSHER_KEY) {
+            const pusher = new Pusher(PUSHER_KEY, {
+                cluster: PUSHER_CLUSTER,
+                forceTLS: true
+            });
+
+            const channel = pusher.subscribe('pedidos');
+            channel.bind('nuevo-pedido', function(data) {
+                showToast('info', `¡Nuevo Pedido #${data.order_id}! Total: Bs. ${parseFloat(data.total).toFixed(2)} - Cliente: ${data.client}`);
+                
+                // Play chime sound
+                try {
+                    const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-84.wav');
+                    audio.play();
+                } catch (e) {}
+
+                // Dynamically prepend new order to table
+                const tbody = document.querySelector(".data-table tbody");
+                if (tbody) {
+                    // Check if empty state row exists
+                    const emptyRow = tbody.querySelector("td.text-center");
+                    if (emptyRow && emptyRow.parentElement) {
+                        emptyRow.parentElement.remove();
+                    }
+
+                    const tr = document.createElement("tr");
+                    tr.style.backgroundColor = "#eef9ff";
+                    tr.style.fontWeight = "bold";
+                    
+                    // Format date
+                    const now = new Date();
+                    const dateStr = now.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }) + `, ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+
+                    tr.innerHTML = `
+                        <td><strong>#${data.order_id}</strong></td>
+                        <td>${data.client}</td>
+                        <td>Sin asignar</td>
+                        <td>-</td>
+                        <td>Bs. ${parseFloat(data.total).toFixed(2)}</td>
+                        <td><span class="text-muted">-</span></td>
+                        <td><span class="badge badge-warning">Pendiente</span></td>
+                        <td>${dateStr}</td>
+                        <td>
+                            <a href="/administrador/pedidos/detalle/${data.order_id}/" class="btn btn-primary-light btn-sm" title="Ver Detalle">
+                                <i class="fa-solid fa-eye"></i>
+                            </a>
+                        </td>
+                    `;
+                    tbody.insertBefore(tr, tbody.firstChild);
+                }
+            });
+        }
+    });
+</script>
 {% endblock %}

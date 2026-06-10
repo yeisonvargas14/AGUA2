@@ -20,13 +20,15 @@ def notify_new_order(order):
     if not client:
         return False
     try:
-        client.trigger('drivers', 'new-order', {
+        data = {
             'order_id': order.id,
-            'client': order.client.get_full_name() or order.client.username,
+            'client': order.client.get_full_name() or order.client.username or order.client.telefono,
             'address': order.delivery_address,
             'total': float(order.total_amount),
             'items_count': order.items.count()
-        })
+        }
+        client.trigger('pedidos', 'nuevo-pedido', data)
+        client.trigger('drivers', 'new-order', data)
         return True
     except Exception:
         return False

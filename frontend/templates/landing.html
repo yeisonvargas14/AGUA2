@@ -241,6 +241,47 @@
             geoStatus.innerHTML = message;
         }
 
+        function showToast(type, text) {
+            let container = document.querySelector(".messages-container");
+            if (!container) {
+                container = document.createElement("div");
+                container.className = "messages-container";
+                container.style.position = "fixed";
+                container.style.top = "20px";
+                container.style.right = "20px";
+                container.style.zIndex = "9999";
+                container.style.width = "320px";
+                document.body.appendChild(container);
+            }
+            const alertDiv = document.createElement("div");
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.style.marginBottom = "10px";
+            alertDiv.style.boxShadow = "0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)";
+            alertDiv.style.borderRadius = "8px";
+            alertDiv.style.border = "none";
+            alertDiv.style.color = "#fff";
+            alertDiv.style.display = "flex";
+            alertDiv.style.alignItems = "center";
+            alertDiv.style.gap = "10px";
+            alertDiv.style.padding = "16px";
+            
+            if (type === 'success') {
+                alertDiv.style.backgroundColor = "#10B981";
+            } else {
+                alertDiv.style.backgroundColor = "#EF4444";
+            }
+            
+            let icon = type === 'success' ? '<i class="fa-solid fa-circle-check"></i>' : '<i class="fa-solid fa-circle-exclamation"></i>';
+            alertDiv.innerHTML = `${icon} <span style="flex-grow:1;font-weight:500;">${text}</span> <button class="alert-close" style="color:#fff;background:none;border:none;font-size:1.2rem;cursor:pointer;" onclick="this.parentElement.remove()">&times;</button>`;
+            container.appendChild(alertDiv);
+            
+            setTimeout(() => {
+                alertDiv.style.transition = "opacity 0.5s ease-out";
+                alertDiv.style.opacity = '0';
+                setTimeout(() => alertDiv.remove(), 500);
+            }, 3500);
+        }
+
         // Check cache in sessionStorage (30 mins validity)
         const cachedValid = sessionStorage.getItem("location_valid");
         const cachedTime = sessionStorage.getItem("location_timestamp");
@@ -249,7 +290,6 @@
         if (cachedValid !== null && cachedTime !== null && (Date.now() - parseInt(cachedTime)) < cacheDuration) {
             const isValid = cachedValid === "true";
             updateUI(isValid, isValid ? "Estás en Comarapa. Puedes realizar pedidos (Ubicación verificada)." : "Lo sentimos, solo atendemos en Comarapa. No puedes agregar productos al carrito.");
-            return;
         }
 
         // Get CSRF Token from cookie or form
@@ -260,46 +300,90 @@
         }
 
         if (navigator.geolocation) {
-            showInfo('<i class="fa-solid fa-spinner fa-spin"></i> Detectando tu ubicación para verificar cobertura...');
-            navigator.geolocation.getCurrentPosition(
-                function(pos) {
-                    const lat = pos.coords.latitude;
-                    const lng = pos.coords.longitude;
-                    
-                    fetch("/api/validate-location/", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                            "X-CSRFToken": csrfToken
-                        },
-                        body: JSON.stringify({ lat: lat, lng: lng })
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        sessionStorage.setItem("location_valid", data.valid ? "true" : "false");
-                        sessionStorage.setItem("location_timestamp", Date.now().toString());
-                        updateUI(data.valid, data.valid ? "Estás en Comarapa. Puedes realizar pedidos." : "Lo sentimos, solo atendemos en Comarapa. No puedes agregar productos al carrito.");
-                    })
-                    .catch(err => {
-                        console.error("Error validating location:", err);
-                        showInfo("Error al verificar ubicación. Por favor, recarga la página.");
-                    });
-                },
-                function(err) {
-                    console.warn("Geolocation error:", err.message);
-                    showInfo('<i class="fa-solid fa-triangle-exclamation"></i> Necesitamos tu ubicación para verificar si puedes hacer pedidos. Por favor, activa la geolocalización.');
-                    // Disable buttons by default since we can't verify
-                    addToCartBtns.forEach(btn => {
-                        btn.disabled = true;
-                        btn.style.opacity = "0.5";
-                        btn.style.cursor = "not-allowed";
-                    });
-                },
-                { timeout: 10000, maximumAge: 0 }
-            );
+            if (!cachedValid) {
+                showInfo('<i class="fa-solid fa-spinner fa-spin"></i> Detectando tu ubicación para verificar cobertura...');
+                navigator.geolocation.getCurrentPosition(
+                    function(pos) {
+                        const lat = pos.coords.latitude;
+                        const lng = pos.coords.longitude;
+                        
+                        fetch("/api/validate-location/", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "X-CSRFToken": csrfToken
+                            },
+                            body: JSON.stringify({ lat: lat, lng: lng })
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            sessionStorage.setItem("location_valid", data.valid ? "true" : "false");
+                            sessionStorage.setItem("location_timestamp", Date.now().toString());
+                            updateUI(data.valid, data.valid ? "Estás en Comarapa. Puedes realizar pedidos." : "Lo sentimos, solo atendemos en Comarapa. No puedes agregar productos al carrito.");
+                        })
+                        .catch(err => {
+                            console.error("Error validating location:", err);
+                            showInfo("Error al verificar ubicación. Por favor, recarga la página.");
+                        });
+                    },
+                    function(err) {
+                        console.warn("Geolocation error:", err.message);
+                        showInfo('<i class="fa-solid fa-triangle-exclamation"></i> Necesitamos tu ubicación para verificar si puedes hacer pedidos. Por favor, activa la geolocalización.');
+                        // Disable buttons by default since we can't verify
+                        addToCartBtns.forEach(btn => {
+                            btn.disabled = true;
+                            btn.style.opacity = "0.5";
+                            btn.style.cursor = "not-allowed";
+                        });
+                    },
+                    { timeout: 10000, maximumAge: 0 }
+                );
+            }
         } else {
             showInfo("Tu navegador no soporta geolocalización para verificar cobertura.");
         }
+
+        // AJAX Add to Cart interceptor
+        const cartForms = document.querySelectorAll(".add-cart-form");
+        cartForms.forEach(form => {
+            form.addEventListener("submit", function(e) {
+                e.preventDefault();
+                const url = form.getAttribute("action");
+                const formData = new FormData(form);
+                formData.append("ajax", "1");
+
+                fetch(url, {
+                    method: "POST",
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest",
+                        "X-CSRFToken": csrfToken
+                    },
+                    body: formData
+                })
+                .then(res => {
+                    if (!res.ok) {
+                        return res.json().then(err => { throw new Error(err.error || "Error al agregar al carrito"); });
+                    }
+                    return res.json();
+                })
+                .then(data => {
+                    // Update badge
+                    let badge = document.querySelector(".landing-cart-badge");
+                    if (!badge) {
+                        const cartLink = document.getElementById("landing-cart-link");
+                        badge = document.createElement("span");
+                        badge.className = "badge landing-cart-badge";
+                        cartLink.appendChild(badge);
+                    }
+                    badge.textContent = data.total_items;
+                    showToast("success", "¡Producto agregado al carrito!");
+                })
+                .catch(err => {
+                    console.error("Error adding to cart:", err);
+                    showToast("error", err.message || "Error al agregar al carrito. Verifica tu ubicación.");
+                });
+            });
+        });
     });
 </script>
 {% endblock %}

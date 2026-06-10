@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+
+{% block title %}Checkout - Paso 1: Dirección y Ubicación - Agua de Mesa Santiago{% endblock %}
+{% block page_title %}Paso 1: Confirmar Ubicación y Pedido{% endblock %}
+
+{% block extra_css %}
+<style>
+    #map {
+        height: 400px;
+        width: 100%;
+        border-radius: var(--radius);
+        border: 2px solid var(--border);
+        margin-top: 15px;
+    }
+    .geo-feedback {
+        margin-top: 15px;
+        padding: 12px;
+        border-radius: var(--radius);
+        display: none;
+    }
+    .checkout-progress {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 30px;
+        background: #f8fafc;
+        padding: 15px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+    }
+    .progress-step {
+        flex: 1;
+        text-align: center;
+        font-weight: 600;
+        color: #94a3b8;
+    }
+    .progress-step.active {
+        color: var(--primary);
+    }
+    .progress-step.completed {
+        color: #10b981;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="checkout-container" style="max-width: 1200px; margin: 0 auto; padding: 20px;">
+    
+    <!-- Progress Indicator -->
+    <div class="checkout-progress">
+        <div class="progress-step active">
+            <i class="fa-solid fa-location-dot"></i> 1. Envío y Ubicación
+        </div>
+        {% if not user.is_authenticated %}
+            <div class="progress-step">
+                <i class="fa-solid fa-lock"></i> 2. Registro / Identificación
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="cart-grid" style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px;">
+        <!-- Delivery info -->
+        <div class="card checkout-card" style="background: #fff; padding: 24px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <h3>Detalles de Entrega</h3>
+            <p class="text-muted small">Por políticas de logística, tu ubicación debe estar estrictamente dentro de la zona urbana de Comarapa.</p>
+            <hr class="divider" style="margin: 15px 0;">
+
+            <form method="post" id="checkout-form" class="mt-4">
+                {% csrf_token %}
+                <input type="hidden" name="lat" id="id_lat" value="{{ lat }}">
+                <input type="hidden" name="lng" id="id_lng" value="{{ lng }}">
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label for="id_delivery_address" style="display: block; font-weight: 600; margin-bottom: 8px;"><i class="fa-solid fa-map-location-dot"></i> Dirección de Entrega Detallada *</label>
+                    <textarea name="delivery_address" id="id_delivery_address" rows="3" class="form-control" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1;" placeholder="Ej: Calle Bolívar #45, referencias (frente a la plaza, puerta azul)..." required>{{ delivery_address }}</textarea>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label for="id_delivery_instructions" style="display: block; font-weight: 600; margin-bottom: 8px;"><i class="fa-solid fa-circle-info"></i> Instrucciones especiales de entrega (Opcional)</label>
+                    <textarea name="delivery_instructions" id="id_delivery_instructions" rows="2" class="form-control" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1;" placeholder="Ej: Tocar timbre fuerte, dejar en recepción, llamar antes de llegar...">{{ delivery_instructions }}</textarea>
+                </div>
+
+                <div class="form-group mt-3" style="margin-bottom: 20px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 8px;"><i class="fa-solid fa-location-crosshairs"></i> Geolocalización en el Mapa</label>
+                    <p class="text-muted small">Haz clic en el mapa para marcar tu ubicación exacta de entrega. También intentaremos detectar tu ubicación por GPS.</p>
+                    
+                    <!-- Feedback notification -->
+                    <div id="geo-status" class="geo-feedback"></div>
+                    
+                    <div id="map"></div>
+                </div>
+
+                <button type="submit" id="btn-submit" class="btn btn-primary btn-block mt-4" style="width: 100%; padding: 14px; border-radius: 8px; font-weight: bold;" disabled>
+                    {% if user.is_authenticated %}
+                        <i class="fa-solid fa-circle-check"></i> Realizar Pedido
+                    {% else %}
+                        <i class="fa-solid fa-arrow-right"></i> Siguiente: Registrarse / Iniciar Sesión
+                    {% endif %}
+                </button>
+            </form>
+        </div>
+
+        <!-- Checkout summary sidebar -->
+        <div class="card cart-summary-card" style="background: #fff; padding: 24px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); height: fit-content;">
+            <h3>Detalles de Pedido</h3>
+            <hr class="divider" style="margin: 15px 0;">
+            
+            <div class="checkout-items-list">
+                {% for item in cart.items.all %}
+                    <div class="checkout-item-row" style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                        <div>
+                            <div class="item-name font-weight-bold" style="font-weight: 600;">{{ item.product.name }}</div>
+                            <div class="item-qty-sub text-muted small" style="font-size: 0.85rem; color: #64748b;">{{ item.quantity }} x Bs. {{ item.price }}</div>
+                        </div>
+                        <div class="item-subtotal" style="font-weight: 600;">Bs. {{ item.subtotal|floatformat:2 }}</div>
+                    </div>
+                    <hr class="divider-light" style="border-top: 1px solid #f1f5f9; margin: 8px 0;">
+                {% endfor %}
+            </div>
+
+            <div class="summary-row mt-3" style="display: flex; justify-content: space-between; margin: 15px 0 10px 0;">
+                <span>Subtotal</span>
+                <strong>Bs. {{ cart.total_amount|floatformat:2 }}</strong>
+            </div>
+
+            {% if coupon %}
+                <div class="summary-row text-success" style="display: flex; justify-content: space-between; color: #10b981; margin-bottom: 10px;">
+                    <span>Cupón aplicado ({{ coupon.code }})</span>
+                    <strong>- Bs. {{ discount|floatformat:2 }}</strong>
+                </div>
+            {% endif %}
+
+            <hr class="divider" style="margin: 15px 0;">
+
+            <div class="summary-row total-row" style="display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: bold; margin-bottom: 20px;">
+                <span>Total a Pagar</span>
+                <span class="total-price text-primary" style="color: var(--primary);">Bs. {{ total|floatformat:2 }}</span>
+            </div>
+            
+            <div class="mt-4 p-3 bg-light rounded text-center text-muted small" style="background: #f8fafc; padding: 12px; border-radius: 8px; text-align: center; font-size: 0.85rem; color: #64748b;">
+                <i class="fa-solid fa-shield-halved text-success" style="color: #10b981;"></i> Pago Seguro Contra-Entrega (Efectivo)
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Global parameters for maps.js
+    const GOOGLE_MAPS_API_KEY = "{{ google_maps_api_key }}";
+    const CSRF_TOKEN = "{{ csrf_token }}";
+    const VALIDATE_LOC_URL = "{% url 'api_validar_ubicacion' %}";
+    
+    // Comarapa default center
+    const DEFAULT_LAT = -17.920000;
+    const DEFAULT_LNG = -64.530000;
+</script>
+<script src="/static/js/maps.js"></script>
+<!-- Dynamically load Google Maps JS API script -->
+<script async defer src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=geometry&callback=initMap"></script>
+{% endblock %}

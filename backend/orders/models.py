@@ -3,14 +3,14 @@ from django.conf import settings
 from products.models import Product
 
 class Cart(models.Model):
-    user = models.OneToOneField(
+    user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='cart',
+        related_name='carts',
         null=True,
         blank=True
     )
-    session_key = models.CharField(max_length=40, null=True, blank=True, db_index=True)
+    session_key = models.CharField(max_length=40, null=True, blank=True, unique=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -28,13 +28,23 @@ class CartItem(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=1)
     price_at_time = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     def __str__(self):
         return f"{self.quantity} x {self.product.name} en carrito"
 
     @property
     def subtotal(self):
-        return self.price_at_time * self.quantity
+        # Prefer the new price field, fallback to price_at_time
+        p = self.price if self.price > 0 else self.price_at_time
+        return p * self.quantity
+
+    def save(self, *args, **kwargs):
+        if not self.price and self.product:
+            self.price = self.product.price
+        if not self.price_at_time and self.product:
+            self.price_at_time = self.product.price
+        super().save(*args, **kwargs)
 
 class Order(models.Model):
     class Status(models.TextChoices):
@@ -102,3 +112,19 @@ class OrderItem(models.Model):
     @property
     def subtotal(self):
         return self.unit_price * self.quantity
+
+class OrderLog(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='logs')
+    estado_anterior = models.CharField(max_length=15, blank=True, null=True)
+    estado_nuevo = models.CharField(max_length=15)
+    changed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+    timestamp = models.DateTimeField(auto_now_add=True)
+    nota = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"Pedido #{self.order.id} cambio: {self.estado_anterior} -> {self.estado_nuevo} en {self.timestamp}"

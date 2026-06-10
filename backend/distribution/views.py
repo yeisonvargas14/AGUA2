@@ -5,7 +5,7 @@ from django.utils import timezone
 from django.conf import settings
 
 from core.decorators import role_required
-from orders.models import Order
+from orders.models import Order, OrderLog
 from ratings.models import Rating
 from .models import Delivery
 
@@ -36,6 +36,7 @@ def driver_dashboard(request):
 def driver_accept_order(request, order_id):
     order = get_object_or_404(Order, id=order_id, status=Order.Status.PENDING, driver__isnull=True)
     
+    old_status = order.status
     order.driver = request.user
     order.status = Order.Status.ACCEPTED
     order.save()
@@ -45,6 +46,18 @@ def driver_accept_order(request, order_id):
         order=order,
         defaults={'driver': request.user}
     )
+
+    # Log to OrderLog
+    OrderLog.objects.create(
+        order=order,
+        estado_anterior=old_status,
+        estado_nuevo=Order.Status.ACCEPTED,
+        changed_by=request.user,
+        nota="Pedido aceptado por el repartidor."
+    )
+
+    # Simulate WhatsApp
+    print(f"[SIMULACIÓN WHATSAPP] Notificación de pedido #{order.id} ACEPTADO (Asignado a Repartidor) enviada al cliente {order.client.telefono}")
     
     messages.success(request, f"¡Has aceptado el pedido #{order.id}! Ya puedes iniciar la entrega.")
     return redirect('driver_dashboard')
@@ -57,6 +70,7 @@ def driver_update_status(request, order_id):
     notes = request.POST.get('notes', '')
     
     if new_status in [Order.Status.ON_WAY, Order.Status.DELIVERED]:
+        old_status = order.status
         order.status = new_status
         order.save()
         
@@ -67,6 +81,18 @@ def driver_update_status(request, order_id):
         if new_status == Order.Status.DELIVERED:
             delivery.delivered_at = timezone.now()
         delivery.save()
+
+        # Log to OrderLog
+        OrderLog.objects.create(
+            order=order,
+            estado_anterior=old_status,
+            estado_nuevo=new_status,
+            changed_by=request.user,
+            nota=f"Estado del pedido actualizado a '{order.get_status_display()}' por el repartidor. Nota: {notes}"
+        )
+
+        # Simulate WhatsApp
+        print(f"[SIMULACIÓN WHATSAPP] Notificación de estado de pedido #{order.id} actualizado a '{order.get_status_display()}' enviada al cliente {order.client.telefono}")
         
         messages.success(request, f"Estado del pedido #{order.id} actualizado a '{order.get_status_display()}'.")
     else:

@@ -83,7 +83,12 @@
 
                     <div class="order-info-group mb-3">
                         <p class="text-muted mb-1 small"><i class="fa-solid fa-location-dot me-1"></i> Dirección de Entrega</p>
-                        <p class="mb-0 fw-semibold">{{ order.address|default:"No especificada" }}</p>
+                        <p class="mb-0 fw-semibold">{{ order.delivery_address|default:"No especificada" }}</p>
+                        {% if order.delivery_lat and order.delivery_lng %}
+                            <a href="https://www.google.com/maps/search/?api=1&query={{ order.delivery_lat }},{{ order.delivery_lng }}" target="_blank" class="btn btn-secondary-light btn-sm mt-2" style="font-size: 0.8rem; padding: 4px 8px;">
+                                <i class="fa-solid fa-map-location-dot"></i> Ver en Google Maps
+                            </a>
+                        {% endif %}
                     </div>
 
                     <div class="order-info-group mb-3">
@@ -94,10 +99,27 @@
                             {% elif order.payment_method == 'qr' %}
                                 <i class="fa-solid fa-qrcode text-primary me-1"></i> QR Simple / Transferencia
                             {% else %}
-                                {{ order.payment_method|default:"No especificado" }}
+                                <i class="fa-solid fa-money-bill-1-wave text-success me-1"></i> Efectivo contra entrega
                             {% endif %}
                         </p>
                     </div>
+
+                    {% if order.logs.exists %}
+                        <hr>
+                        <h5 class="mb-3"><i class="fa-solid fa-timeline me-2"></i> Historial del Pedido</h5>
+                        <ul class="timeline" style="list-style: none; padding-left: 0; position: relative;">
+                            {% for log in order.logs.all|dictsort:"timestamp" %}
+                                <li style="margin-left: 20px; margin-bottom: 15px; position: relative; padding-left: 10px; border-left: 2px solid #cbd5e1;">
+                                    <span style="content: ''; width: 10px; height: 10px; border-radius: 50%; background: var(--primary); position: absolute; left: -6px; top: 6px;"></span>
+                                    <small class="text-muted" style="display: block; font-size: 0.8rem;">{{ log.timestamp|date:"d M Y, H:i" }}</small>
+                                    <strong>{{ log.get_estado_nuevo_display }}</strong>
+                                    {% if log.nota %}
+                                        <p class="text-muted small mb-0" style="font-size: 0.85rem;">{{ log.nota }}</p>
+                                    {% endif %}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
 
                     {% if order.status == 'pending' %}
                         <hr>
