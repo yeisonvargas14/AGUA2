@@ -45,6 +45,9 @@ body {
     background-color: var(--bg-primary);
     color: var(--text-primary);
     overflow-x: hidden;
+    /* Ensure body scrolls on all devices */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 /* Layout */
@@ -187,7 +190,8 @@ body {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
+    /* min-height: 100vh here caused mobile scroll lock — use min-height: 0 so flex child can grow without viewport lock */
+    min-height: 0;
 }
 
 /* Navbar */
@@ -519,19 +523,24 @@ body {
     font-weight: 600;
 }
 
-/* Mobile scroll fix */
-html, body {
-    overflow-y: auto !important;
+/* Mobile scroll fix — ensure document flow is never locked */
+html {
+    height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+body {
+    min-height: 100%;
     overflow-x: hidden !important;
-    height: auto !important;
-    min-height: 100vh !important;
-    position: static !important;
+    overflow-y: auto !important;
     -webkit-overflow-scrolling: touch;
 }
 
 .content-body, main, .wrapper {
     overflow-y: visible !important;
     height: auto !important;
+    flex-shrink: 0;
 }
 
 .progress-bar {
@@ -679,13 +688,20 @@ html, body {
         transform: translateX(0);
     }
 
-    /* Main content takes full width */
+    /* Main content takes full width — remove height constraints that block scroll */
     .app-container {
         flex-direction: column;
+        /* CRITICAL: allow overflow so body can scroll on touch devices */
+        overflow: visible;
+        min-height: 100vh;
+        height: auto;
     }
 
     .main-content {
         width: 100%;
+        /* Ensure it grows freely without locking the viewport height */
+        min-height: auto;
+        overflow: visible;
     }
 
     /* Navbar adjustments */
@@ -1246,6 +1262,22 @@ html, body {
     gap: 12px;
     width: 100%;
     max-width: 480px;
+}
+
+.category-banner {
+    margin: 24px 0 16px;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+}
+
+.category-banner-image {
+    width: 100%;
+    display: block;
+    object-fit: cover;
+    object-position: center;
+    max-height: 360px;
 }
 
 .search-input-wrapper {
