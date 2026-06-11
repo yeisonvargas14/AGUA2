@@ -94,8 +94,6 @@
                                     <img src="{% static 'images/bidon_20l.jpg' %}" alt="{{ prod.name }}" class="product-image">
                                 {% elif "bidon_10l" in prod.image.name or "10l" in prod.name|lower %}
                                     <img src="{% static 'images/bidon_10l.jpg' %}" alt="{{ prod.name }}" class="product-image">
-                                {% elif "dispensador" in prod.name|lower or "dispenser" in prod.name|lower %}
-                                    <img src="{% static 'images/dispensador_mesa.jpg' %}" alt="{{ prod.name }}" class="product-image">
                                 {% else %}
                                     <img src="{{ prod.image.url }}" alt="{{ prod.name }}" class="product-image">
                                 {% endif %}
