@@ -47,6 +47,7 @@ def register_view(request):
 class CustomLoginView(DjangoLoginView):
     template_name = 'auth/login.html'
     authentication_form = UsernameAuthenticationForm
+    redirect_authenticated_user = True
 
     def form_valid(self, form):
         user = form.get_user()
