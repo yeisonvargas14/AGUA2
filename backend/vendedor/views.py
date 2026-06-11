@@ -2,6 +2,7 @@ import os
 import secrets
 from decimal import Decimal
 from django import forms
+from django.db.models import Sum
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib import messages
@@ -64,6 +65,11 @@ class VendedorOrderForm(forms.Form):
         required=False,
         widget=forms.Select(attrs={'class': 'form-control'})
     )
+    driver_id = forms.ChoiceField(
+        label="Repartidor",
+        required=True,
+        widget=forms.Select(attrs={'class': 'form-control', 'id': 'id_driver_id'})
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -77,19 +83,28 @@ class VendedorOrderForm(forms.Form):
             (p.id, f"{p.name} ({p.discount_percentage}%)") for p in active_promos
         ]
 
+        drivers = User.objects.filter(role=User.Roles.DRIVER, is_active=True).order_by('first_name', 'last_name')
+        self.fields['driver_id'].choices = [('', '— Seleccionar repartidor —')] + [
+            (d.id, f"{d.get_full_name() or d.username} ({d.telefono})") for d in drivers
+        ]
+
 
 @vendedor_required
 def vendedor_dashboard(request):
     today = timezone.now().date()
     total_clients = User.objects.filter(role=User.Roles.CLIENT).count()
+    clients_today = User.objects.filter(role=User.Roles.CLIENT, date_joined__date=today).count()
     orders_today = Order.objects.filter(created_at__date=today).count()
+    sales_today = Order.objects.filter(created_at__date=today).aggregate(total=Sum('total_amount'))['total'] or Decimal('0.00')
     pending_orders = Order.objects.filter(status=Order.Status.PENDING).count()
     accepted_orders = Order.objects.filter(status=Order.Status.ACCEPTED).count()
     recent_orders = Order.objects.order_by('-created_at')[:6]
 
     return render(request, 'vendedor/dashboard.html', {
         'total_clients':  total_clients,
+        'clients_today':  clients_today,
         'orders_today':   orders_today,
+        'sales_today':    sales_today,
         'pending_orders': pending_orders,
         'accepted_orders': accepted_orders,
         'recent_orders':  recent_orders,
@@ -160,12 +175,30 @@ def vendedor_client_edit(request, pk):
 @vendedor_required
 def vendedor_orders(request):
     status_filter = request.GET.get('status', '')
+    date_filter = request.GET.get('date', '')
+    start_date = request.GET.get('start_date', '')
+    end_date = request.GET.get('end_date', '')
+
     orders = Order.objects.all().order_by('-created_at')
     if status_filter:
         orders = orders.filter(status=status_filter)
+
+    if date_filter == 'today':
+        today = timezone.now().date()
+        orders = orders.filter(created_at__date=today)
+    elif date_filter == 'week':
+        today = timezone.now().date()
+        week_start = today - timezone.timedelta(days=today.weekday())
+        orders = orders.filter(created_at__date__gte=week_start)
+    elif start_date and end_date:
+        orders = orders.filter(created_at__date__range=[start_date, end_date])
+
     return render(request, 'vendedor/pedidos.html', {
         'orders': orders,
         'status_filter': status_filter,
+        'date_filter': date_filter,
+        'start_date': start_date,
+        'end_date': end_date,
     })
 
 
@@ -173,7 +206,6 @@ def vendedor_orders(request):
 def vendedor_order_create(request):
     if request.method == 'POST':
         form = VendedorOrderForm(request.POST)
-        # Collect product lines from POST
         product_ids = request.POST.getlist('product_id')
         quantities = request.POST.getlist('quantity')
 
@@ -183,8 +215,10 @@ def vendedor_order_create(request):
             delivery_address = form.cleaned_data['delivery_address'] or client.address
             coupon_code = form.cleaned_data.get('coupon_code', '').strip()
             promotion_id = form.cleaned_data.get('promotion_id')
+            driver_id = form.cleaned_data['driver_id']
 
-            # Validate coupon
+            driver = get_object_or_404(User, pk=driver_id, role=User.Roles.DRIVER, is_active=True)
+
             coupon = None
             if coupon_code:
                 try:
@@ -195,7 +229,6 @@ def vendedor_order_create(request):
                 except Coupon.DoesNotExist:
                     messages.error(request, f"El cupón '{coupon_code}' no existe o no pertenece a este cliente.")
 
-            # Validate promotion
             promotion = None
             if promotion_id:
                 try:
@@ -204,9 +237,9 @@ def vendedor_order_create(request):
                 except Promotion.DoesNotExist:
                     pass
 
-            # Build order
             order = Order.objects.create(
                 client=client,
+                driver=driver,
                 status=Order.Status.PENDING,
                 delivery_address=delivery_address,
                 coupon=coupon,
@@ -216,6 +249,7 @@ def vendedor_order_create(request):
 
             total = Decimal('0.00')
             errors = []
+            added_items = 0
             for pid, qty_str in zip(product_ids, quantities):
                 try:
                     qty = max(1, int(qty_str))
@@ -223,7 +257,7 @@ def vendedor_order_create(request):
                     if product.stock < qty:
                         errors.append(f"Stock insuficiente para '{product.name}' (disponible: {product.stock}).")
                         continue
-                    # Apply promotion discount if product is in promotion
+
                     unit_price = product.price
                     if promotion and promotion.products.filter(pk=product.pk).exists():
                         discount = product.price * Decimal(str(promotion.discount_percentage)) / Decimal('100')
@@ -238,34 +272,40 @@ def vendedor_order_create(request):
                         reason=f"Pedido #{order.id} registrado por Vendedor"
                     )
                     total += unit_price * qty
+                    added_items += 1
                 except (Product.DoesNotExist, ValueError):
                     continue
 
-            # Apply coupon discount
-            discount_amount = Decimal('0.00')
-            if coupon:
-                discount_amount = total * Decimal(str(coupon.discount_percentage)) / Decimal('100')
-                coupon.used = True
-                coupon.save()
+            if added_items == 0:
+                order.delete()
+                messages.error(request, "No se pudo crear el pedido. Verifica los productos agregados y el stock disponible.")
+            else:
+                discount_amount = Decimal('0.00')
+                if coupon:
+                    discount_amount = total * Decimal(str(coupon.discount_percentage)) / Decimal('100')
+                    coupon.used = True
+                    coupon.save()
 
-            order.total_amount = total
-            order.discount_amount = discount_amount
-            order.save()
+                final_total = total - discount_amount
+                order.total_amount = final_total
+                order.discount_amount = discount_amount
+                order.save()
 
-            # Log creation
-            OrderLog.objects.create(
-                order=order,
-                estado_anterior=None,
-                estado_nuevo=Order.Status.PENDING,
-                changed_by=request.user,
-                nota=f"Pedido creado por Vendedor: {request.user.get_full_name() or request.user.username}"
-            )
+                Delivery.objects.create(order=order, driver=driver)
 
-            for err in errors:
-                messages.warning(request, err)
+                OrderLog.objects.create(
+                    order=order,
+                    estado_anterior=None,
+                    estado_nuevo=Order.Status.PENDING,
+                    changed_by=request.user,
+                    nota=f"Pedido creado por Vendedor: {request.user.get_full_name() or request.user.username}"
+                )
 
-            messages.success(request, f"Pedido #{order.id} creado exitosamente para {client.get_full_name() or client.telefono}.")
-            return redirect('vendedor_order_detail', pk=order.id)
+                for err in errors:
+                    messages.warning(request, err)
+
+                messages.success(request, f"Pedido #{order.id} creado exitosamente para {client.get_full_name() or client.telefono}.")
+                return redirect('vendedor_order_detail', pk=order.id)
         else:
             if not product_ids:
                 messages.error(request, "Debes agregar al menos un producto al pedido.")

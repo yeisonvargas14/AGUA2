@@ -33,11 +33,16 @@
         {% endif %}
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+          <div class="form-group" style="grid-column: span 2;">
+            <label for="client-search" style="display: block; font-weight: 500; margin-bottom: 6px; font-size: 14px;">Buscar Cliente</label>
+            <input type="text" id="client-search" class="form-control" placeholder="Buscar por nombre o celular...">
+          </div>
+
           <div class="form-group">
             <label for="id_client_id" style="display: block; font-weight: 500; margin-bottom: 6px; font-size: 14px;">Cliente *</label>
             {{ form.client_id }}
             <p style="color: var(--text-secondary); font-size: 11px; margin-top: 4px; margin-bottom: 0;">
-              ¿El cliente no está registrado? <a href="{% url 'vendedor_client_create' %}" target="_blank" style="color: var(--primary); font-weight: 500;">Registrar cliente nuevo</a>
+              ¿El cliente no está registrado? <a href="{% url 'vendedor_client_create' %}?next={% url 'vendedor_order_create' %}" target="_blank" style="color: var(--primary); font-weight: 500;">Registrar cliente nuevo</a>
             </p>
           </div>
 
@@ -47,6 +52,11 @@
             <p style="color: var(--text-secondary); font-size: 11px; margin-top: 4px; margin-bottom: 0;">
               Dejar en blanco para usar la dirección registrada del cliente.
             </p>
+          </div>
+
+          <div class="form-group">
+            <label for="id_driver_id" style="display: block; font-weight: 500; margin-bottom: 6px; font-size: 14px;">Repartidor *</label>
+            {{ form.driver_id }}
           </div>
 
           <div class="form-group">
@@ -261,6 +271,23 @@
       toggleNoProductsAlert();
       calculateTotals();
     });
+
+// Handle client search filtering
+    const clientSearch = document.getElementById('client-search');
+    const clientSelect = document.querySelector('select[name="client_id"]');
+    if (clientSearch && clientSelect) {
+      clientSearch.addEventListener('input', function() {
+        const query = clientSearch.value.toLowerCase().trim();
+        Array.from(clientSelect.options).forEach(option => {
+          if (!option.value) {
+            option.hidden = false;
+            return;
+          }
+          const text = option.text.toLowerCase();
+          option.hidden = !text.includes(query);
+        });
+      });
+    }
 
     // Handle form submit validation (must have at least one product row)
     const orderForm = document.getElementById("order-form");

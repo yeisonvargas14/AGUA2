@@ -9,7 +9,7 @@
       <h3 class="section-title">Pedidos Registrados</h3>
       
       <!-- Status Filters -->
-      <div class="filter-pills" style="display:flex;gap:8px;flex-wrap:wrap;">
+      <div class="filter-pills" style="display:flex;gap:8px;flex-wrap:wrap; margin-bottom: 12px;">
         <a href="{% url 'vendedor_orders' %}" class="filter-pill {% if not status_filter %}active{% endif %}" style="padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; text-decoration: none; border: 1px solid var(--border-color); color: var(--text-secondary); background: var(--card-bg);">
           Todos
         </a>
@@ -29,6 +29,26 @@
           Cancelados
         </a>
       </div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <a href="?date=today{% if status_filter %}&status={{ status_filter }}{% endif %}" class="filter-pill {% if date_filter == 'today' %}active{% endif %}" style="padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; text-decoration: none; border: 1px solid var(--border-color); color: var(--text-secondary); background: var(--card-bg);">
+          Hoy
+        </a>
+        <a href="?date=week{% if status_filter %}&status={{ status_filter }}{% endif %}" class="filter-pill {% if date_filter == 'week' %}active{% endif %}" style="padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; text-decoration: none; border: 1px solid var(--border-color); color: var(--text-secondary); background: var(--card-bg);">
+          Esta Semana
+        </a>
+      </div>
+
+      <form method="get" style="margin-top: 12px; display:flex;gap:10px;flex-wrap:wrap;">
+        {% if status_filter %}
+          <input type="hidden" name="status" value="{{ status_filter }}">
+        {% endif %}
+        <label style="font-size: 13px; color: var(--text-secondary);">Desde</label>
+        <input type="date" name="start_date" value="{{ start_date }}" class="form-control" style="max-width: 170px;">
+        <label style="font-size: 13px; color: var(--text-secondary);">Hasta</label>
+        <input type="date" name="end_date" value="{{ end_date }}" class="form-control" style="max-width: 170px;">
+        <button type="submit" class="btn btn-secondary" style="padding: 8px 18px;">Aplicar</button>
+      </form>
     </div>
     
     <div style="margin-bottom: 20px;">
