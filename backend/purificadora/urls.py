@@ -38,6 +38,9 @@ urlpatterns = [
     # Driver Panel
     path('repartidor/', include('distribution.urls')),
     
+    # Seller Panel
+    path('vendedor/', include('vendedor.urls')),
+    
     # Admin Panel
     path('administrador/', include('core.urls')),
 ]

@@ -48,16 +48,4 @@ urlpatterns = [
     path('repartidores/editar/<int:pk>/', views.admin_driver_edit, name='admin_driver_edit'),
     path('repartidores/toggle/<int:pk>/', views.admin_driver_toggle, name='admin_driver_toggle_active'),
     path('repartidores/historial/<int:pk>/', views.admin_driver_history, name='admin_driver_history'),
-
-    # ─── VENDEDOR PANEL ──────────────────────────────────────────────────────
-    path('vendedor/',                              views.vendedor_dashboard,      name='vendedor_dashboard'),
-    path('vendedor/clientes/',                     views.vendedor_clients,        name='vendedor_clients'),
-    path('vendedor/clientes/nuevo/',               views.vendedor_client_create,  name='vendedor_client_create'),
-    path('vendedor/clientes/editar/<int:pk>/',     views.vendedor_client_edit,    name='vendedor_client_edit'),
-    path('vendedor/pedidos/',                      views.vendedor_orders,         name='vendedor_orders'),
-    path('vendedor/pedidos/nuevo/',                views.vendedor_order_create,   name='vendedor_order_create'),
-    path('vendedor/pedidos/<int:pk>/',             views.vendedor_order_detail,   name='vendedor_order_detail'),
-    path('vendedor/pedidos/<int:pk>/cancelar/',    views.vendedor_order_cancel,   name='vendedor_order_cancel'),
-    path('vendedor/pedidos/<int:pk>/asignar/',     views.vendedor_assign_driver,  name='vendedor_assign_driver'),
-    path('vendedor/catalogo/',                     views.vendedor_catalog,        name='vendedor_catalog'),
 ]

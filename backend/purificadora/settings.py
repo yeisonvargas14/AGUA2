@@ -74,6 +74,7 @@ INSTALLED_APPS = [
     'coupons',
     'promotions',
     'ratings',
+    'vendedor',
 ]
 
 MIDDLEWARE = [
