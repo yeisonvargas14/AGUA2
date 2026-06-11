@@ -832,23 +832,33 @@ def admin_agency_create(request):
         form = AgencyCreateForm(request.POST, request.FILES)
         if form.is_valid():
             d = form.cleaned_data
+
             # Validate unique username
             if User.objects.filter(username=d['username']).exists():
                 form.add_error('username', 'Este nombre de usuario ya está en uso.')
                 return render(request, 'admin_panel/agencia_form.html', {'form': form, 'title': 'Crear Nueva Agencia'})
 
+            # Validate unique email
+            if d.get('email') and User.objects.filter(email=d['email']).exists():
+                form.add_error('email', 'Este correo electrónico ya está registrado por otro usuario.')
+                return render(request, 'admin_panel/agencia_form.html', {'form': form, 'title': 'Crear Nueva Agencia'})
+
             # Generate random password
             raw_password = secrets.token_urlsafe(10)
 
-            # Create user with agency role
-            user = User.objects.create_user(
-                username=d['username'],
-                email=d['email'],
-                password=raw_password,
-                role=User.Roles.AGENCY,
-                is_staff=False,
-                is_superuser=False,
-            )
+            try:
+                # Create user with agency role
+                user = User.objects.create_user(
+                    username=d['username'],
+                    email=d['email'] or None,
+                    password=raw_password,
+                    role=User.Roles.AGENCY,
+                    is_staff=False,
+                    is_superuser=False,
+                )
+            except Exception as e:
+                messages.error(request, f"Error al crear el usuario de agencia: {e}")
+                return render(request, 'admin_panel/agencia_form.html', {'form': form, 'title': 'Crear Nueva Agencia'})
 
             # Determine contact email
             email_contacto = d.get('email_contacto') or d['email']
