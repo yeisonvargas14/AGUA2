@@ -3,16 +3,18 @@ from django.db import models
 
 class User(AbstractUser):
     class Roles(models.TextChoices):
-        ADMIN = 'admin', 'Administrador'
-        AGENCY = 'agency', 'Agencia'
-        CLIENT = 'client', 'Cliente'
-        DRIVER = 'driver', 'Repartidor'
+        ADMIN    = 'admin',    'Administrador'
+        VENDEDOR = 'vendedor', 'Vendedor'
+        AGENCY   = 'agency',   'Agencia'
+        CLIENT   = 'client',   'Cliente'
+        DRIVER   = 'driver',   'Repartidor'
 
     role = models.CharField(
         max_length=15,
         choices=Roles.choices,
         default=Roles.CLIENT
     )
+
     telefono = models.CharField(
         max_length=20,
         unique=True,

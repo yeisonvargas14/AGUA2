@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% block title %}Pedidos — Panel Vendedor{% endblock %}
+{% block page_title %}Gestión de Pedidos{% endblock %}
+
+{% block content %}
+<div class="content-body">
+  <div class="card">
+    <div class="section-header flex-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;margin-bottom:16px;">
+      <h3 class="section-title">Pedidos Registrados</h3>
+      
+      <!-- Status Filters -->
+      <div class="filter-pills" style="display:flex;gap:8px;flex-wrap:wrap;">
+        <a href="{% url 'vendedor_orders' %}" class="filter-pill {% if not status_filter %}active{% endif %}" style="padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; text-decoration: none; border: 1px solid var(--border-color); color: var(--text-secondary); background: var(--card-bg);">
+          Todos
+        </a>
+        <a href="?status=pending" class="filter-pill {% if status_filter == 'pending' %}active{% endif %}" style="padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; text-decoration: none; border: 1px solid var(--border-color); color: var(--text-secondary); background: var(--card-bg);">
+          Pendientes
+        </a>
+        <a href="?status=accepted" class="filter-pill {% if status_filter == 'accepted' %}active{% endif %}" style="padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; text-decoration: none; border: 1px solid var(--border-color); color: var(--text-secondary); background: var(--card-bg);">
+          Aceptados
+        </a>
+        <a href="?status=on_way" class="filter-pill {% if status_filter == 'on_way' %}active{% endif %}" style="padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; text-decoration: none; border: 1px solid var(--border-color); color: var(--text-secondary); background: var(--card-bg);">
+          En Camino
+        </a>
+        <a href="?status=delivered" class="filter-pill {% if status_filter == 'delivered' %}active{% endif %}" style="padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; text-decoration: none; border: 1px solid var(--border-color); color: var(--text-secondary); background: var(--card-bg);">
+          Entregados
+        </a>
+        <a href="?status=cancelled" class="filter-pill {% if status_filter == 'cancelled' %}active{% endif %}" style="padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; text-decoration: none; border: 1px solid var(--border-color); color: var(--text-secondary); background: var(--card-bg);">
+          Cancelados
+        </a>
+      </div>
+    </div>
+    
+    <div style="margin-bottom: 20px;">
+      <a href="{% url 'vendedor_order_create' %}" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 8px;">
+        <i class="fa-solid fa-cart-plus"></i> Registrar Nuevo Pedido
+      </a>
+    </div>
+    
+    <hr class="divider">
+
+    <div class="table-responsive mt-3">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Pedido #</th>
+            <th>Cliente</th>
+            <th>Repartidor</th>
+            <th>Total</th>
+            <th>Descuento</th>
+            <th>Estado</th>
+            <th>Fecha</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for order in orders %}
+          <tr>
+            <td><strong>#{{ order.id }}</strong></td>
+            <td>
+              <div>{{ order.client.get_full_name|default:order.client.username }}</div>
+              <small style="color: var(--text-secondary); font-size: 11px;">{{ order.client.telefono }}</small>
+            </td>
+            <td>
+              {% if order.driver %}
+                <span style="font-size: 13px;"><i class="fa-solid fa-motorcycle" style="color: var(--primary); margin-right: 6px;"></i>{{ order.driver.get_full_name|default:order.driver.username }}</span>
+              {% else %}
+                <span style="color: var(--text-secondary); font-size: 13px; font-style: italic;">Sin asignar</span>
+              {% endif %}
+            </td>
+            <td><strong>Bs. {{ order.total_amount|floatformat:2 }}</strong></td>
+            <td>
+              {% if order.discount_amount > 0 %}
+                <span style="color: var(--success); font-weight: 500;">- Bs. {{ order.discount_amount|floatformat:2 }}</span>
+              {% else %}
+                <span style="color: var(--text-secondary); font-size: 13px;">—</span>
+              {% endif %}
+            </td>
+            <td>
+              <span class="badge
+                {% if order.status == 'pending' %}badge-warning
+                {% elif order.status == 'accepted' %}badge-info
+                {% elif order.status == 'on_way' %}badge-primary
+                {% elif order.status == 'delivered' %}badge-success
+                {% elif order.status == 'cancelled' %}badge-danger
+                {% endif %}">
+                {{ order.get_status_display }}
+              </span>
+            </td>
+            <td style="color:var(--text-secondary);font-size:13px;">{{ order.created_at|date:"d/m/Y H:i" }}</td>
+            <td>
+              <a href="{% url 'vendedor_order_detail' order.id %}" class="btn btn-secondary btn-sm" title="Ver Detalle">
+                <i class="fa-solid fa-eye"></i> Ver
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="8" style="text-align:center;padding:40px;color:var(--text-secondary);">
+              <i class="fa-solid fa-cart-shopping" style="font-size:32px;margin-bottom:12px;display:block;color:var(--text-muted);"></i>
+              No se encontraron pedidos con el filtro seleccionado.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* Local styling adjustment for filter pills to override if needed */
+  .filter-pill.active {
+    background-color: var(--primary) !important;
+    color: #fff !important;
+    border-color: var(--primary) !important;
+  }
+</style>
+{% endblock %}

@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+{% block title %}Detalle Pedido #{{ order.id }} — Panel Vendedor{% endblock %}
+{% block page_title %}Detalle del Pedido #{{ order.id }}{% endblock %}
+
+{% block content %}
+<div class="content-body">
+  <a href="{% url 'vendedor_orders' %}" class="btn btn-secondary mb-4" style="display: inline-flex; align-items: center; gap: 8px; margin-bottom: 20px;">
+    <i class="fa-solid fa-arrow-left"></i> Volver a Pedidos
+  </a>
+
+  <!-- Message notifications inside template if any -->
+  {% if messages %}
+    <div style="margin-bottom: 20px;">
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}" style="padding: 12px; border-radius: 8px; margin-bottom: 10px; font-size: 14px;">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; margin-bottom: 24px; flex-wrap: wrap;">
+    
+    <!-- Left Column: Order Information -->
+    <div class="card" style="padding: 24px;">
+      <h3 class="section-title" style="margin-bottom: 12px;"><i class="fa-solid fa-info-circle" style="color: var(--primary); margin-right: 8px;"></i>Información del Pedido</h3>
+      <hr class="divider" style="margin-bottom: 16px;">
+      
+      <table class="data-table" style="width: 100%;">
+        <tbody>
+          <tr>
+            <td style="padding: 10px 0; font-weight: bold; width: 150px;">Pedido #</td>
+            <td style="padding: 10px 0;"><strong>{{ order.id }}</strong></td>
+          </tr>
+          <tr>
+            <td style="padding: 10px 0; font-weight: bold;">Estado</td>
+            <td style="padding: 10px 0;">
+              <span class="badge
+                {% if order.status == 'pending' %}badge-warning
+                {% elif order.status == 'accepted' %}badge-info
+                {% elif order.status == 'on_way' %}badge-primary
+                {% elif order.status == 'delivered' %}badge-success
+                {% elif order.status == 'cancelled' %}badge-danger
+                {% endif %}">
+                {{ order.get_status_display }}
+              </span>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 10px 0; font-weight: bold;">Cliente</td>
+            <td style="padding: 10px 0;">
+              <strong>{{ order.client.get_full_name|default:order.client.username }}</strong>
+              <div style="font-size: 12px; color: var(--text-secondary);"><i class="fa-solid fa-phone" style="margin-right: 4px;"></i>{{ order.client.telefono }}</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 10px 0; font-weight: bold;">Dirección Entrega</td>
+            <td style="padding: 10px 0; font-size: 13px; color: var(--text-secondary);">{{ order.delivery_address }}</td>
+          </tr>
+          <tr>
+            <td style="padding: 10px 0; font-weight: bold;">Fecha Registro</td>
+            <td style="padding: 10px 0; font-size: 13px; color: var(--text-secondary);">{{ order.created_at|date:"d/m/Y H:i" }}</td>
+          </tr>
+          <tr>
+            <td style="padding: 10px 0; font-weight: bold;">Total Pedido</td>
+            <td style="padding: 10px 0;"><strong style="color: var(--primary); font-size: 16px;">Bs. {{ order.total_amount|floatformat:2 }}</strong></td>
+          </tr>
+          {% if order.discount_amount > 0 %}
+            <tr>
+              <td style="padding: 10px 0; font-weight: bold; color: var(--success);">Descuento</td>
+              <td style="padding: 10px 0; color: var(--success); font-weight: bold;">
+                - Bs. {{ order.discount_amount|floatformat:2 }}
+                {% if order.coupon %} <span style="font-weight: normal; font-size: 11px; color: var(--text-secondary);">(Cupón: {{ order.coupon.code }})</span>{% endif %}
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Right Column: Driver Assignment & Actions -->
+    <div style="display: grid; grid-template-columns: 1fr; gap: 24px;">
+      
+      <!-- Driver assignment card -->
+      <div class="card" style="padding: 24px;">
+        <h3 class="section-title" style="margin-bottom: 12px;"><i class="fa-solid fa-motorcycle" style="color: var(--primary); margin-right: 8px;"></i>Asignación de Repartidor</h3>
+        <hr class="divider" style="margin-bottom: 16px;">
+
+        {% if can_assign %}
+          <form method="post" action="{% url 'vendedor_assign_driver' order.id %}">
+            {% csrf_token %}
+            <div class="form-group" style="margin-bottom: 16px;">
+              <label for="driver" style="display: block; font-weight: 500; margin-bottom: 6px; font-size: 14px;">Repartidor Activo</label>
+              <select name="driver" id="driver" class="form-control" required style="width: 100%;">
+                <option value="">— Seleccionar repartidor —</option>
+                {% for d in drivers %}
+                  <option value="{{ d.id }}" {% if order.driver and order.driver.id == d.id %}selected{% endif %}>
+                    {{ d.get_full_name|default:d.username }} ({{ d.telefono }})
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px; padding: 10px;">
+              <i class="fa-solid fa-circle-check"></i> Asignar Repartidor
+            </button>
+          </form>
+        {% else %}
+          <p style="color: var(--text-secondary); font-size: 14px; font-style: italic; margin: 10px 0 0 0;">
+            El estado actual de este pedido no permite asignar o modificar el repartidor ({{ order.get_status_display }}).
+          </p>
+        {% endif %}
+      </div>
+
+      <!-- Action Card (Cancel) -->
+      {% if can_cancel %}
+        <div class="card" style="padding: 24px; border: 1px dashed var(--danger); background-color: rgba(239, 68, 68, 0.02);">
+          <h3 class="section-title" style="margin-bottom: 12px; color: var(--danger);"><i class="fa-solid fa-circle-xmark" style="margin-right: 8px;"></i>Acciones de Control</h3>
+          <hr class="divider" style="margin-bottom: 16px;">
+          <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">
+            Como vendedor, puedes cancelar este pedido siempre que se encuentre en estado <strong>Pendiente</strong>. Se restaurará el stock de los productos.
+          </p>
+          <a href="{% url 'vendedor_order_cancel' order.id %}" class="btn btn-danger" style="display: inline-flex; align-items: center; gap: 8px; width: 100%; justify-content: center; padding: 10px;">
+            <i class="fa-solid fa-trash-can"></i> Cancelar Pedido
+          </a>
+        </div>
+      {% endif %}
+
+    </div>
+  </div>
+
+  <!-- Order Items Table -->
+  <div class="card" style="padding: 24px; margin-bottom: 24px;">
+    <h3 class="section-title" style="margin-bottom: 12px;"><i class="fa-solid fa-box" style="color: var(--primary); margin-right: 8px;"></i>Detalle de Artículos</h3>
+    <hr class="divider" style="margin-bottom: 16px;">
+    
+    <div class="table-responsive">
+      <table class="data-table" style="width: 100%;">
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th style="width: 150px;">Precio Unit.</th>
+            <th style="width: 120px; text-align: center;">Cantidad</th>
+            <th style="width: 150px; text-align: right;">Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in order.items.all %}
+            <tr>
+              <td><strong>{{ item.product.name }}</strong></td>
+              <td>Bs. {{ item.unit_price|floatformat:2 }}</td>
+              <td style="text-align: center;">{{ item.quantity }}</td>
+              <td style="text-align: right;"><strong>Bs. {{ item.subtotal|floatformat:2 }}</strong></td>
+            </tr>
+          {% endfor %}
+          <tr style="border-top: 2px solid var(--border-color); font-weight: bold;">
+            <td colspan="3" style="text-align: right; padding: 14px;">Subtotal:</td>
+            <td style="text-align: right; padding: 14px;">Bs. {{ order.total_amount|floatformat:2 }}</td>
+          </tr>
+          {% if order.discount_amount > 0 %}
+            <tr style="font-weight: bold; color: var(--success);">
+              <td colspan="3" style="text-align: right; padding: 10px;">Descuento:</td>
+              <td style="text-align: right; padding: 10px;">- Bs. {{ order.discount_amount|floatformat:2 }}</td>
+            </tr>
+          {% endif %}
+          <tr style="font-weight: 800; font-size: 16px; border-top: 1px solid var(--border-color); color: var(--primary);">
+            <td colspan="3" style="text-align: right; padding: 14px;">Total Cobrado:</td>
+            <td style="text-align: right; padding: 14px;">Bs. {{ order.total_payable|default:order.total_amount|floatformat:2 }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Order Log History -->
+  {% if order.logs.exists %}
+    <div class="card" style="padding: 24px;">
+      <h3 class="section-title" style="margin-bottom: 12px;"><i class="fa-solid fa-history" style="color: var(--primary); margin-right: 8px;"></i>Historial de Cambios</h3>
+      <hr class="divider" style="margin-bottom: 16px;">
+      
+      <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 12px;">
+        {% for log in order.logs.all|dictsortreversed:"timestamp" %}
+          <div style="border-left: 3px solid var(--primary); padding-left: 14px; padding-top: 4px; padding-bottom: 4px;">
+            <div style="display: flex; justify-content: space-between; flex-wrap: wrap; margin-bottom: 4px;">
+              <span style="font-weight: 600; font-size: 13px;">
+                {{ log.timestamp|date:"d/m/Y H:i" }}
+              </span>
+              <span style="font-size: 11px; color: var(--text-secondary);">
+                Por: <strong>{{ log.changed_by.get_full_name|default:log.changed_by.username }}</strong>
+              </span>
+            </div>
+            <div style="font-size: 13px; margin-bottom: 4px;">
+              Estado: 
+              {% if log.estado_anterior %}
+                <span class="badge badge-secondary" style="font-size: 10px; padding: 2px 6px;">{{ log.estado_anterior }}</span> &rarr;
+              {% endif %}
+              <span class="badge badge-info" style="font-size: 10px; padding: 2px 6px;">{{ log.estado_nuevo }}</span>
+            </div>
+            {% if log.nota %}
+              <div style="font-size: 13px; color: var(--text-secondary); font-style: italic; background-color: var(--card-bg-hover); padding: 6px 10px; border-radius: 6px; margin-top: 4px;">
+                "{{ log.nota }}"
+              </div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

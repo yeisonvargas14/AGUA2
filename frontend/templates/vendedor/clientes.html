@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% block title %}Clientes — Panel Vendedor{% endblock %}
+{% block page_title %}Gestión de Clientes{% endblock %}
+
+{% block content %}
+<div class="content-body">
+  <div class="card">
+    <div class="section-header flex-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
+      <h3 class="section-title">Clientes Registrados</h3>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+        <!-- Búsqueda -->
+        <form method="get" style="display:flex;gap:8px;">
+          <input type="text" name="q" value="{{ q }}" placeholder="Buscar por nombre o celular..."
+                 class="form-control" style="min-width:220px;">
+          <button type="submit" class="btn btn-secondary"><i class="fa-solid fa-search"></i></button>
+          {% if q %}<a href="{% url 'vendedor_clients' %}" class="btn btn-secondary"><i class="fa-solid fa-xmark"></i></a>{% endif %}
+        </form>
+        <a href="{% url 'vendedor_client_create' %}" class="btn btn-primary">
+          <i class="fa-solid fa-user-plus"></i> Nuevo Cliente
+        </a>
+      </div>
+    </div>
+    <hr class="divider">
+
+    <div class="table-responsive mt-3">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Nombre</th>
+            <th>Celular</th>
+            <th>Dirección</th>
+            <th>Municipio</th>
+            <th>Registro</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for client in clients %}
+          <tr>
+            <td><strong>#{{ client.id }}</strong></td>
+            <td>{{ client.get_full_name|default:"—" }}</td>
+            <td><i class="fa-solid fa-phone" style="color:var(--success);margin-right:6px;"></i>{{ client.telefono|default:"—" }}</td>
+            <td style="color:var(--text-secondary);font-size:13px;">{{ client.address|default:"—" }}</td>
+            <td style="font-size:13px;">{{ client.municipio|default:"—" }}</td>
+            <td style="color:var(--text-secondary);font-size:13px;">{{ client.date_joined|date:"d/m/Y" }}</td>
+            <td>
+              <div style="display:flex;gap:8px;">
+                <a href="{% url 'vendedor_client_edit' client.pk %}" class="btn btn-secondary btn-sm" title="Editar">
+                  <i class="fa-solid fa-pen"></i>
+                </a>
+                <a href="{% url 'vendedor_order_create' %}?client={{ client.pk }}" class="btn btn-primary btn-sm" title="Nuevo pedido para este cliente">
+                  <i class="fa-solid fa-cart-plus"></i>
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" style="text-align:center;padding:40px;color:var(--text-secondary);">
+              <i class="fa-solid fa-users" style="font-size:32px;margin-bottom:12px;display:block;color:var(--text-muted);"></i>
+              {% if q %}No se encontraron clientes para "{{ q }}".{% else %}No hay clientes registrados aún.{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

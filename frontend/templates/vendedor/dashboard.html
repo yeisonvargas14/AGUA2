@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% block title %}Panel Vendedor — Agua de Mesa Santiago{% endblock %}
+{% block page_title %}Panel de Atención{% endblock %}
+
+{% block content %}
+<div class="content-body">
+
+  <!-- Stats Row -->
+  <div class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); margin-bottom:28px;">
+
+    <div class="stat-card">
+      <div class="card-icon blue"><i class="fa-solid fa-users"></i></div>
+      <div class="card-data">
+        <span class="card-label">Total Clientes</span>
+        <span class="card-value">{{ total_clients }}</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="card-icon emerald"><i class="fa-solid fa-receipt"></i></div>
+      <div class="card-data">
+        <span class="card-label">Pedidos Hoy</span>
+        <span class="card-value">{{ orders_today }}</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="card-icon orange"><i class="fa-solid fa-clock"></i></div>
+      <div class="card-data">
+        <span class="card-label">Pendientes</span>
+        <span class="card-value">{{ pending_orders }}</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="card-icon blue"><i class="fa-solid fa-circle-check"></i></div>
+      <div class="card-data">
+        <span class="card-label">Aceptados</span>
+        <span class="card-value">{{ accepted_orders }}</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="section-card" style="margin-bottom:24px;">
+    <div class="section-header">
+      <h3 class="section-title">Acciones Rápidas</h3>
+    </div>
+    <div style="display:flex; gap:14px; flex-wrap:wrap; padding-top:4px;">
+      <a href="{% url 'vendedor_order_create' %}" class="btn btn-primary">
+        <i class="fa-solid fa-plus"></i> Nuevo Pedido
+      </a>
+      <a href="{% url 'vendedor_client_create' %}" class="btn btn-secondary">
+        <i class="fa-solid fa-user-plus"></i> Registrar Cliente
+      </a>
+      <a href="{% url 'vendedor_orders' %}?status=pending" class="btn btn-secondary">
+        <i class="fa-solid fa-clock"></i> Ver Pendientes
+      </a>
+      <a href="{% url 'vendedor_catalog' %}" class="btn btn-secondary">
+        <i class="fa-solid fa-box-open"></i> Ver Catálogo
+      </a>
+    </div>
+  </div>
+
+  <!-- Recent Orders -->
+  <div class="section-card">
+    <div class="section-header">
+      <h3 class="section-title">Últimos Pedidos</h3>
+      <a href="{% url 'vendedor_orders' %}" class="btn btn-text">Ver todos</a>
+    </div>
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>#</th><th>Cliente</th><th>Total</th><th>Estado</th><th>Fecha</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for order in recent_orders %}
+          <tr>
+            <td><strong>#{{ order.id }}</strong></td>
+            <td>{{ order.client.get_full_name|default:order.client.telefono }}</td>
+            <td>Bs. {{ order.total_amount }}</td>
+            <td>
+              <span class="badge
+                {% if order.status == 'pending' %}badge-warning
+                {% elif order.status == 'accepted' %}badge-info
+                {% elif order.status == 'on_way' %}badge-info
+                {% elif order.status == 'delivered' %}badge-success
+                {% else %}badge-alert{% endif %}">
+                {{ order.get_status_display }}
+              </span>
+            </td>
+            <td style="color:var(--text-secondary);font-size:13px;">{{ order.created_at|date:"d/m/Y H:i" }}</td>
+            <td><a href="{% url 'vendedor_order_detail' order.pk %}" class="btn btn-text btn-sm"><i class="fa-solid fa-eye"></i></a></td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text-secondary);">No hay pedidos aún.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

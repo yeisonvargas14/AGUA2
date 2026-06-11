@@ -19,6 +19,8 @@ def role_required(*roles):
                 messages.error(request, "No tienes permiso para acceder a esta sección.")
                 if request.user.role == 'admin':
                     return redirect('admin_dashboard')
+                elif request.user.role == 'vendedor':
+                    return redirect('vendedor_dashboard')
                 elif request.user.role == 'agency':
                     return redirect('agency_dashboard')
                 elif request.user.role == 'driver':
@@ -28,4 +30,3 @@ def role_required(*roles):
             return view_func(request, *args, **kwargs)
         return wrapper
     return decorator
-

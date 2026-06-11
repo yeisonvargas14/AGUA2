@@ -52,13 +52,19 @@ class CustomLoginView(DjangoLoginView):
         rol_solicitado = self.request.POST.get('rol', '')
         user = form.get_user()
         role_map = {
-            'admin': User.Roles.ADMIN,
-            'agency': User.Roles.AGENCY,
+            'admin':    User.Roles.ADMIN,
+            'vendedor': User.Roles.VENDEDOR,
+            'agency':   User.Roles.AGENCY,
         }
         if rol_solicitado:
             is_valid_superuser = (rol_solicitado == 'admin' and user.is_superuser)
             if not is_valid_superuser and user.role != role_map.get(rol_solicitado):
-                form.add_error(None, f"Esta cuenta no tiene el rol de {'Administrador' if rol_solicitado == 'admin' else 'Agencia'}.")
+                labels = {
+                    'admin': 'Administrador',
+                    'vendedor': 'Vendedor',
+                    'agency': 'Agencia',
+                }
+                form.add_error(None, f"Esta cuenta no tiene el rol de {labels.get(rol_solicitado, rol_solicitado)}.")
                 return self.form_invalid(form)
         transfer_cart(self.request, user)
         return super().form_valid(form)
@@ -148,6 +154,8 @@ def rol_redirect(request):
     user = request.user
     if user.role == User.Roles.ADMIN or user.is_superuser:
         return redirect('admin_dashboard')
+    elif user.role == User.Roles.VENDEDOR:
+        return redirect('vendedor_dashboard')
     elif user.role == User.Roles.AGENCY:
         try:
             agency = user.agencia
@@ -180,6 +188,8 @@ def dashboard_router(request):
     user = request.user
     if user.role == User.Roles.ADMIN:
         return redirect('admin_dashboard')
+    elif user.role == User.Roles.VENDEDOR:
+        return redirect('vendedor_dashboard')
     elif user.role == User.Roles.AGENCY:
         return redirect('agency_dashboard')
     elif user.role == User.Roles.DRIVER:

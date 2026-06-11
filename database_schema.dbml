@@ -1,0 +1,312 @@
+Table "django_content_type" {
+  "id" SERIAL [pk, increment]
+  "app_label" VARCHAR(100) [not null]
+  "model" VARCHAR(100) [not null]
+
+  Indexes {
+    (app_label, model) [unique]
+  }
+}
+
+Table "auth_permission" {
+  "id" SERIAL [pk, increment]
+  "name" VARCHAR(255) [not null]
+  "content_type_id" INTEGER [not null]
+  "codename" VARCHAR(100) [not null]
+
+  Indexes {
+    (content_type_id, codename) [unique]
+  }
+}
+
+Table "auth_group" {
+  "id" SERIAL [pk, increment]
+  "name" VARCHAR(150) [unique, not null]
+}
+
+Table "accounts_user" {
+  "id" SERIAL [pk, increment]
+  "password" VARCHAR(128) [not null]
+  "last_login" TIMESTAMP
+  "is_superuser" BOOLEAN [not null, default: false]
+  "is_staff" BOOLEAN [not null, default: false]
+  "is_active" BOOLEAN [not null, default: true]
+  "date_joined" TIMESTAMP [not null, default: `NOW()`]
+  "first_name" VARCHAR(150) [not null, default: '']
+  "last_name" VARCHAR(150) [not null, default: '']
+  "username" VARCHAR(150) [unique]
+  "email" VARCHAR(254) [unique]
+  "telefono" VARCHAR(20) [unique]
+  "role" VARCHAR(15) [not null, default: 'client']
+  "address" VARCHAR(255) [not null, default: '']
+  "municipio" VARCHAR(100) [not null, default: '']
+  "avatar" VARCHAR(100)
+}
+
+Table "accounts_user_groups" {
+  "id" SERIAL [pk, increment]
+  "user_id" INTEGER [not null]
+  "group_id" INTEGER [not null]
+
+  Indexes {
+    (user_id, group_id) [unique]
+  }
+}
+
+Table "accounts_user_user_permissions" {
+  "id" SERIAL [pk, increment]
+  "user_id" INTEGER [not null]
+  "permission_id" INTEGER [not null]
+
+  Indexes {
+    (user_id, permission_id) [unique]
+  }
+}
+
+Table "accounts_passwordresetcode" {
+  "id" SERIAL [pk, increment]
+  "user_id" INTEGER [not null]
+  "telefono" VARCHAR(20) [not null]
+  "codigo" VARCHAR(6) [not null]
+  "creado_en" TIMESTAMP [not null, default: `NOW()`]
+  "expira_en" TIMESTAMP [not null]
+  "usado" BOOLEAN [not null, default: false]
+
+  Indexes {
+    (telefono, codigo) [name: "idx_reset_code_telefono_codigo"]
+  }
+}
+
+Table "accounts_driverprofile" {
+  "id" SERIAL [pk, increment]
+  "user_id" INTEGER [unique, not null]
+  "vehicle" VARCHAR(20) [not null, default: 'moto']
+  "phone" VARCHAR(20) [not null, default: '']
+  "active" BOOLEAN [not null, default: true]
+  "rating_avg" FLOAT [not null, default: 0.0]
+  "current_latitude" DECIMAL(10,6)
+  "current_longitude" DECIMAL(10,6)
+}
+
+Table "products_category" {
+  "id" SERIAL [pk, increment]
+  "name" VARCHAR(100) [unique, not null]
+  "description" TEXT [not null, default: '']
+}
+
+Table "products_product" {
+  "id" SERIAL [pk, increment]
+  "name" VARCHAR(100) [not null]
+  "description" TEXT [not null, default: '']
+  "price" DECIMAL(10,2) [not null]
+  "stock" INTEGER [not null, check: `stock >= 0`, default: 0]
+  "image" VARCHAR(100)
+  "is_active" BOOLEAN [not null, default: true]
+  "created_at" TIMESTAMP [not null, default: `NOW()`]
+  "category_id" INTEGER
+}
+
+Table "agencies_agency" {
+  "id" SERIAL [pk, increment]
+  "usuario_id" INTEGER [unique, not null]
+  "nombre_empresa" VARCHAR(200) [not null, default: '']
+  "direccion" TEXT [not null, default: '']
+  "telefono" VARCHAR(20) [not null, default: '']
+  "email_contacto" VARCHAR(254) [not null, default: '']
+  "fecha_creacion" TIMESTAMP [not null, default: `NOW()`]
+  "activa" BOOLEAN [not null, default: true]
+  "notas_internas" TEXT [not null, default: '']
+  "logo" VARCHAR(100)
+  "latitud" DECIMAL(9,6)
+  "longitud" DECIMAL(9,6)
+}
+
+Table "coupons_coupon" {
+  "id" SERIAL [pk, increment]
+  "code" VARCHAR(20) [unique, not null]
+  "user_client_id" INTEGER [not null]
+  "discount_percentage" INTEGER [not null, check: `discount_percentage > 0 AND discount_percentage <= 100`]
+  "expires_at" TIMESTAMP [not null]
+  "used" BOOLEAN [not null, default: false]
+  "created_at" TIMESTAMP [not null, default: `NOW()`]
+}
+
+Table "promotions_promotion" {
+  "id" SERIAL [pk, increment]
+  "name" VARCHAR(100) [not null]
+  "description" TEXT [not null, default: '']
+  "discount_percentage" INTEGER [not null, check: `discount_percentage > 0`]
+  "start_date" TIMESTAMP [not null]
+  "end_date" TIMESTAMP [not null]
+  "is_active" BOOLEAN [not null, default: true]
+}
+
+Table "promotions_promotion_products" {
+  "id" SERIAL [pk, increment]
+  "promotion_id" INTEGER [not null]
+  "product_id" INTEGER [not null]
+
+  Indexes {
+    (promotion_id, product_id) [unique]
+  }
+}
+
+Table "orders_cart" {
+  "id" SERIAL [pk, increment]
+  "user_id" INTEGER
+  "session_key" VARCHAR(40) [unique]
+  "created_at" TIMESTAMP [not null, default: `NOW()`]
+  "updated_at" TIMESTAMP [not null, default: `NOW()`]
+
+  Indexes {
+    session_key [name: "idx_cart_session_key"]
+  }
+}
+
+Table "orders_cartitem" {
+  "id" SERIAL [pk, increment]
+  "cart_id" INTEGER [not null]
+  "product_id" INTEGER [not null]
+  "quantity" INTEGER [not null, check: `quantity > 0`, default: 1]
+  "price_at_time" DECIMAL(10,2) [not null, default: 0]
+  "price" DECIMAL(10,2) [not null, default: 0]
+}
+
+Table "orders_order" {
+  "id" SERIAL [pk, increment]
+  "client_id" INTEGER [not null]
+  "driver_id" INTEGER
+  "agency_id" INTEGER
+  "coupon_id" INTEGER
+  "status" VARCHAR(15) [not null, default: 'pending']
+  "total_amount" DECIMAL(10,2) [not null, default: 0]
+  "discount_amount" DECIMAL(10,2) [not null, default: 0]
+  "delivery_address" VARCHAR(255) [not null, default: '']
+  "delivery_lat" DECIMAL(10,6)
+  "delivery_lng" DECIMAL(10,6)
+  "created_at" TIMESTAMP [not null, default: `NOW()`]
+  "updated_at" TIMESTAMP [not null, default: `NOW()`]
+}
+
+Table "orders_orderitem" {
+  "id" SERIAL [pk, increment]
+  "order_id" INTEGER [not null]
+  "product_id" INTEGER [not null]
+  "quantity" INTEGER [not null, check: `quantity > 0`, default: 1]
+  "unit_price" DECIMAL(10,2) [not null]
+}
+
+Table "orders_orderlog" {
+  "id" SERIAL [pk, increment]
+  "order_id" INTEGER [not null]
+  "estado_anterior" VARCHAR(15)
+  "estado_nuevo" VARCHAR(15) [not null]
+  "changed_by_id" INTEGER
+  "timestamp" TIMESTAMP [not null, default: `NOW()`]
+  "nota" TEXT
+}
+
+Table "inventory_inventorylog" {
+  "id" SERIAL [pk, increment]
+  "product_id" INTEGER [not null]
+  "user_id" INTEGER
+  "quantity" INTEGER [not null, check: `quantity > 0`]
+  "movement_type" VARCHAR(3) [not null]
+  "reason" VARCHAR(255) [not null, default: '']
+  "created_at" TIMESTAMP [not null, default: `NOW()`]
+}
+
+Table "distribution_delivery" {
+  "id" SERIAL [pk, increment]
+  "order_id" INTEGER [unique, not null]
+  "driver_id" INTEGER
+  "assigned_at" TIMESTAMP [not null, default: `NOW()`]
+  "delivered_at" TIMESTAMP
+  "notes" TEXT [not null, default: '']
+}
+
+Table "notifications_notification" {
+  "id" SERIAL [pk, increment]
+  "user_id" INTEGER [not null]
+  "order_id" INTEGER
+  "message" TEXT [not null]
+  "is_read" BOOLEAN [not null, default: false]
+  "created_at" TIMESTAMP [not null, default: `NOW()`]
+}
+
+Table "ratings_rating" {
+  "id" SERIAL [pk, increment]
+  "user_client_id" INTEGER [not null]
+  "order_id" INTEGER [not null]
+  "product_id" INTEGER
+  "driver_id" INTEGER
+  "score" INTEGER [not null, check: `score >= 1 AND score <= 5`]
+  "comment" TEXT [not null, default: '']
+  "created_at" TIMESTAMP [not null, default: `NOW()`]
+}
+
+Ref:"django_content_type"."id" < "auth_permission"."content_type_id" [delete: cascade]
+
+Ref:"accounts_user"."id" < "accounts_user_groups"."user_id" [delete: cascade]
+
+Ref:"auth_group"."id" < "accounts_user_groups"."group_id" [delete: cascade]
+
+Ref:"accounts_user"."id" < "accounts_user_user_permissions"."user_id" [delete: cascade]
+
+Ref:"auth_permission"."id" < "accounts_user_user_permissions"."permission_id" [delete: cascade]
+
+Ref:"accounts_user"."id" < "accounts_passwordresetcode"."user_id" [delete: cascade]
+
+Ref:"accounts_user"."id" < "accounts_driverprofile"."user_id" [delete: cascade]
+
+Ref:"products_category"."id" < "products_product"."category_id" [delete: set null]
+
+Ref:"accounts_user"."id" < "agencies_agency"."usuario_id" [delete: cascade]
+
+Ref:"accounts_user"."id" < "coupons_coupon"."user_client_id" [delete: cascade]
+
+Ref:"promotions_promotion"."id" < "promotions_promotion_products"."promotion_id" [delete: cascade]
+
+Ref:"products_product"."id" < "promotions_promotion_products"."product_id" [delete: cascade]
+
+Ref:"accounts_user"."id" < "orders_cart"."user_id" [delete: cascade]
+
+Ref:"orders_cart"."id" < "orders_cartitem"."cart_id" [delete: cascade]
+
+Ref:"products_product"."id" < "orders_cartitem"."product_id" [delete: cascade]
+
+Ref:"accounts_user"."id" < "orders_order"."client_id" [delete: cascade]
+
+Ref:"accounts_user"."id" < "orders_order"."driver_id" [delete: set null]
+
+Ref:"agencies_agency"."id" < "orders_order"."agency_id" [delete: set null]
+
+Ref:"coupons_coupon"."id" < "orders_order"."coupon_id" [delete: set null]
+
+Ref:"orders_order"."id" < "orders_orderitem"."order_id" [delete: cascade]
+
+Ref:"products_product"."id" < "orders_orderitem"."product_id" [delete: restrict]
+
+Ref:"orders_order"."id" < "orders_orderlog"."order_id" [delete: cascade]
+
+Ref:"accounts_user"."id" < "orders_orderlog"."changed_by_id" [delete: set null]
+
+Ref:"products_product"."id" < "inventory_inventorylog"."product_id" [delete: cascade]
+
+Ref:"accounts_user"."id" < "inventory_inventorylog"."user_id" [delete: set null]
+
+Ref:"orders_order"."id" < "distribution_delivery"."order_id" [delete: cascade]
+
+Ref:"accounts_user"."id" < "distribution_delivery"."driver_id" [delete: set null]
+
+Ref:"accounts_user"."id" < "notifications_notification"."user_id" [delete: cascade]
+
+Ref:"orders_order"."id" < "notifications_notification"."order_id" [delete: cascade]
+
+Ref:"accounts_user"."id" < "ratings_rating"."user_client_id" [delete: cascade]
+
+Ref:"orders_order"."id" < "ratings_rating"."order_id" [delete: cascade]
+
+Ref:"products_product"."id" < "ratings_rating"."product_id" [delete: cascade]
+
+Ref:"accounts_user"."id" < "ratings_rating"."driver_id" [delete: cascade]

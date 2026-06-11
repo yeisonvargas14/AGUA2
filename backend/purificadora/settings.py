@@ -59,6 +59,8 @@ INSTALLED_APPS = [
     # Third party
     'rest_framework',
     'widget_tweaks',
+    'cloudinary',
+    'cloudinary_storage',
     
     # Local apps
     'accounts',
@@ -180,6 +182,14 @@ STATIC_ROOT = BASE_DIR.parent / 'frontend' / 'staticfiles'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR.parent / 'frontend' / 'media'
+
+# Cloudinary configuration for cloud media storage
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME', 'duk0t4y3p'),
+    'API_KEY': os.environ.get('CLOUDINARY_API_KEY', '134725759352973'),
+    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET', 'AlIhRkZEeuPEF3pYd2ulpWH3xK4'),
+}
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

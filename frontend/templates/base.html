@@ -3,7 +3,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <meta name="description" content="Agua de Mesa Santiago — Sistema de Gestión de Purificadora de Agua. Pedidos, entregas y distribución en Comarapa.">
     <title>{% block title %}Agua de Mesa Santiago — Purificadora de Agua{% endblock %}</title>
     <!-- Favicon -->
@@ -127,6 +127,29 @@
                     <a href="{% url 'driver_history' %}" class="menu-item {% if request.resolver_match.url_name == 'driver_history' %}active{% endif %}">
                         <i class="fa-solid fa-clock-rotate-left"></i>
                         <span>Historial</span>
+                    </a>
+
+                <!-- VENDEDOR Menu -->
+                {% elif user.role == 'vendedor' %}
+                    <a href="{% url 'vendedor_dashboard' %}" class="menu-item {% if request.resolver_match.url_name == 'vendedor_dashboard' %}active{% endif %}">
+                        <i class="fa-solid fa-gauge-high"></i>
+                        <span>Panel</span>
+                    </a>
+                    <a href="{% url 'vendedor_clients' %}" class="menu-item {% if 'vendedor_client' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fa-solid fa-users"></i>
+                        <span>Clientes</span>
+                    </a>
+                    <a href="{% url 'vendedor_orders' %}" class="menu-item {% if 'vendedor_order' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fa-solid fa-cart-shopping"></i>
+                        <span>Pedidos</span>
+                    </a>
+                    <a href="{% url 'vendedor_order_create' %}" class="menu-item {% if request.resolver_match.url_name == 'vendedor_order_create' %}active{% endif %}">
+                        <i class="fa-solid fa-plus-circle"></i>
+                        <span>Nuevo Pedido</span>
+                    </a>
+                    <a href="{% url 'vendedor_catalog' %}" class="menu-item {% if request.resolver_match.url_name == 'vendedor_catalog' %}active{% endif %}">
+                        <i class="fa-solid fa-box-open"></i>
+                        <span>Catálogo</span>
                     </a>
 
                 <!-- CLIENT Menu -->

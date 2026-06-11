@@ -1,0 +1,292 @@
+{% extends 'base.html' %}
+{% block title %}Nuevo Pedido — Panel Vendedor{% endblock %}
+{% block page_title %}Registrar Nuevo Pedido{% endblock %}
+
+{% block content %}
+<div class="content-body">
+  <a href="{% url 'vendedor_orders' %}" class="btn btn-secondary mb-4" style="display: inline-flex; align-items: center; gap: 8px; margin-bottom: 20px;">
+    <i class="fa-solid fa-arrow-left"></i> Volver a Pedidos
+  </a>
+
+  <form method="post" id="order-form" novalidate>
+    {% csrf_token %}
+
+    <div style="display: grid; grid-template-columns: 1fr; gap: 24px; max-width: 1100px; margin: 0 auto;">
+      
+      <!-- Seccion 1: Datos de Pedido -->
+      <div class="card" style="padding: 24px;">
+        <h3 class="section-title" style="margin-bottom: 8px;"><i class="fa-solid fa-file-invoice" style="color: var(--primary); margin-right: 8px;"></i>Datos del Pedido</h3>
+        <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 20px;">Selecciona el cliente y especifica los detalles de entrega y cupones/promociones.</p>
+        <hr class="divider" style="margin-bottom: 20px;">
+
+        {% if form.errors %}
+          <div class="alert alert-danger" style="background-color: rgba(239, 68, 68, 0.1); border: 1px solid var(--danger); color: var(--danger); padding: 12px; border-radius: 8px; margin-bottom: 20px;">
+            <p style="margin: 0; font-weight: bold;">Por favor, corrige los siguientes errores:</p>
+            <ul style="margin: 4px 0 0 20px; padding: 0;">
+              {% for field, errors in form.errors.items %}
+                {% for error in errors %}
+                  <li>{{ field }}: {{ error }}</li>
+                {% endfor %}
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+          <div class="form-group">
+            <label for="id_client_id" style="display: block; font-weight: 500; margin-bottom: 6px; font-size: 14px;">Cliente *</label>
+            {{ form.client_id }}
+            <p style="color: var(--text-secondary); font-size: 11px; margin-top: 4px; margin-bottom: 0;">
+              ¿El cliente no está registrado? <a href="{% url 'vendedor_client_create' %}" target="_blank" style="color: var(--primary); font-weight: 500;">Registrar cliente nuevo</a>
+            </p>
+          </div>
+
+          <div class="form-group">
+            <label for="id_delivery_address" style="display: block; font-weight: 500; margin-bottom: 6px; font-size: 14px;">Dirección de Entrega</label>
+            {{ form.delivery_address }}
+            <p style="color: var(--text-secondary); font-size: 11px; margin-top: 4px; margin-bottom: 0;">
+              Dejar en blanco para usar la dirección registrada del cliente.
+            </p>
+          </div>
+
+          <div class="form-group">
+            <label for="id_coupon_code" style="display: block; font-weight: 500; margin-bottom: 6px; font-size: 14px;">Código de Cupón (opcional)</label>
+            {{ form.coupon_code }}
+          </div>
+
+          <div class="form-group">
+            <label for="id_promotion_id" style="display: block; font-weight: 500; margin-bottom: 6px; font-size: 14px;">Promoción Activa (opcional)</label>
+            {{ form.promotion_id }}
+            <p style="color: var(--text-secondary); font-size: 11px; margin-top: 4px; margin-bottom: 0;">
+              Aplica descuentos porcentuales en productos incluidos.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Seccion 2: Seleccion de Productos -->
+      <div class="card" style="padding: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <h3 class="section-title" style="margin: 0;"><i class="fa-solid fa-box-open" style="color: var(--primary); margin-right: 8px;"></i>Productos del Pedido</h3>
+          <button type="button" id="add-product-btn" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px;">
+            <i class="fa-solid fa-plus"></i> Añadir Producto
+          </button>
+        </div>
+        <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 20px;">Agrega productos al pedido y define las cantidades. El stock se restará al guardar.</p>
+        <hr class="divider" style="margin-bottom: 20px;">
+
+        <div class="table-responsive">
+          <table class="data-table" id="products-table" style="width: 100%;">
+            <thead>
+              <tr>
+                <th>Producto *</th>
+                <th style="width: 140px;">Precio Unit.</th>
+                <th style="width: 120px;">Stock</th>
+                <th style="width: 110px;">Cantidad *</th>
+                <th style="width: 140px;">Subtotal</th>
+                <th style="width: 60px;"></th>
+              </tr>
+            </thead>
+            <tbody id="products-tbody">
+              <!-- Dynamically added rows will go here -->
+            </tbody>
+          </table>
+        </div>
+
+        <div id="no-products-alert" style="text-align: center; padding: 32px; color: var(--text-secondary); border: 2px dashed var(--border-color); border-radius: 8px; margin-top: 16px;">
+          <i class="fa-solid fa-basket-shopping" style="font-size: 28px; color: var(--text-muted); margin-bottom: 8px; display: block;"></i>
+          Ningún producto agregado aún. Haz clic en "Añadir Producto" para comenzar.
+        </div>
+      </div>
+
+      <!-- Seccion 3: Totales y Confirmacion -->
+      <div class="card" style="padding: 24px; max-width: 500px; margin-left: auto; width: 100%;">
+        <h3 class="section-title" style="margin-bottom: 12px;"><i class="fa-solid fa-calculator" style="color: var(--primary); margin-right: 8px;"></i>Resumen Estimado</h3>
+        <hr class="divider" style="margin-bottom: 16px;">
+
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; color: var(--text-secondary);">
+          <span>Subtotal Productos:</span>
+          <span id="summary-subtotal">Bs. 0.00</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 16px; font-size: 14px; color: var(--text-secondary);">
+          <span>Descuento Promociones / Cupones:</span>
+          <span style="color: var(--success); font-weight: 500;">Calculado al procesar</span>
+        </div>
+        <hr class="divider" style="margin-bottom: 16px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 24px;">
+          <span style="font-size: 18px; font-weight: 600;">Total Estimado:</span>
+          <span id="summary-total" style="font-size: 20px; font-weight: 700; color: var(--primary);">Bs. 0.00</span>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px; padding: 12px; font-size: 15px; font-weight: 600;">
+          <i class="fa-solid fa-circle-check"></i> Crear Pedido
+        </button>
+      </div>
+
+    </div>
+  </form>
+</div>
+
+<!-- Template Row (Hidden) -->
+<table style="display: none;">
+  <tr id="row-template">
+    <td>
+      <select name="product_id" class="form-control product-select" required style="width: 100%;">
+        <option value="" data-price="0" data-stock="0">— Seleccionar producto —</option>
+        {% for product in products %}
+          <option value="{{ product.id }}" data-price="{{ product.price }}" data-stock="{{ product.stock }}">{{ product.name }}</option>
+        {% endfor %}
+      </select>
+    </td>
+    <td class="unit-price" style="vertical-align: middle; font-size: 14px; color: var(--text-secondary);">Bs. 0.00</td>
+    <td class="stock-available" style="vertical-align: middle; font-size: 14px; color: var(--text-secondary);">0</td>
+    <td>
+      <input type="number" name="quantity" class="form-control quantity-input" min="1" value="1" required disabled style="width: 80px;">
+    </td>
+    <td class="row-total" style="vertical-align: middle; font-weight: 600; font-size: 14px;">Bs. 0.00</td>
+    <td style="text-align: center; vertical-align: middle;">
+      <button type="button" class="btn btn-danger btn-sm remove-row-btn" style="padding: 6px 10px; border-radius: 6px;">
+        <i class="fa-solid fa-trash"></i>
+      </button>
+    </td>
+  </tr>
+</table>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const productsTbody = document.getElementById("products-tbody");
+    const addProductBtn = document.getElementById("add-product-btn");
+    const noProductsAlert = document.getElementById("no-products-alert");
+    const rowTemplate = document.getElementById("row-template");
+    const summarySubtotal = document.getElementById("summary-subtotal");
+    const summaryTotal = document.getElementById("summary-total");
+
+    // Auto-preselect client from URL param (?client=ID)
+    const urlParams = new URLSearchParams(window.location.search);
+    const clientParam = urlParams.get('client');
+    if (clientParam) {
+      const clientSelect = document.querySelector("select[name='client_id']");
+      if (clientSelect) {
+        clientSelect.value = clientParam;
+      }
+    }
+
+    function toggleNoProductsAlert() {
+      if (productsTbody.children.length === 0) {
+        noProductsAlert.style.display = "block";
+      } else {
+        noProductsAlert.style.display = "none";
+      }
+    }
+
+    function calculateTotals() {
+      let grandTotal = 0;
+      const rows = productsTbody.querySelectorAll("tr");
+      
+      rows.forEach(row => {
+        const select = row.querySelector(".product-select");
+        const qtyInput = row.querySelector(".quantity-input");
+        const rowTotalSpan = row.querySelector(".row-total");
+        
+        const selectedOption = select.options[select.selectedIndex];
+        const price = parseFloat(selectedOption.getAttribute("data-price") || 0);
+        const qty = parseInt(qtyInput.value || 0);
+        const subtotal = price * qty;
+        
+        rowTotalSpan.textContent = `Bs. ${subtotal.toFixed(2)}`;
+        grandTotal += subtotal;
+      });
+
+      summarySubtotal.textContent = `Bs. ${grandTotal.toFixed(2)}`;
+      summaryTotal.textContent = `Bs. ${grandTotal.toFixed(2)}`;
+    }
+
+    addProductBtn.addEventListener("click", function() {
+      // Clone template row
+      const newRow = rowTemplate.cloneNode(true);
+      newRow.removeAttribute("id"); // Remove id to avoid duplicate ID issues
+      
+      // Setup event listeners for new row elements
+      const select = newRow.querySelector(".product-select");
+      const qtyInput = newRow.querySelector(".quantity-input");
+      const removeBtn = newRow.querySelector(".remove-row-btn");
+      const unitPriceTd = newRow.querySelector(".unit-price");
+      const stockTd = newRow.querySelector(".stock-available");
+
+      select.addEventListener("change", function() {
+        const selectedOption = select.options[select.selectedIndex];
+        const price = parseFloat(selectedOption.getAttribute("data-price") || 0);
+        const stock = parseInt(selectedOption.getAttribute("data-stock") || 0);
+        
+        unitPriceTd.textContent = `Bs. ${price.toFixed(2)}`;
+        stockTd.textContent = stock;
+        
+        if (select.value === "") {
+          qtyInput.disabled = true;
+          qtyInput.value = 1;
+        } else {
+          qtyInput.disabled = false;
+          qtyInput.max = stock;
+          qtyInput.min = 1;
+          if (parseInt(qtyInput.value) > stock) {
+            qtyInput.value = stock;
+          }
+        }
+        calculateTotals();
+      });
+
+      qtyInput.addEventListener("input", function() {
+        const maxStock = parseInt(qtyInput.max || 9999);
+        const val = parseInt(qtyInput.value);
+        if (val > maxStock) {
+          qtyInput.value = maxStock;
+        }
+        if (val < 1 || isNaN(val)) {
+          qtyInput.value = 1;
+        }
+        calculateTotals();
+      });
+
+      removeBtn.addEventListener("click", function() {
+        newRow.remove();
+        toggleNoProductsAlert();
+        calculateTotals();
+      });
+
+      // Append row and update visibility
+      productsTbody.appendChild(newRow);
+      toggleNoProductsAlert();
+      calculateTotals();
+    });
+
+    // Handle form submit validation (must have at least one product row)
+    const orderForm = document.getElementById("order-form");
+    orderForm.addEventListener("submit", function(e) {
+      const rows = productsTbody.querySelectorAll("tr");
+      if (rows.length === 0) {
+        e.preventDefault();
+        alert("Debes agregar al menos un producto al pedido.");
+        return;
+      }
+
+      let valid = true;
+      rows.forEach(row => {
+        const select = row.querySelector(".product-select");
+        if (select.value === "") {
+          valid = false;
+        }
+      });
+
+      if (!valid) {
+        e.preventDefault();
+        alert("Por favor selecciona un producto válido en cada fila.");
+      }
+    });
+
+    toggleNoProductsAlert();
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}Cancelar Pedido #{{ order.id }} — Panel Vendedor{% endblock %}
+{% block page_title %}Cancelar Pedido #{{ order.id }}{% endblock %}
+
+{% block content %}
+<div class="content-body">
+  <div class="card" style="max-width: 500px; margin: 40px auto; padding: 32px; border: 1px solid var(--danger); text-align: center;">
+    
+    <div style="color: var(--danger); font-size: 54px; margin-bottom: 16px;">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+    </div>
+    
+    <h3 class="section-title" style="margin-bottom: 12px; color: var(--danger);">¿Confirmar Cancelación?</h3>
+    <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 24px; line-height: 1.5;">
+      ¿Estás seguro de que deseas cancelar el <strong>Pedido #{{ order.id }}</strong>?<br>
+      Esta acción es irreversible y restaurará el stock de los productos asociados en el inventario.
+    </p>
+
+    <!-- Resumen del Pedido -->
+    <div style="background-color: var(--card-bg-hover); padding: 16px; border-radius: 8px; margin-bottom: 24px; text-align: left; font-size: 13px;">
+      <div style="margin-bottom: 6px;"><strong>Cliente:</strong> {{ order.client.get_full_name|default:order.client.username }}</div>
+      <div style="margin-bottom: 6px;"><strong>Celular:</strong> {{ order.client.telefono }}</div>
+      <div><strong>Total Pedido:</strong> Bs. {{ order.total_amount|floatformat:2 }}</div>
+    </div>
+
+    <form method="post" style="display: flex; gap: 12px; justify-content: center;">
+      {% csrf_token %}
+      <a href="{% url 'vendedor_order_detail' order.id %}" class="btn btn-secondary" style="flex: 1; padding: 10px 0;">
+        <i class="fa-solid fa-arrow-left"></i> No, Volver
+      </a>
+      <button type="submit" class="btn btn-danger" style="flex: 1; padding: 10px 0; display: flex; align-items: center; justify-content: center; gap: 8px;">
+        <i class="fa-solid fa-circle-xmark"></i> Sí, Cancelar
+      </button>
+    </form>
+    
+  </div>
+</div>
+{% endblock %}

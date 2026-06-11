@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }} — Panel Vendedor{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="content-body">
+  <a href="{% url 'vendedor_clients' %}" class="btn btn-secondary mb-4" style="display: inline-flex; align-items: center; gap: 8px; margin-bottom: 20px;">
+    <i class="fa-solid fa-arrow-left"></i> Volver a Clientes
+  </a>
+
+  <div class="card" style="max-width: 600px; margin: 0 auto; padding: 24px;">
+    <h3 class="section-title" style="margin-bottom: 8px;">{{ title }}</h3>
+    <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 20px;">
+      {% if is_create %}
+        Registra los datos del nuevo cliente. Si no asignas contraseña, se generará una por defecto.
+      {% else %}
+        Modifica la información de contacto y dirección del cliente.
+      {% endif %}
+    </p>
+    <hr class="divider" style="margin-bottom: 24px;">
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger" style="background-color: rgba(239, 68, 68, 0.1); border: 1px solid var(--danger); color: var(--danger); padding: 12px; border-radius: 8px; margin-bottom: 20px;">
+          {% for error in form.non_field_errors %}
+            <p style="margin: 0; font-size: 14px;">{{ error }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+        <div class="form-group" style="grid-column: span 1;">
+          <label for="id_first_name" style="display: block; font-weight: 500; margin-bottom: 6px; font-size: 14px;">Nombre *</label>
+          {{ form.first_name }}
+          {% if form.first_name.errors %}
+            <span style="color: var(--danger); font-size: 12px; display: block; margin-top: 4px;">{{ form.first_name.errors.0 }}</span>
+          {% endif %}
+        </div>
+
+        <div class="form-group" style="grid-column: span 1;">
+          <label for="id_last_name" style="display: block; font-weight: 500; margin-bottom: 6px; font-size: 14px;">Apellido</label>
+          {{ form.last_name }}
+          {% if form.last_name.errors %}
+            <span style="color: var(--danger); font-size: 12px; display: block; margin-top: 4px;">{{ form.last_name.errors.0 }}</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+        <div class="form-group" style="grid-column: span 1;">
+          <label for="id_telefono" style="display: block; font-weight: 500; margin-bottom: 6px; font-size: 14px;">Celular *</label>
+          {{ form.telefono }}
+          {% if form.telefono.errors %}
+            <span style="color: var(--danger); font-size: 12px; display: block; margin-top: 4px;">{{ form.telefono.errors.0 }}</span>
+          {% endif %}
+        </div>
+
+        <div class="form-group" style="grid-column: span 1;">
+          <label for="id_password" style="display: block; font-weight: 500; margin-bottom: 6px; font-size: 14px;">
+            Contraseña {% if not is_create %}(opcional){% endif %}
+          </label>
+          {{ form.password }}
+          <p style="color: var(--text-secondary); font-size: 11px; margin-top: 4px; margin-bottom: 0; line-height: 1.3;">
+            {% if is_create %}
+              Opcional. Si se deja en blanco, se creará una contraseña aleatoria.
+            {% else %}
+              Opcional. Dejar en blanco para mantener la contraseña actual.
+            {% endif %}
+          </p>
+          {% if form.password.errors %}
+            <span style="color: var(--danger); font-size: 12px; display: block; margin-top: 4px;">{{ form.password.errors.0 }}</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 20px;">
+        <label for="id_municipio" style="display: block; font-weight: 500; margin-bottom: 6px; font-size: 14px;">Municipio</label>
+        {{ form.municipio }}
+        {% if form.municipio.errors %}
+          <span style="color: var(--danger); font-size: 12px; display: block; margin-top: 4px;">{{ form.municipio.errors.0 }}</span>
+        {% endif %}
+      </div>
+
+      <div class="form-group" style="margin-bottom: 28px;">
+        <label for="id_address" style="display: block; font-weight: 500; margin-bottom: 6px; font-size: 14px;">Dirección de Entrega</label>
+        {{ form.address }}
+        {% if form.address.errors %}
+          <span style="color: var(--danger); font-size: 12px; display: block; margin-top: 4px;">{{ form.address.errors.0 }}</span>
+        {% endif %}
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px; padding: 12px;">
+        <i class="fa-solid fa-floppy-disk"></i> Guardar Cliente
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}

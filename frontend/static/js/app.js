@@ -12,7 +12,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (sidebar && sidebarOverlay) {
             sidebar.classList.add('open');
             sidebarOverlay.classList.add('active');
-            document.body.style.overflow = 'hidden'; // prevent background scroll
+            // Lock background scroll only while sidebar is open
+            document.body.style.overflow = 'hidden';
+            document.body.style.position = 'fixed';
+            document.body.style.width = '100%';
         }
     }
 
@@ -20,9 +23,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (sidebar && sidebarOverlay) {
             sidebar.classList.remove('open');
             sidebarOverlay.classList.remove('active');
-            document.body.style.overflow = '';
+            // CRITICAL: restore scroll — use 'auto' not '' to avoid inheritance conflicts
+            document.body.style.overflow = 'auto';
+            document.body.style.position = '';
+            document.body.style.width = '';
         }
     }
+
+    // Safety net: on page load, always ensure body is scrollable
+    document.body.style.overflow = 'auto';
+    document.body.style.position = '';
 
     if (sidebarToggle) {
         sidebarToggle.addEventListener('click', openSidebar);
