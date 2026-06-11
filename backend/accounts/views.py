@@ -10,7 +10,7 @@ from django import forms
 from .models import User, PasswordResetCode
 from .forms import (
     ClientRegisterForm,
-    TelefonoAuthenticationForm,
+    UsernameAuthenticationForm,
     PasswordResetRequestForm,
     PasswordResetVerifyForm,
     SetNewPasswordForm,
@@ -34,7 +34,7 @@ def register_view(request):
             Cart.objects.get_or_create(user=user)
             transfer_cart(request, user)
 
-            login(request, user, backend='accounts.backends.TelefonoBackend')
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             messages.success(request, f"¡Bienvenido a Agua de Mesa Santiago, {user.first_name}! Tu cuenta ha sido creada exitosamente.")
             return redirect('client_dashboard')
         else:
@@ -46,32 +46,16 @@ def register_view(request):
 
 class CustomLoginView(DjangoLoginView):
     template_name = 'auth/login.html'
-    authentication_form = TelefonoAuthenticationForm
+    authentication_form = UsernameAuthenticationForm
 
     def form_valid(self, form):
-        rol_solicitado = self.request.POST.get('rol', '')
         user = form.get_user()
-        role_map = {
-            'admin':    User.Roles.ADMIN,
-            'vendedor': User.Roles.VENDEDOR,
-            'agency':   User.Roles.AGENCY,
-        }
-        if rol_solicitado:
-            is_valid_superuser = (rol_solicitado == 'admin' and user.is_superuser)
-            if not is_valid_superuser and user.role != role_map.get(rol_solicitado):
-                labels = {
-                    'admin': 'Administrador',
-                    'vendedor': 'Vendedor',
-                    'agency': 'Agencia',
-                }
-                form.add_error(None, f"Esta cuenta no tiene el rol de {labels.get(rol_solicitado, rol_solicitado)}.")
-                return self.form_invalid(form)
         transfer_cart(self.request, user)
         return super().form_valid(form)
 
     def get_success_url(self):
         user = self.request.user
-        messages.success(self.request, f"¡Hola de nuevo, {user.first_name or user.username or user.telefono}!")
+        messages.success(self.request, f"¡Hola de nuevo, {user.first_name or user.username}!")
         return reverse('rol_redirect')
 
 

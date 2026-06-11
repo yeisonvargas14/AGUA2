@@ -17,11 +17,10 @@ class User(AbstractUser):
 
     telefono = models.CharField(
         max_length=20,
-        unique=True,
         blank=True,
         null=True,
         verbose_name="Celular",
-        help_text="Número de celular usado para iniciar sesión"
+        help_text="Número de celular de contacto"
     )
     email = models.EmailField(
         unique=True,
@@ -29,19 +28,12 @@ class User(AbstractUser):
         null=True,
         verbose_name="Correo electrónico"
     )
-    username = models.CharField(
-        max_length=150,
-        unique=True,
-        blank=True,
-        null=True,
-        verbose_name="Nombre de usuario"
-    )
     address = models.CharField(max_length=255, blank=True)
     municipio = models.CharField(max_length=100, blank=True, help_text="Ej: Comarapa")
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
 
-    USERNAME_FIELD = 'telefono'
-    REQUIRED_FIELDS = []
+    USERNAME_FIELD = 'username'
+    REQUIRED_FIELDS = ['email']
 
     @property
     def full_name(self):

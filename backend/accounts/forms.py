@@ -9,6 +9,11 @@ User = get_user_model()
 PHONE_REGEX = re.compile(r'^\+?\d{7,15}$')
 
 class ClientRegisterForm(forms.ModelForm):
+    username = forms.CharField(
+        max_length=150,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre de Usuario'}),
+        label="Usuario"
+    )
     full_name = forms.CharField(
         max_length=250,
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre Completo'}),
@@ -16,8 +21,9 @@ class ClientRegisterForm(forms.ModelForm):
     )
     telefono = forms.CharField(
         max_length=20,
+        required=False,
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '+591 7xxxxxxx'}),
-        label="Celular"
+        label="Celular (opcional)"
     )
     email = forms.EmailField(
         required=False,
@@ -35,13 +41,19 @@ class ClientRegisterForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ['telefono', 'email', 'address', 'municipio']
+        fields = ['username', 'telefono', 'email', 'address', 'municipio']
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username', '').strip()
+        if User.objects.filter(username=username).exists():
+            raise forms.ValidationError("Este nombre de usuario ya está registrado.")
+        return username
 
     def clean_telefono(self):
         telefono = self.cleaned_data.get('telefono', '').strip()
+        if not telefono:
+            return None
         telefono = telefono.replace(' ', '')
-        if User.objects.filter(telefono=telefono).exists():
-            raise forms.ValidationError("Este número de celular ya está registrado.")
         if not PHONE_REGEX.match(telefono):
             raise forms.ValidationError("Ingresa un número de celular válido.")
         return telefono
@@ -56,7 +68,7 @@ class ClientRegisterForm(forms.ModelForm):
 
     def save(self, commit=True):
         user = super().save(commit=False)
-        user.username = self.cleaned_data.get('telefono')
+        user.username = self.cleaned_data.get('username')
         email = self.cleaned_data.get('email', '').strip()
         user.email = email if email else None
         full_name = self.cleaned_data.get('full_name', '').strip()
@@ -72,15 +84,15 @@ class ClientRegisterForm(forms.ModelForm):
         return user
 
 
-class TelefonoAuthenticationForm(AuthenticationForm):
+class UsernameAuthenticationForm(AuthenticationForm):
     username = forms.CharField(
         max_length=254,
         widget=forms.TextInput(attrs={
             'autofocus': True,
             'class': 'form-control',
-            'placeholder': 'Celular'
+            'placeholder': 'Usuario'
         }),
-        label='Celular'
+        label='Usuario'
     )
 
 
