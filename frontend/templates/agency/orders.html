@@ -1,0 +1,55 @@
+{% extends 'agency/base_agency.html' %}
+
+{% block title %}Mis Pedidos{% endblock %}
+{% block header %}Historial de Pedidos{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-lg shadow overflow-hidden">
+    {% if orders %}
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-gray-100 text-gray-700 text-sm uppercase">
+                    <th class="py-3 px-6 font-semibold">ID</th>
+                    <th class="py-3 px-6 font-semibold">Fecha Pedido</th>
+                    <th class="py-3 px-6 font-semibold">Entrega Deseada</th>
+                    <th class="py-3 px-6 font-semibold text-right">Total</th>
+                    <th class="py-3 px-6 font-semibold text-center">Estado</th>
+                    <th class="py-3 px-6 font-semibold text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="text-gray-600 divide-y divide-gray-200">
+                {% for order in orders %}
+                <tr class="hover:bg-gray-50">
+                    <td class="py-4 px-6 font-medium text-gray-800">#{{ order.id }}</td>
+                    <td class="py-4 px-6">{{ order.created_at|date:"d/m/Y H:i" }}</td>
+                    <td class="py-4 px-6">{{ order.fecha_entrega_deseada|date:"d/m/Y"|default:"-" }}</td>
+                    <td class="py-4 px-6 text-right font-medium">Bs {{ order.total_amount }}</td>
+                    <td class="py-4 px-6 text-center">
+                        <span class="px-3 py-1 rounded-full text-xs font-semibold
+                            {% if order.status == 'pending' %}bg-yellow-100 text-yellow-800
+                            {% elif order.status == 'accepted' %}bg-blue-100 text-blue-800
+                            {% elif order.status == 'on_way' %}bg-purple-100 text-purple-800
+                            {% elif order.status == 'delivered' %}bg-green-100 text-green-800
+                            {% elif order.status == 'cancelled' %}bg-red-100 text-red-800
+                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ order.get_status_display }}
+                        </span>
+                    </td>
+                    <td class="py-4 px-6 text-center">
+                        <a href="{% url 'agency_ticket' order.id %}" class="text-blue-600 hover:text-blue-900" title="Ver Ticket">
+                            <i class="fa-solid fa-file-invoice"></i> Ver/Imprimir
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="p-8 text-center text-gray-500">
+        No has realizado ningún pedido todavía.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

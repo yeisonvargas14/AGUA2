@@ -46,6 +46,41 @@ class CartItem(models.Model):
             self.price_at_time = self.product.price
         super().save(*args, **kwargs)
 
+class AgencyCart(models.Model):
+    agency = models.ForeignKey(
+        'agencies.Agency',
+        on_delete=models.CASCADE,
+        related_name='carts'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Carrito Agencia de {self.agency.nombre_empresa}"
+
+    @property
+    def total_amount(self):
+        return sum(item.subtotal for item in self.items.all())
+
+class AgencyCartItem(models.Model):
+    cart = models.ForeignKey(AgencyCart, on_delete=models.CASCADE, related_name='items')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField(default=1)
+    price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    def __str__(self):
+        return f"{self.quantity} x {self.product.name} en carrito agencia"
+
+    @property
+    def subtotal(self):
+        return self.price * self.quantity
+
+    def save(self, *args, **kwargs):
+        if not self.price and self.product:
+            self.price = self.product.get_agency_price
+        super().save(*args, **kwargs)
+
+
 class Order(models.Model):
     class Status(models.TextChoices):
         PENDING = 'pending', 'Pendiente'
@@ -94,6 +129,13 @@ class Order(models.Model):
     delivery_lat = models.DecimalField(max_digits=10, decimal_places=6, null=True, blank=True)
     delivery_lng = models.DecimalField(max_digits=10, decimal_places=6, null=True, blank=True)
     
+    fecha_entrega_deseada = models.DateField(null=True, blank=True)
+    tipo_pedido = models.CharField(
+        max_length=15,
+        choices=[('cliente', 'Cliente'), ('agencia', 'Agencia')],
+        default='cliente'
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

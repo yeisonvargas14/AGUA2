@@ -1,0 +1,82 @@
+{% extends 'agency/base_agency.html' %}
+
+{% block title %}Checkout{% endblock %}
+{% block header %}Finalizar Pedido{% endblock %}
+
+{% block content %}
+<div class="flex flex-col lg:flex-row gap-8">
+    <!-- Formulario Checkout -->
+    <div class="lg:w-2/3">
+        <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+            <h3 class="text-xl font-bold border-b pb-2 mb-4 text-gray-800">Datos de Entrega</h3>
+            
+            <form action="{% url 'agency_checkout' %}" method="POST" id="checkout-form">
+                {% csrf_token %}
+                
+                <div class="mb-6">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="fecha_entrega_deseada">
+                        Fecha de entrega deseada (Mínimo 24 horas de anticipación)
+                    </label>
+                    <input type="date" id="fecha_entrega_deseada" name="fecha_entrega_deseada" 
+                           class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           min="{{ min_date }}" required>
+                    <p class="text-xs text-gray-500 mt-1">Nuestra planta requiere al menos 24 horas para procesar su pedido de abastecimiento.</p>
+                </div>
+                
+                <div class="mb-6">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">
+                        Dirección de Entrega
+                    </label>
+                    <div class="bg-gray-100 p-3 rounded text-gray-700 border border-gray-200">
+                        {{ request.user.agencia.direccion }}
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">El pedido será enviado a la dirección registrada de la agencia.</p>
+                </div>
+                
+                <div class="flex justify-end gap-4 mt-8">
+                    <a href="{% url 'agency_cart' %}" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded transition">
+                        Volver al Carrito
+                    </a>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded shadow transition">
+                        Confirmar Pedido
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Resumen -->
+    <div class="lg:w-1/3">
+        <div class="bg-gray-50 p-6 rounded-lg shadow-md border border-gray-200">
+            <h3 class="text-lg font-bold border-b pb-2 mb-4 text-gray-800">Resumen del Pedido</h3>
+            
+            <div class="space-y-3 mb-4 max-h-64 overflow-y-auto">
+                {% for item in cart.items.all %}
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-700">{{ item.quantity }}x {{ item.product.name }}</span>
+                    <span class="font-medium">Bs {{ item.subtotal }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="border-t pt-4 mt-4">
+                <div class="flex justify-between text-lg font-bold text-gray-800">
+                    <span>Total a Pagar:</span>
+                    <span class="text-blue-600">Bs {{ cart.total_amount }}</span>
+                </div>
+                <p class="text-xs text-gray-500 mt-2 text-center">El pago se realiza contraentrega o mediante transferencia acordada.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const inputDate = document.getElementById('fecha_entrega_deseada');
+        // Pre-seleccionar la fecha mínima si no hay valor
+        if(!inputDate.value) {
+            inputDate.value = "{{ min_date }}";
+        }
+    });
+</script>
+{% endblock %}

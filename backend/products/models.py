@@ -1,6 +1,5 @@
 from django.db import models
-
-
+from decimal import Decimal
 class Category(models.Model):
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True)
@@ -16,6 +15,7 @@ class Product(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
+    precio_agencia = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     stock = models.PositiveIntegerField(default=0)
     image = models.ImageField(upload_to='products/', blank=True, null=True)
     is_active = models.BooleanField(default=True)
@@ -24,3 +24,9 @@ class Product(models.Model):
 
     def __str__(self):
         return self.name
+
+    @property
+    def get_agency_price(self):
+        if self.precio_agencia is not None:
+            return self.precio_agencia
+        return self.price * Decimal('0.8')

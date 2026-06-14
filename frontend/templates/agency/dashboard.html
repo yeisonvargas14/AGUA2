@@ -1,107 +1,47 @@
-﻿{% extends 'base.html' %}
+{% extends 'agency/base_agency.html' %}
 
-{% block title %}Panel de Agencia - Agua de Mesa Santiago{% endblock %}
-{% block page_title %}Panel de Control - {{ agency.name }}{% endblock %}
+{% block title %}Dashboard{% endblock %}
+{% block header %}Resumen de la Agencia{% endblock %}
 
 {% block content %}
-<div class="agency-dashboard-container">
-    {% if not agency %}
-        <div class="card p-5 text-center">
-            <i class="fa-solid fa-triangle-exclamation text-danger mb-3" style="font-size: 3rem;"></i>
-            <h2>Sin Agencia Asignada</h2>
-            <p class="text-muted">No tienes ninguna sucursal registrada bajo tu administración. Contacta al administrador general.</p>
-        </div>
-    {% else %}
-        <!-- Metric Cards -->
-        <div class="dashboard-grid">
-            <div class="stat-card">
-                <div class="card-icon blue">
-                    <i class="fa-solid fa-receipt"></i>
-                </div>
-                <div class="card-data">
-                    <span class="card-label">Pedidos Registrados</span>
-                    <span class="card-value">{{ orders.count }}</span>
-                </div>
-            </div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="bg-white p-6 rounded-lg shadow border-l-4 border-blue-500">
+        <h3 class="text-gray-500 text-sm uppercase font-semibold">Total Pedidos</h3>
+        <p class="text-3xl font-bold text-gray-800 mt-2">{{ total_orders }}</p>
+    </div>
+    
+    <div class="bg-white p-6 rounded-lg shadow border-l-4 border-green-500">
+        <h3 class="text-gray-500 text-sm uppercase font-semibold">Último Pedido</h3>
+        <p class="text-xl font-bold text-gray-800 mt-2">
+            {% if last_order %}
+                {{ last_order.created_at|date:"d/m/Y" }} <span class="text-sm font-normal text-gray-500">({{ last_order.get_status_display }})</span>
+            {% else %}
+                Sin pedidos
+            {% endif %}
+        </p>
+    </div>
+    
+    <div class="bg-white p-6 rounded-lg shadow border-l-4 border-yellow-500">
+        <h3 class="text-gray-500 text-sm uppercase font-semibold">Próxima Entrega</h3>
+        <p class="text-xl font-bold text-gray-800 mt-2">
+            {% if proxima_entrega %}
+                {{ proxima_entrega.fecha_entrega_deseada|date:"d/m/Y" }}
+            {% else %}
+                Ninguna
+            {% endif %}
+        </p>
+    </div>
+</div>
 
-            <div class="stat-card">
-                <div class="card-icon emerald">
-                    <i class="fa-solid fa-money-bill-wave"></i>
-                </div>
-                <div class="card-data">
-                    <span class="card-label">Ventas Totales</span>
-                    <span class="card-value">Bs. {{ total_sales|floatformat:2 }}</span>
-                </div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="card-icon orange">
-                    <i class="fa-solid fa-shop"></i>
-                </div>
-                <div class="card-data">
-                    <span class="card-label">Dirección Agencia</span>
-                    <span class="card-value-small font-weight-bold" style="font-size: 1rem; color: var(--text);">{{ agency.address|truncatechars:35 }}</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Orders Table -->
-        <div class="card mt-4">
-            <div class="section-header flex-header">
-                <h3>Historial de Pedidos de la Agencia</h3>
-                <a href="{% url 'agency_create_order' %}" class="btn btn-primary">
-                    <i class="fa-solid fa-plus"></i> Registrar Venta / Pedido Manual
-                </a>
-            </div>
-            <hr class="divider">
-
-            <div class="table-responsive mt-3">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Pedido #</th>
-                            <th>Fecha</th>
-                            <th>Productos</th>
-                            <th>Total</th>
-                            <th>Detalle de Entrega</th>
-                            <th>Estado</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for order in orders %}
-                            <tr>
-                                <td><strong>#{{ order.id }}</strong></td>
-                                <td>{{ order.created_at|date:"d M Y, H:i" }}</td>
-                                <td>
-                                    {% for item in order.items.all %}
-                                        <span class="badge badge-light">{{ item.quantity }} x {{ item.product.name }}</span>
-                                    {% endfor %}
-                                </td>
-                                <td>Bs. {{ order.total_amount|floatformat:2 }}</td>
-                                <td>{{ order.delivery_address }}</td>
-                                <td>
-                                    {% if order.status == 'pending' %}
-                                        <span class="badge badge-warning">Pendiente</span>
-                                    {% elif order.status == 'accepted' %}
-                                        <span class="badge badge-info">Aceptado</span>
-                                    {% elif order.status == 'on_way' %}
-                                        <span class="badge badge-primary">En camino</span>
-                                    {% elif order.status == 'delivered' %}
-                                        <span class="badge badge-success">Entregado</span>
-                                    {% elif order.status == 'cancelled' %}
-                                        <span class="badge badge-danger">Cancelado</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                        {% empty %}
-                            <tr>
-                                <td colspan="6" class="text-center text-muted p-4">No hay pedidos registrados en esta sucursal aún.</td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    {% endif %}
+<div class="bg-white p-6 rounded-lg shadow">
+    <h3 class="text-lg font-semibold mb-4">Acciones Rápidas</h3>
+    <div class="flex gap-4">
+        <a href="{% url 'agency_catalog' %}" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded shadow">
+            Nuevo Pedido / Catálogo
+        </a>
+        <a href="{% url 'agency_orders' %}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded shadow">
+            Ver Historial
+        </a>
+    </div>
 </div>
 {% endblock %}
