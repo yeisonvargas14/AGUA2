@@ -9,4 +9,5 @@ urlpatterns = [
     path('checkout/', views.agency_checkout, name='agency_checkout'),
     path('pedidos/', views.agency_orders, name='agency_orders'),
     path('pedido/<int:order_id>/ticket/', views.agency_ticket, name='agency_ticket'),
+    path('cambiar-contrasena/', views.agency_change_password, name='agency_change_password'),
 ]
