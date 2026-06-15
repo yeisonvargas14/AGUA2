@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from cloudinary.models import CloudinaryField
 
 class User(AbstractUser):
     class Roles(models.TextChoices):
@@ -30,7 +31,7 @@ class User(AbstractUser):
     )
     address = models.CharField(max_length=255, blank=True)
     municipio = models.CharField(max_length=100, blank=True, help_text="Ej: Comarapa")
-    avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
+    avatar = CloudinaryField('avatar', blank=True, null=True)
 
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = ['email']
