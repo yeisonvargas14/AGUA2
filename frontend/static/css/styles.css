@@ -1351,7 +1351,6 @@ body {
 
 .product-card-visual {
     height: 220px;
-    aspect-ratio: 1 / 1;
     background-color: var(--bg-primary);
     position: relative;
     display: block;
@@ -1715,3 +1714,64 @@ body {
 .add-cart-form .btn {
     white-space: nowrap;
 }
+
+/* =====================================================================
+   ADDITIONAL LANDING & GENERAL RESPONSIVE FIXES
+   ===================================================================== */
+.product-card-visual {
+    width: 100% !important;
+    height: 220px;
+    background-color: var(--bg-primary);
+    position: relative;
+    display: block;
+    overflow: hidden;
+    border-bottom: 1px solid var(--border-color);
+}
+
+@media (max-width: 768px) {
+    .landing-nav-container {
+        padding: 0 16px;
+    }
+    .landing-brand .brand-text {
+        font-size: 16px;
+    }
+    .landing-nav {
+        gap: 10px;
+    }
+    .landing-nav .nav-link {
+        display: none; /* Hide 'Catálogo' link to save header space */
+    }
+    .landing-nav .btn {
+        padding: 8px 12px;
+        font-size: 13px;
+    }
+    
+    /* Optimize product card height for mobile */
+    .product-card {
+        min-height: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .landing-header {
+        height: 70px;
+    }
+    .landing-brand .brand-text {
+        display: none; /* Only show logo icon on extra small phones */
+    }
+    .landing-nav {
+        gap: 8px;
+    }
+    .landing-nav .btn-text {
+        padding: 6px 8px;
+    }
+    .landing-nav .btn-primary {
+        padding: 8px 10px;
+        font-size: 12px;
+    }
+    
+    .product-card-visual {
+        height: 180px;
+    }
+}
+
