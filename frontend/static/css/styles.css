@@ -1775,3 +1775,18 @@ body {
     }
 }
 
+/* =====================================================================
+   DIAGNOSTIC MOBILE SCROLL FORCED STYLES
+   ===================================================================== */
+html, body {
+    overflow: auto !important;
+    height: auto !important;
+    min-height: 100vh !important;
+    position: relative !important;
+}
+.content-body, main, .scrollable {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+}
+
+
