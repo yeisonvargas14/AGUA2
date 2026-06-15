@@ -1,4 +1,5 @@
 {% extends 'agency/base_agency.html' %}
+{% load static %}
 
 {% block title %}Comprobante de Pedido #{{ order.id }}{% endblock %}
 {% block header %}Ticket de Pedido{% endblock %}
@@ -40,8 +41,12 @@
     <!-- TICKET AREA -->
     <div id="print-area" class="bg-white p-8 rounded-lg shadow-lg border border-gray-200">
         <div class="text-center mb-6 border-b pb-4">
-            <h1 class="text-3xl font-bold text-blue-900 mb-1">AQUAFLOW</h1>
-            <h2 class="text-xl text-gray-700">Comprobante de Pedido - Agencia</h2>
+            <div class="flex justify-center mb-2">
+                <img src="{% static 'images/logo.jpg' %}" alt="Agua de Mesa Santiago" class="h-20 w-auto object-contain" style="max-height: 80px;">
+            </div>
+            <h1 class="text-3xl font-bold text-blue-900 mb-1">Agua de Mesa Santiago</h1>
+            <p class="text-sm text-gray-600 font-semibold">Calle Comercio #123, Comarapa | Tel: 71234567</p>
+            <h2 class="text-xl text-gray-700 mt-2">Comprobante de Pedido - Agencia</h2>
         </div>
         
         <div class="flex justify-between mb-8 text-sm">
@@ -88,7 +93,7 @@
         
         <div class="text-center text-xs text-gray-500 mt-8 italic border-t pt-4">
             Este documento es un comprobante de pedido. El pago se realiza contraentrega o por transferencia bancaria según acuerdos previos.<br>
-            ¡Gracias por ser parte de la red AquaFlow!
+            ¡Gracias por ser parte de la red Agua de Mesa Santiago!
         </div>
     </div>
 </div>
