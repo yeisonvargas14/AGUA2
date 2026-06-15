@@ -9,7 +9,91 @@ import datetime
 
 from orders.models import Order, OrderItem, AgencyCart, AgencyCartItem
 from products.models import Product
+from promotions.models import AgencyPromotion
 from .decorators import agency_active_required
+
+
+def calcular_promociones_carrito(cart):
+    """
+    Evaluates all active agency promotions against the cart contents.
+    Returns:
+        best_promotion: AgencyPromotion or None
+        discount_amount: Decimal (total discount)
+        applied_details: List of strings detailing the discount components
+    """
+    if not cart or cart.items.count() == 0:
+        return None, Decimal('0.00'), []
+
+    active_promotions = AgencyPromotion.objects.filter(activa=True)
+    active_promotions = [p for p in active_promotions if p.is_current]
+
+    best_promotion = None
+    max_discount = Decimal('0.00')
+    best_applied_details = []
+
+    if not active_promotions:
+        return None, Decimal('0.00'), []
+
+    for promo in active_promotions:
+        discount = Decimal('0.00')
+        details = []
+
+        items = list(cart.items.all())
+        # Filter items matching the promo's products
+        if promo.productos.exists():
+            promo_products = set(promo.productos.all())
+            matching_items = [item for item in items if item.product in promo_products]
+        else:
+            matching_items = items
+
+        if not matching_items:
+            continue
+
+        if promo.tipo == 'descuento_porcentaje':
+            for item in matching_items:
+                if item.quantity >= promo.cantidad_minima:
+                    item_discount = item.subtotal * (promo.valor / Decimal('100.00'))
+                    discount += item_discount
+                    details.append(f"{promo.nombre}: {promo.valor}% desc. en {item.product.name} (-Bs {item_discount:.2f})")
+
+        elif promo.tipo == 'descuento_fijo':
+            if promo.productos.exists():
+                for item in matching_items:
+                    if item.quantity >= promo.cantidad_minima:
+                        item_discount = min(promo.valor, item.subtotal)
+                        discount += item_discount
+                        details.append(f"{promo.nombre}: Bs {promo.valor} desc. en {item.product.name} (-Bs {item_discount:.2f})")
+            else:
+                total_qty = sum(item.quantity for item in matching_items)
+                if total_qty >= promo.cantidad_minima:
+                    cart_subtotal = sum(item.subtotal for item in matching_items)
+                    cart_discount = min(promo.valor, cart_subtotal)
+                    discount += cart_discount
+                    details.append(f"{promo.nombre}: Bs {promo.valor} desc. total (-Bs {cart_discount:.2f})")
+
+        elif promo.tipo == 'combo':
+            for item in matching_items:
+                if item.quantity >= promo.cantidad_minima:
+                    times = item.quantity // promo.cantidad_minima
+                    free_units = times * promo.cantidad_regalo
+                    item_discount = free_units * item.price
+                    discount += item_discount
+                    details.append(f"{promo.nombre}: Combo {promo.cantidad_minima} + {promo.cantidad_regalo} en {item.product.name} ({free_units} gratis: -Bs {item_discount:.2f})")
+
+        elif promo.tipo == 'volumen':
+            for item in matching_items:
+                if item.quantity >= promo.cantidad_minima:
+                    item_discount = item.subtotal * (promo.valor / Decimal('100.00'))
+                    discount += item_discount
+                    details.append(f"{promo.nombre}: Desc. volumen ({promo.valor}%) en {item.product.name} (-Bs {item_discount:.2f})")
+
+        # Choose the promotion that offers the maximum discount
+        if discount > max_discount:
+            max_discount = discount
+            best_promotion = promo
+            best_applied_details = details
+
+    return best_promotion, max_discount, best_applied_details
 
 
 @agency_active_required
@@ -90,8 +174,17 @@ def agency_cart(request):
             messages.success(request, "Producto eliminado del carrito.")
             return redirect('agency_cart')
 
+    promo, discount, details = calcular_promociones_carrito(cart)
+    subtotal = cart.total_amount if cart else Decimal('0.00')
+    total = max(Decimal('0.00'), subtotal - discount)
+
     return render(request, 'agency/cart.html', {
-        'cart': cart
+        'cart': cart,
+        'promo': promo,
+        'discount': discount,
+        'applied_details': details,
+        'subtotal': subtotal,
+        'total': total,
     })
 
 
@@ -104,26 +197,47 @@ def agency_checkout(request):
         messages.error(request, "Tu carrito está vacío.")
         return redirect('agency_catalog')
 
+    promo, discount, details = calcular_promociones_carrito(cart)
+    subtotal = cart.total_amount
+    total = max(Decimal('0.00'), subtotal - discount)
+
     if request.method == 'POST':
         fecha_str = request.POST.get('fecha_entrega_deseada')
         
         if not fecha_str:
             messages.error(request, "Debes seleccionar una fecha de entrega.")
-            return render(request, 'agency/checkout.html', {'cart': cart})
+            return render(request, 'agency/checkout.html', {
+                'cart': cart,
+                'subtotal': subtotal,
+                'discount': discount,
+                'total': total,
+                'applied_details': details,
+            })
 
         try:
             fecha_entrega = datetime.datetime.strptime(fecha_str, '%Y-%m-%d').date()
         except ValueError:
             messages.error(request, "Formato de fecha inválido.")
-            return render(request, 'agency/checkout.html', {'cart': cart})
+            return render(request, 'agency/checkout.html', {
+                'cart': cart,
+                'subtotal': subtotal,
+                'discount': discount,
+                'total': total,
+                'applied_details': details,
+            })
 
         ahora = timezone.now()
-        # Mínimo 24 horas: la fecha deseada debe ser > fecha_actual + 1 día
         min_date = ahora.date() + datetime.timedelta(days=1)
         
         if fecha_entrega < min_date:
             messages.error(request, "La fecha de entrega debe tener al menos 24 horas de anticipación.")
-            return render(request, 'agency/checkout.html', {'cart': cart})
+            return render(request, 'agency/checkout.html', {
+                'cart': cart,
+                'subtotal': subtotal,
+                'discount': discount,
+                'total': total,
+                'applied_details': details,
+            })
 
         # Validar stock nuevamente
         for item in cart.items.all():
@@ -132,11 +246,11 @@ def agency_checkout(request):
                 return redirect('agency_cart')
 
         # Crear Order
-        total = cart.total_amount
         order = Order.objects.create(
-            client=request.user, # The agency manager is the client here
+            client=request.user,
             agency=agency,
             total_amount=total,
+            discount_amount=discount,
             fecha_entrega_deseada=fecha_entrega,
             tipo_pedido='agencia',
             status=Order.Status.PENDING,
@@ -162,8 +276,24 @@ def agency_checkout(request):
 
     return render(request, 'agency/checkout.html', {
         'cart': cart,
-        'min_date': (timezone.now().date() + datetime.timedelta(days=1)).strftime('%Y-%m-%d')
+        'min_date': (timezone.now().date() + datetime.timedelta(days=1)).strftime('%Y-%m-%d'),
+        'subtotal': subtotal,
+        'discount': discount,
+        'total': total,
+        'applied_details': details,
     })
+
+
+@agency_active_required
+def agency_promotions(request):
+    active_promotions = AgencyPromotion.objects.filter(activa=True).order_by('fecha_fin')
+    now = timezone.now()
+    current_promotions = [p for p in active_promotions if p.fecha_fin >= now]
+    
+    return render(request, 'agency/promociones.html', {
+        'promotions': current_promotions,
+    })
+
 
 
 @agency_active_required

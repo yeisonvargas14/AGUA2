@@ -1,0 +1,107 @@
+{% extends 'agency/base_agency.html' %}
+
+{% block title %}Promociones Disponibles{% endblock %}
+{% block header %}Promociones para Agencias{% endblock %}
+
+{% block content %}
+<div class="container mx-auto">
+    <div class="mb-6">
+        <p class="text-gray-600">Aquí puedes ver todas las promociones activas y exclusivas para tu agencia. Se aplicarán automáticamente al realizar tu pedido si cumples con las condiciones.</p>
+    </div>
+
+    {% if promotions %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for promo in promotions %}
+        <div class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg transition duration-300 flex flex-col justify-between">
+            <div class="p-6">
+                <!-- Promo Type Badge -->
+                <div class="flex justify-between items-start mb-4">
+                    <span class="px-3 py-1 text-xs font-semibold rounded-full 
+                        {% if promo.tipo == 'descuento_porcentaje' or promo.tipo == 'volumen' %}
+                            bg-green-100 text-green-800
+                        {% elif promo.tipo == 'descuento_fijo' %}
+                            bg-blue-100 text-blue-800
+                        {% else %}
+                            bg-purple-100 text-purple-800
+                        {% endif %}">
+                        {{ promo.get_tipo_display }}
+                    </span>
+                    <span class="text-xs text-gray-500 font-medium">
+                        {% if promo.is_current %}
+                            <span class="text-green-600"><i class="fa-solid fa-circle text-[8px] mr-1"></i>Activa</span>
+                        {% else %}
+                            <span class="text-yellow-600">Programada</span>
+                        {% endif %}
+                    </span>
+                </div>
+
+                <!-- Title & Description -->
+                <h3 class="text-xl font-bold text-gray-800 mb-2">{{ promo.nombre }}</h3>
+                {% if promo.descripcion %}
+                    <p class="text-gray-600 text-sm mb-4">{{ promo.descripcion }}</p>
+                {% endif %}
+
+                <!-- Conditions -->
+                <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 mb-4">
+                    <span class="text-xs font-bold text-gray-500 uppercase block mb-1">Condiciones:</span>
+                    <p class="text-sm font-semibold text-gray-700">
+                        {% if promo.tipo == 'combo' %}
+                            Compra {{ promo.cantidad_minima }} unidades y lleva {{ promo.cantidad_regalo }} gratis.
+                        {% else %}
+                            Cantidad mínima de compra: {{ promo.cantidad_minima }} unidad(es).
+                        {% endif %}
+                    </p>
+                    {% if promo.condiciones %}
+                        <p class="text-xs text-gray-500 mt-1 italic">{{ promo.condiciones }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Products Affected -->
+                <div class="mb-4">
+                    <span class="text-xs font-bold text-gray-500 uppercase block mb-1">Productos que aplican:</span>
+                    <div class="flex flex-wrap gap-1 mt-1">
+                        {% if promo.productos.exists %}
+                            {% for prod in promo.productos.all %}
+                                <span class="px-2.5 py-0.5 bg-gray-100 text-gray-700 text-xs rounded font-medium">{{ prod.name }}</span>
+                            {% endfor %}
+                        {% else %}
+                            <span class="px-2.5 py-0.5 bg-blue-50 text-blue-700 text-xs rounded font-medium">Todo el catálogo</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Validity and value footer -->
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+                <div>
+                    <span class="text-xs text-gray-400 block uppercase font-bold">Vence el:</span>
+                    <span class="text-sm text-gray-700 font-semibold">{{ promo.fecha_fin|date:"d/m/Y H:i" }}</span>
+                </div>
+                <div class="text-right">
+                    {% if promo.tipo == 'descuento_porcentaje' or promo.tipo == 'volumen' %}
+                        <span class="text-2xl font-black text-green-600">{{ promo.valor|floatformat:0 }}%</span>
+                        <span class="text-xs text-green-600 font-bold block">Desc.</span>
+                    {% elif promo.tipo == 'descuento_fijo' %}
+                        <span class="text-2xl font-black text-blue-600">Bs {{ promo.valor }}</span>
+                        <span class="text-xs text-blue-600 font-bold block">Desc.</span>
+                    {% elif promo.tipo == 'combo' %}
+                        <span class="text-2xl font-black text-purple-600">{{ promo.cantidad_minima }}+{{ promo.cantidad_regalo }}</span>
+                        <span class="text-xs text-purple-600 font-bold block">Lleva gratis</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-white rounded-lg shadow-md p-12 text-center text-gray-500 border border-gray-100">
+        <i class="fa-solid fa-tags text-6xl mb-4 text-gray-300"></i>
+        <h3 class="text-2xl font-semibold mb-2">No hay promociones activas</h3>
+        <p class="mb-6">Actualmente no existen promociones exclusivas vigentes para agencias. ¡Vuelve pronto!</p>
+        <a href="{% url 'agency_catalog' %}" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-6 rounded shadow transition">
+            Ver Catálogo de Productos
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Panel de Agencia{% endblock %} - AquaFlow</title>
+    <title>{% block title %}Panel de Agencia{% endblock %} - Agua de Mesa Santiago</title>
     <!-- TailwindCSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome for icons -->
@@ -14,7 +14,7 @@
     <!-- Sidebar -->
     <aside class="w-64 bg-blue-900 text-white flex flex-col hidden md:flex">
         <div class="h-16 flex items-center justify-center border-b border-blue-800">
-            <h1 class="text-2xl font-bold">AquaFlow Agencia</h1>
+            <h1 class="text-2xl font-bold">Agua Santiago</h1>
         </div>
         <nav class="flex-1 px-4 py-6 space-y-2">
             <a href="{% url 'agency_dashboard' %}" class="block px-4 py-2 rounded hover:bg-blue-800 transition">
@@ -25,6 +25,9 @@
             </a>
             <a href="{% url 'agency_cart' %}" class="block px-4 py-2 rounded hover:bg-blue-800 transition">
                 <i class="fa-solid fa-shopping-cart w-6"></i> Mi Carrito
+            </a>
+            <a href="{% url 'agency_promotions' %}" class="block px-4 py-2 rounded hover:bg-blue-800 transition">
+                <i class="fa-solid fa-tags w-6"></i> Promociones
             </a>
             <a href="{% url 'agency_orders' %}" class="block px-4 py-2 rounded hover:bg-blue-800 transition">
                 <i class="fa-solid fa-list w-6"></i> Mis Pedidos

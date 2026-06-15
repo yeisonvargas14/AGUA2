@@ -139,6 +139,10 @@ class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    @property
+    def subtotal(self):
+        return self.total_amount + self.discount_amount
+
     def __str__(self):
         return f"Pedido #{self.id} - {self.client.username} - {self.get_status_display()}"
 

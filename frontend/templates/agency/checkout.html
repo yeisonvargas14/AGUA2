@@ -59,10 +59,25 @@
                 {% endfor %}
             </div>
             
-            <div class="border-t pt-4 mt-4">
-                <div class="flex justify-between text-lg font-bold text-gray-800">
+            <div class="border-t pt-4 mt-4 space-y-2">
+                <div class="flex justify-between text-sm text-gray-600">
+                    <span>Subtotal:</span>
+                    <span>Bs {{ subtotal }}</span>
+                </div>
+                {% if discount > 0 %}
+                <div class="flex justify-between text-sm text-green-700 font-semibold bg-green-50 p-2 rounded">
+                    <div>
+                        <span>Descuento:</span>
+                        {% for detail in applied_details %}
+                            <span class="block text-[10px] font-normal text-green-600 mt-0.5">{{ detail }}</span>
+                        {% endfor %}
+                    </div>
+                    <span>-Bs {{ discount }}</span>
+                </div>
+                {% endif %}
+                <div class="flex justify-between text-lg font-bold text-gray-800 pt-2 border-t border-dashed">
                     <span>Total a Pagar:</span>
-                    <span class="text-blue-600">Bs {{ cart.total_amount }}</span>
+                    <span class="text-blue-600">Bs {{ total }}</span>
                 </div>
                 <p class="text-xs text-gray-500 mt-2 text-center">El pago se realiza contraentrega o mediante transferencia acordada.</p>
             </div>
