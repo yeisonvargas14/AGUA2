@@ -69,6 +69,10 @@
                                         <a href="{% url 'detalle_pedido' order.id %}" class="btn btn-primary-light btn-sm">
                                             <i class="fa-solid fa-eye"></i> Ver detalle
                                         </a>
+
+                                        <a href="{% url 'client_ticket' order.id %}" class="btn btn-secondary btn-sm" style="margin-left: 5px;">
+                                            <i class="fa-solid fa-receipt"></i> Ver ticket
+                                        </a>
                                     </div>
                                 </td>
                             </tr>

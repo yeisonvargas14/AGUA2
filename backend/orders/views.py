@@ -298,7 +298,7 @@ def checkout_paso1(request):
                     print(f"[SIMULACIÓN WHATSAPP] Notificación de nuevo pedido #{order.id} enviada al cliente {request.user.telefono}")
 
                     messages.success(request, f"¡Pedido #{order.id} registrado exitosamente!")
-                    return redirect('checkout_exito', order_id=order.id)
+                    return redirect('client_ticket', order_id=order.id)
             except Exception as e:
                 messages.error(request, f"Error al procesar el pedido: {str(e)}")
                 return render(request, 'client/checkout_paso1.html', {'cart': cart, 'total': total, 'coupon': coupon})
@@ -445,7 +445,7 @@ def checkout_paso2(request):
                         print(f"[SIMULACIÓN WHATSAPP] Notificación de nuevo pedido #{order.id} enviada al cliente {user.telefono}")
 
                         messages.success(request, f"¡Pedido #{order.id} registrado exitosamente!")
-                        return redirect('checkout_exito', order_id=order.id)
+                        return redirect('client_ticket', order_id=order.id)
                 except Exception as e:
                     messages.error(request, f"Error al procesar el pedido: {str(e)}")
             else:
@@ -553,7 +553,7 @@ def checkout_paso2(request):
                         print(f"[SIMULACIÓN WHATSAPP] Notificación de nuevo pedido #{order.id} enviada al cliente {user.telefono}")
 
                         messages.success(request, f"¡Bienvenido! Tu cuenta ha sido creada y tu pedido #{order.id} registrado exitosamente.")
-                        return redirect('checkout_exito', order_id=order.id)
+                        return redirect('client_ticket', order_id=order.id)
                 except Exception as e:
                     messages.error(request, f"Error al crear la cuenta/pedido: {str(e)}")
 
@@ -564,10 +564,10 @@ def checkout_paso2(request):
 
 @login_required
 @role_required('client')
-def checkout_exito(request, order_id):
-    """Confirm order success."""
+def client_ticket(request, order_id):
+    """Confirm order success and show ticket."""
     order = get_object_or_404(Order, id=order_id, client=request.user)
-    return render(request, 'client/pedido_exito.html', {
+    return render(request, 'client/ticket.html', {
         'order': order
     })
 

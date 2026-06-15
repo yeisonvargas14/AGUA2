@@ -19,7 +19,7 @@ urlpatterns = [
     path('checkout/', views.checkout_paso1, name='checkout'), # alias to step 1
     path('checkout/paso1/', views.checkout_paso1, name='checkout_paso1'),
     path('checkout/paso2/', views.checkout_paso2, name='checkout_paso2'),
-    path('checkout/exito/<int:order_id>/', views.checkout_exito, name='checkout_exito'),
+    path('pedido/<int:order_id>/ticket/', views.client_ticket, name='client_ticket'),
     path('validar-ubicacion/', views.validate_location, name='api_validar_ubicacion'),
 
     # Order history (two canonical names)
