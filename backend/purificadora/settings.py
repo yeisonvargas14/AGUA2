@@ -12,6 +12,9 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 import os
 from pathlib import Path
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
 
 try:
     import dj_database_url
@@ -184,13 +187,21 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR.parent / 'frontend' / 'media'
 
-# Cloudinary configuration for cloud media storage
+# --- Cloudinary Configuration ---
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME', 'duk0t4y3p'),
     'API_KEY': os.environ.get('CLOUDINARY_API_KEY', '134725759352973'),
     'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET', 'AlIhRkZEeuPEF3pYd2ulpWH3xK4'),
 }
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+# Initialize Cloudinary SDK so cloudinary.uploader / cloudinary.api are ready to use
+cloudinary.config(
+    cloud_name=os.environ.get('CLOUDINARY_CLOUD_NAME', 'duk0t4y3p'),
+    api_key=os.environ.get('CLOUDINARY_API_KEY', '134725759352973'),
+    api_secret=os.environ.get('CLOUDINARY_API_SECRET', 'AlIhRkZEeuPEF3pYd2ulpWH3xK4'),
+    secure=True,
+)
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
