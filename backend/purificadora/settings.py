@@ -120,12 +120,25 @@ WSGI_APPLICATION = 'purificadora.wsgi.application'
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 if dj_database_url:
-    DATABASES = {
-        'default': dj_database_url.config(
-            default='postgresql://postgres:YfSzAciyrXCjeJtQKJdfrQUhqXfUpkVB@zephyr.proxy.rlwy.net:52419/railway',
-            conn_max_age=600
-        )
-    }
+    try:
+        DATABASES = {
+            'default': dj_database_url.config(
+                default='postgresql://postgres:YfSzAciyrXCjeJtQKJdfrQUhqXfUpkVB@zephyr.proxy.rlwy.net:52419/railway',
+                conn_max_age=600
+            )
+        }
+    except Exception as e:
+        print("Error parsing DATABASE_URL, using fallback:", e)
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql',
+                'NAME': 'railway',
+                'USER': 'postgres',
+                'PASSWORD': 'YfSzAciyrXCjeJtQKJdfrQUhqXfUpkVB',
+                'HOST': 'zephyr.proxy.rlwy.net',
+                'PORT': '52419',
+            }
+        }
 else:
     DATABASES = {
         'default': {
