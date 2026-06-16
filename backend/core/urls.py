@@ -30,8 +30,9 @@ urlpatterns = [
     # Orders Management
     path('pedidos/', views.admin_orders, name='admin_orders'),
     path('pedidos/detalle/<int:pk>/', views.admin_order_detail, name='admin_order_detail'),
-    path('pedidos/asignar-repartidor/<int:pk>/', views.admin_assign_driver, name='admin_assign_driver'),
-    path('pedidos/cancelar/<int:pk>/', views.admin_cancel_order, name='admin_cancel_order'),
+    path('pedidos/<int:pk>/asignar/', views.admin_assign_driver, name='admin_assign_driver'),
+    path('pedidos/<int:pk>/cancelar/', views.admin_cancel_order, name='admin_cancel_order'),
+    path('pedidos/<int:pk>/ticket/', views.admin_print_ticket, name='pedido_ticket'),
     path('pedidos/ticket/<int:pk>/', views.admin_print_ticket, name='admin_print_ticket'),
     
     # Notifications APIs

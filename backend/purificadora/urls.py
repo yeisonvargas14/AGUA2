@@ -45,6 +45,7 @@ urlpatterns = [
     
     # Admin Panel
     path('administrador/', include('core.urls')),
+    path('administrador/', include(('core.urls', 'core'), namespace='admin_panel')),
 ]
 
 if settings.DEBUG:

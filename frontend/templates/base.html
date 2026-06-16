@@ -471,7 +471,7 @@
                     forceTLS: true
                 });
                 
-                const channel = pusher.subscribe('nuevo_pedido_admin');
+                const channel = pusher.subscribe('admin_notifications');
                 channel.bind('nuevo-pedido', function(data) {
                     // Show Toast Notification
                     showToastNotification(data);

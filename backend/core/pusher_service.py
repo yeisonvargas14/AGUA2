@@ -29,6 +29,7 @@ def notify_new_order(order):
         }
         client.trigger('pedidos', 'nuevo-pedido', data)
         client.trigger('nuevo_pedido_admin', 'nuevo-pedido', data)
+        client.trigger('admin_notifications', 'nuevo-pedido', data)
         client.trigger('drivers', 'new-order', data)
         return True
     except Exception:

@@ -66,29 +66,37 @@
                             <td>{{ order.created_at|date:"d M Y, H:i" }}</td>
                             <td>
                                 <div style="display: flex; gap: 6px; flex-wrap: nowrap;">
-                                    <a href="{% url 'admin_order_detail' order.id %}" class="btn btn-primary-light btn-sm" title="Ver Detalle">
-                                        <i class="fa-solid fa-eye"></i>
+                                    <!-- Ver (always visible) -->
+                                    <a href="{% url 'admin_order_detail' order.id %}" class="btn btn-sm btn-info" style="color: #fff;">
+                                        <i class="fas fa-eye"></i> Ver
                                     </a>
+
                                     {% if order.status == 'pending' %}
-                                        <button onclick="openDriverModal('{{ order.id }}', false)" class="btn btn-success-light btn-sm" title="Asignar Repartidor">
-                                            <i class="fa-solid fa-user-plus"></i>
+                                        <!-- Asignar repartidor -->
+                                        <button class="btn btn-sm btn-warning" onclick="openAsignarModal('{{ order.id }}')">
+                                            <i class="fas fa-truck"></i> Asignar
                                         </button>
-                                        <button onclick="openCancelModal('{{ order.id }}')" class="btn btn-danger-light btn-sm" title="Cancelar Pedido">
-                                            <i class="fa-solid fa-xmark"></i>
+                                        <!-- Cancelar -->
+                                        <button class="btn btn-sm btn-danger" onclick="openCancelarModal('{{ order.id }}')">
+                                            <i class="fas fa-times"></i> Cancelar
                                         </button>
                                     {% elif order.status == 'accepted' %}
-                                        <button onclick="openDriverModal('{{ order.id }}', true, '{{ order.driver.id|default:'' }}')" class="btn btn-warning-light btn-sm" title="Reasignar Repartidor">
-                                            <i class="fa-solid fa-user-pen"></i>
+                                        <!-- Reasignar repartidor -->
+                                        <button class="btn btn-sm btn-warning" onclick="openAsignarModal('{{ order.id }}', '{{ order.driver.id|default:'' }}')">
+                                            <i class="fas fa-truck"></i> Asignar
                                         </button>
-                                        <button onclick="openCancelModal('{{ order.id }}')" class="btn btn-danger-light btn-sm" title="Cancelar Pedido">
-                                            <i class="fa-solid fa-xmark"></i>
+                                        <!-- Cancelar -->
+                                        <button class="btn btn-sm btn-danger" onclick="openCancelarModal('{{ order.id }}')">
+                                            <i class="fas fa-times"></i> Cancelar
                                         </button>
-                                        <a href="{% url 'admin_print_ticket' order.id %}" target="_blank" class="btn btn-secondary-light btn-sm" title="Imprimir Ticket">
-                                            <i class="fa-solid fa-print"></i>
+                                        <!-- Ticket -->
+                                        <a href="{% url 'admin_panel:pedido_ticket' order.id %}" target="_blank" class="btn btn-sm btn-success">
+                                            <i class="fas fa-print"></i> Ticket
                                         </a>
                                     {% elif order.status == 'delivered' %}
-                                        <a href="{% url 'admin_print_ticket' order.id %}" target="_blank" class="btn btn-secondary-light btn-sm" title="Imprimir Ticket">
-                                            <i class="fa-solid fa-print"></i>
+                                        <!-- Ticket -->
+                                        <a href="{% url 'admin_panel:pedido_ticket' order.id %}" target="_blank" class="btn btn-sm btn-success">
+                                            <i class="fas fa-print"></i> Ticket
                                         </a>
                                     {% endif %}
                                 </div>
@@ -105,14 +113,14 @@
     </div>
 </div>
 
-<!-- Driver Assignment Modal -->
-<div class="modal fade" id="driverModal" style="display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center;">
+<!-- Asignar Repartidor Modal -->
+<div class="modal fade" id="asignarModal" style="display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center;">
     <div class="modal-dialog" style="background: var(--bg-surface); border-radius: 12px; max-width: 500px; width: 90%; margin: auto; padding: 24px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); border: 1px solid var(--border-color);">
         <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
-            <h4 class="modal-title" id="driverModalTitle" style="margin: 0; color: var(--text-primary); font-weight: 600;">Asignar Repartidor</h4>
-            <button class="close-modal" onclick="closeModal('driverModal')" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-secondary);">&times;</button>
+            <h4 class="modal-title" id="asignarModalTitle" style="margin: 0; color: var(--text-primary); font-weight: 600;">Asignar Repartidor</h4>
+            <button class="close-modal" onclick="closeModal('asignarModal')" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-secondary);">&times;</button>
         </div>
-        <form id="driverForm" method="POST" action="">
+        <form id="asignarForm" method="POST" action="">
             {% csrf_token %}
             <input type="hidden" name="next" value="{{ request.get_full_path }}">
             <div class="form-group" style="margin-bottom: 20px;">
@@ -127,21 +135,21 @@
                 </select>
             </div>
             <div style="display: flex; justify-content: flex-end; gap: 12px;">
-                <button type="button" class="btn btn-secondary" onclick="closeModal('driverModal')">Cancelar</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('asignarModal')">Cancelar</button>
                 <button type="submit" class="btn btn-primary">Guardar Cambios</button>
             </div>
         </form>
     </div>
 </div>
 
-<!-- Cancellation Modal -->
-<div class="modal fade" id="cancelModal" style="display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center;">
+<!-- Cancelar Pedido Modal -->
+<div class="modal fade" id="cancelarModal" style="display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center;">
     <div class="modal-dialog" style="background: var(--bg-surface); border-radius: 12px; max-width: 500px; width: 90%; margin: auto; padding: 24px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); border: 1px solid var(--border-color);">
         <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
             <h4 class="modal-title" style="margin: 0; color: var(--text-primary); font-weight: 600;">Cancelar Pedido</h4>
-            <button class="close-modal" onclick="closeModal('cancelModal')" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-secondary);">&times;</button>
+            <button class="close-modal" onclick="closeModal('cancelarModal')" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-secondary);">&times;</button>
         </div>
-        <form id="cancelForm" method="POST" action="">
+        <form id="cancelarForm" method="POST" action="">
             {% csrf_token %}
             <input type="hidden" name="next" value="{{ request.get_full_path }}">
             <div class="form-group" style="margin-bottom: 20px;">
@@ -149,7 +157,7 @@
                 <textarea name="motivo" id="cancelMotivo" class="form-control" required rows="3" placeholder="Escriba el motivo aquí..." style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--bg-primary); color: var(--text-primary); resize: vertical;"></textarea>
             </div>
             <div style="display: flex; justify-content: flex-end; gap: 12px;">
-                <button type="button" class="btn btn-secondary" onclick="closeModal('cancelModal')">Cerrar</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('cancelarModal')">Cerrar</button>
                 <button type="submit" class="btn btn-danger">Confirmar Cancelación</button>
             </div>
         </form>
@@ -159,14 +167,14 @@
 
 {% block extra_js %}
 <script>
-    function openDriverModal(orderId, isReassign, currentDriverId) {
-        const modal = document.getElementById("driverModal");
-        const title = document.getElementById("driverModalTitle");
+    function openAsignarModal(orderId, currentDriverId) {
+        const modal = document.getElementById("asignarModal");
+        const title = document.getElementById("asignarModalTitle");
         const select = document.getElementById("driverSelect");
-        const form = document.getElementById("driverForm");
+        const form = document.getElementById("asignarForm");
         
-        form.action = `/administrador/pedidos/asignar-repartidor/${orderId}/`;
-        title.innerText = isReassign ? "Reasignar Repartidor" : "Asignar Repartidor";
+        form.action = `/administrador/pedidos/${orderId}/asignar/`;
+        title.innerText = currentDriverId ? "Reasignar Repartidor" : "Asignar Repartidor";
         
         if (currentDriverId) {
             select.value = currentDriverId;
@@ -177,12 +185,12 @@
         modal.style.display = "flex";
     }
 
-    function openCancelModal(orderId) {
-        const modal = document.getElementById("cancelModal");
-        const form = document.getElementById("cancelForm");
+    function openCancelarModal(orderId) {
+        const modal = document.getElementById("cancelarModal");
+        const form = document.getElementById("cancelarForm");
         const textarea = document.getElementById("cancelMotivo");
         
-        form.action = `/administrador/pedidos/cancelar/${orderId}/`;
+        form.action = `/administrador/pedidos/${orderId}/cancelar/`;
         textarea.value = "";
         
         modal.style.display = "flex";
@@ -194,9 +202,9 @@
 
     // Auto-refresh the order list table partially every 30 seconds
     function refreshOrderTable() {
-        const driverModal = document.getElementById("driverModal");
-        const cancelModal = document.getElementById("cancelModal");
-        if ((driverModal && driverModal.style.display === "flex") || (cancelModal && cancelModal.style.display === "flex")) {
+        const asignarModal = document.getElementById("asignarModal");
+        const cancelarModal = document.getElementById("cancelarModal");
+        if ((asignarModal && asignarModal.style.display === "flex") || (cancelarModal && cancelarModal.style.display === "flex")) {
             return;
         }
         
