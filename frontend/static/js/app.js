@@ -399,6 +399,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     ${products.map(p => `
                         <div class="product-card" style="background:#fff; border-radius:16px; padding:20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border:1px solid #f1f5f9; position:relative; display:flex; flex-direction:column; justify-content:space-between;">
                             <div>
+                                <div class="product-card-visual" style="height: 160px; width: 100%; border-radius: 12px; overflow: hidden; margin-bottom: 12px; background: var(--bg-primary); display: flex; align-items: center; justify-content: center; border: 1px solid var(--border-color);">
+                                    ${p.image ? `<img src="${p.image}" alt="${p.name}" style="width: 100%; height: 100%; object-fit: cover;">` : `
+                                        <div style="font-size: 3rem; color: var(--primary); opacity: 0.6;">
+                                            <i class="fa-solid fa-bottle-water"></i>
+                                        </div>
+                                    `}
+                                </div>
                                 <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
                                     <h4 style="font-family:'Outfit',sans-serif; font-size:1.15rem; font-weight:700; color:#0f172a;">${p.name}</h4>
                                     <span class="badge" style="background:#f0f9ff; color:#0284c7; font-weight:700; font-size:1rem; padding:4px 8px;">Bs. ${p.price.toFixed(2)}</span>

@@ -482,6 +482,7 @@ def api_products(request):
                     "description": p.description,
                     "price": float(p.price),
                     "stock": p.stock,
+                    "image": p.image.url if p.image else None,
                     "is_active": p.is_active
                 })
             return JsonResponse(data, safe=False)
