@@ -34,15 +34,7 @@
                 
                 <div class="product-card-visual product-image-container">
                     {% if product.image %}
-                        {% if "sachet_250ml" in product.image.name or "sachet" in product.name|lower %}
-                            <img class="product-image" src="{% static 'images/sachet_250ml.png' %}" alt="{{ product.name }}">
-                        {% elif "bidon_20l" in product.image.name or "20l" in product.name|lower %}
-                            <img class="product-image" src="{% static 'images/bidon_20l.jpg' %}" alt="{{ product.name }}">
-                        {% elif "bidon_10l" in product.image.name or "10l" in product.name|lower %}
-                            <img class="product-image" src="{% static 'images/bidon_10l.jpg' %}" alt="{{ product.name }}">
-                        {% else %}
-                            <img class="product-image" src="{{ product.image.url }}" alt="{{ product.name }}">
-                        {% endif %}
+                        <img class="product-image" src="{{ product.image.url }}" alt="{{ product.name }}">
                     {% else %}
                         {% if "sachet" in product.name|lower %}
                             <img class="product-image" src="{% static 'images/sachet_250ml.png' %}" alt="{{ product.name }}">
