@@ -216,6 +216,34 @@
                 </div>
                 
                 <div class="navbar-right">
+                    <!-- Notification Bell for Admin and Vendedor -->
+                    {% if user.role == 'admin' or user.role == 'vendedor' %}
+                        <div class="notif-dropdown-wrapper" style="position: relative; margin-right: 15px;">
+                            <button class="nav-icon-btn" id="notif-bell-btn" title="Notificaciones" style="position: relative; background: none; border: none; cursor: pointer; color: var(--text-primary); font-size: 1.2rem; display: flex; align-items: center; justify-content: center; height: 40px; width: 40px; border-radius: 50%; transition: background-color 0.2s;">
+                                <i class="fa-solid fa-bell"></i>
+                                <span class="badge" id="notif-count-badge" style="position: absolute; top: -2px; right: -2px; background-color: #EF4444; color: white; font-size: 0.75rem; font-weight: bold; border-radius: 9999px; min-width: 18px; height: 18px; display: none; align-items: center; justify-content: center; padding: 0 4px; border: 2px solid var(--bg-surface);">0</span>
+                            </button>
+                            <div class="notif-dropdown" id="notif-dropdown-menu" style="display: none; position: absolute; top: 48px; right: 0; background-color: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1); width: 320px; z-index: 1000; overflow: hidden;">
+                                <div class="notif-header" style="padding: 12px 16px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="font-weight: 600; color: var(--text-primary); font-size: 0.95rem;">Pedidos Pendientes</span>
+                                    <button id="notif-mark-read" style="background: none; border: none; font-size: 0.8rem; color: var(--color-primary); cursor: pointer; font-weight: 500;">Marcar vistos</button>
+                                </div>
+                                <div class="notif-body" id="notif-dropdown-items" style="max-height: 280px; overflow-y: auto;">
+                                    <div style="padding: 24px; text-align: center; color: var(--text-secondary); font-size: 0.9rem;">
+                                        No hay nuevos pedidos pendientes.
+                                    </div>
+                                </div>
+                                <div class="notif-footer" style="padding: 10px 16px; border-top: 1px solid var(--border-color); text-align: center; background-color: var(--bg-primary);">
+                                    {% if user.role == 'admin' %}
+                                        <a href="{% url 'admin_orders' %}" style="font-size: 0.85rem; color: var(--color-primary); font-weight: 500; text-decoration: none;">Ver todos los pedidos</a>
+                                    {% else %}
+                                        <a href="{% url 'vendedor_orders' %}" style="font-size: 0.85rem; color: var(--color-primary); font-weight: 500; text-decoration: none;">Ver todos los pedidos</a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+
                     <!-- Cart icon for clients -->
                     {% if user.role == 'client' %}
                         <a href="{% url 'ver_carrito' %}" class="nav-icon-btn" title="Mi Carrito" style="position:relative;">
@@ -307,6 +335,214 @@
     {% endif %}
 
     <script src="/static/js/app.js"></script>
+    
+    {% if user.role == 'admin' or user.role == 'vendedor' %}
+    <script src="https://js.pusher.com/8.0.1/pusher.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const bellBtn = document.getElementById("notif-bell-btn");
+            const dropdownMenu = document.getElementById("notif-dropdown-menu");
+            const countBadge = document.getElementById("notif-count-badge");
+            const itemsContainer = document.getElementById("notif-dropdown-items");
+            const markReadBtn = document.getElementById("notif-mark-read");
+            
+            if (!bellBtn) return;
+            
+            // Toggle dropdown
+            bellBtn.addEventListener("click", function(e) {
+                e.stopPropagation();
+                const isVisible = dropdownMenu.style.display === "block";
+                dropdownMenu.style.display = isVisible ? "none" : "block";
+                
+                if (!isVisible) {
+                    markAsRead();
+                }
+            });
+            
+            // Mark read btn
+            markReadBtn.addEventListener("click", function(e) {
+                e.stopPropagation();
+                markAsRead();
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener("click", function(e) {
+                if (dropdownMenu && !dropdownMenu.contains(e.target) && e.target !== bellBtn && !bellBtn.contains(e.target)) {
+                    dropdownMenu.style.display = "none";
+                }
+            });
+            
+            function markAsRead() {
+                fetch("/api/nuevos-pedidos/marcar-vistos/", {
+                    method: "POST",
+                    headers: {
+                        "X-CSRFToken": getCookie("csrftoken"),
+                        "Content-Type": "application/json"
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === "success") {
+                        countBadge.style.display = "none";
+                        countBadge.innerText = "0";
+                    }
+                })
+                .catch(err => console.error("Error marking seen:", err));
+            }
+            
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+
+            function fetchNotifications() {
+                fetch("/api/nuevos-pedidos/contador/")
+                .then(response => response.json())
+                .then(data => {
+                    // Update count
+                    if (data.count > 0) {
+                        countBadge.innerText = data.count;
+                        countBadge.style.display = "flex";
+                    } else {
+                        countBadge.style.display = "none";
+                    }
+                    
+                    // Update list
+                    if (data.orders.length > 0) {
+                        itemsContainer.innerHTML = "";
+                        data.orders.forEach(order => {
+                            const item = document.createElement("a");
+                            item.href = `/administrador/pedidos/detalle/${order.id}/`;
+                            item.className = "notif-item";
+                            item.style.display = "block";
+                            item.style.padding = "12px 16px";
+                            item.style.borderBottom = "1px solid var(--border-color)";
+                            item.style.textDecoration = "none";
+                            item.style.color = "var(--text-primary)";
+                            item.style.transition = "background-color 0.2s";
+                            item.onmouseover = () => item.style.backgroundColor = "var(--bg-primary)";
+                            item.onmouseout = () => item.style.backgroundColor = "transparent";
+                            
+                            item.innerHTML = `
+                                <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                                    <strong style="font-size:0.85rem; color:var(--color-primary);">Pedido #${order.id}</strong>
+                                    <span style="font-size:0.75rem; color:var(--text-secondary);">${order.created_at}</span>
+                                </div>
+                                <div style="font-size:0.8rem; color:var(--text-secondary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                    Cliente: ${order.client}
+                                </div>
+                                <div style="font-size:0.85rem; font-weight:500; margin-top:2px;">
+                                    Total: Bs. ${parseFloat(order.total).toFixed(2)}
+                                </div>
+                            `;
+                            itemsContainer.appendChild(item);
+                        });
+                    } else {
+                        itemsContainer.innerHTML = `
+                            <div style="padding: 24px; text-align: center; color: var(--text-secondary); font-size: 0.9rem;">
+                                No hay nuevos pedidos pendientes.
+                            </div>
+                        `;
+                    }
+                })
+                .catch(err => console.error("Error fetching notifications:", err));
+            }
+            
+            // Initial fetch
+            fetchNotifications();
+
+            // Pusher notifications
+            const PUSHER_KEY = "{{ pusher_key }}";
+            const PUSHER_CLUSTER = "{{ pusher_cluster }}";
+            
+            if (PUSHER_KEY) {
+                const pusher = new Pusher(PUSHER_KEY, {
+                    cluster: PUSHER_CLUSTER,
+                    forceTLS: true
+                });
+                
+                const channel = pusher.subscribe('nuevo_pedido_admin');
+                channel.bind('nuevo-pedido', function(data) {
+                    // Show Toast Notification
+                    showToastNotification(data);
+                    
+                    // Fetch notifications again to update list & badge count
+                    fetchNotifications();
+                    
+                    // Play notification sound
+                    try {
+                        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-84.wav');
+                        audio.play();
+                    } catch (e) {}
+                });
+            }
+            
+            function showToastNotification(data) {
+                let container = document.getElementById("toast-container");
+                if (!container) {
+                    container = document.createElement("div");
+                    container.id = "toast-container";
+                    container.style.position = "fixed";
+                    container.style.top = "20px";
+                    container.style.right = "20px";
+                    container.style.zIndex = "9999";
+                    container.style.width = "320px";
+                    document.body.appendChild(container);
+                }
+                
+                const toast = document.createElement("div");
+                toast.style.backgroundColor = "var(--bg-surface)";
+                toast.style.borderLeft = "4px solid var(--color-primary)";
+                toast.style.borderRadius = "8px";
+                toast.style.boxShadow = "0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)";
+                toast.style.padding = "16px";
+                toast.style.marginBottom = "10px";
+                toast.style.position = "relative";
+                toast.style.display = "flex";
+                toast.style.flexDirection = "column";
+                toast.style.gap = "4px";
+                toast.style.animation = "slideIn 0.3s ease-out";
+                
+                toast.innerHTML = `
+                    <button style="position:absolute; top:8px; right:8px; background:none; border:none; font-size:1.2rem; cursor:pointer; color:var(--text-secondary);" onclick="this.parentElement.remove()">&times;</button>
+                    <div style="display:flex; align-items:center; gap:8px; color:var(--color-primary); font-weight:600; font-size:0.9rem;">
+                        <i class="fa-solid fa-bell"></i> ¡Nuevo Pedido Pendiente!
+                    </div>
+                    <div style="font-size:0.85rem; color:var(--text-primary); margin-top:4px;">
+                        Nuevo pedido <strong>#${data.order_id}</strong> de ${data.client} por Bs. ${parseFloat(data.total).toFixed(2)}.
+                    </div>
+                    <a href="/administrador/pedidos/detalle/${data.order_id}/" style="font-size:0.8rem; color:var(--color-primary); text-decoration:none; font-weight:500; margin-top:6px; display:inline-block; align-self:flex-start;">Ver detalle &rarr;</a>
+                `;
+                
+                container.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.style.transition = "opacity 0.5s ease-out, transform 0.5s ease-out";
+                    toast.style.opacity = "0";
+                    toast.style.transform = "translateX(20px)";
+                    setTimeout(() => toast.remove(), 500);
+                }, 5000);
+            }
+        });
+    </script>
+    <style>
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+    {% endif %}
+
     {% block extra_js %}{% endblock %}
 </body>
 </html>

@@ -135,6 +135,7 @@ class Order(models.Model):
         choices=[('cliente', 'Cliente'), ('agencia', 'Agencia')],
         default='cliente'
     )
+    visto_admin = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

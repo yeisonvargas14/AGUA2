@@ -299,19 +299,21 @@ def admin_orders(request):
     if status_filter:
         orders = orders.filter(status=status_filter)
         
+    drivers = User.objects.filter(role=User.Roles.DRIVER, is_active=True)
     from django.conf import settings as django_settings
     return render(request, 'admin_panel/pedidos.html', {
         'orders': orders,
         'status_filter': status_filter,
         'pusher_key': django_settings.PUSHER_KEY,
-        'pusher_cluster': django_settings.PUSHER_CLUSTER
+        'pusher_cluster': django_settings.PUSHER_CLUSTER,
+        'drivers': drivers,
     })
 
 @login_required
 @role_required('admin')
 def admin_order_detail(request, pk):
     order = get_object_or_404(Order, pk=pk)
-    drivers = User.objects.filter(role=User.Roles.DRIVER)
+    drivers = User.objects.filter(role=User.Roles.DRIVER, is_active=True)
     return render(request, 'admin_panel/pedido_detalle.html', {
         'order': order,
         'drivers': drivers
@@ -321,6 +323,10 @@ def admin_order_detail(request, pk):
 @role_required('admin')
 def admin_assign_driver(request, pk):
     order = get_object_or_404(Order, pk=pk)
+    if order.status not in [Order.Status.PENDING, Order.Status.ACCEPTED]:
+        messages.error(request, "Solo se pueden asignar repartidores a pedidos pendientes o aceptados.")
+        return redirect('admin_orders')
+
     if request.method == 'POST':
         driver_id = request.POST.get('driver')
         driver = get_object_or_404(User, id=driver_id, role=User.Roles.DRIVER)
@@ -337,19 +343,111 @@ def admin_assign_driver(request, pk):
         )
         
         # Log to OrderLog
+        nota_log = f"Pedido asignado al repartidor '{driver.get_full_name() or driver.username}' por el Administrador."
+        if old_status == Order.Status.ACCEPTED:
+            nota_log = f"Repartidor reasignado a '{driver.get_full_name() or driver.username}' por el Administrador."
+            
         OrderLog.objects.create(
             order=order,
             estado_anterior=old_status,
             estado_nuevo=Order.Status.ACCEPTED,
             changed_by=request.user,
-            nota=f"Pedido asignado al repartidor '{driver.get_full_name() or driver.username}' por el Administrador."
+            nota=nota_log
         )
 
         # Simulate WhatsApp
-        print(f"[SIMULACIÓN WHATSAPP] Notificación de pedido #{order.id} ACEPTADO enviada al cliente {order.client.telefono}")
+        print(f"[SIMULACIÓN WHATSAPP] Notificación de pedido #{order.id} ACEPTADO/REASIGNADO enviada al cliente {order.client.telefono}")
         
         messages.success(request, f"Pedido #{order.id} asignado al repartidor '{driver.get_full_name() or driver.username}'.")
-    return redirect('admin_order_detail', pk=order.id)
+    
+    next_url = request.POST.get('next') or request.META.get('HTTP_REFERER') or 'admin_orders'
+    return redirect(next_url)
+
+@login_required
+@role_required('admin')
+def admin_cancel_order(request, pk):
+    order = get_object_or_404(Order, pk=pk)
+    if order.status not in [Order.Status.PENDING, Order.Status.ACCEPTED]:
+        messages.error(request, "Solo se pueden cancelar pedidos en estado Pendiente o Aceptado.")
+        return redirect('admin_orders')
+        
+    if request.method == 'POST':
+        motivo = request.POST.get('motivo', '').strip()
+        old_status = order.status
+        order.status = Order.Status.CANCELLED
+        order.save()
+        
+        # Restock items
+        for item in order.items.all():
+            item.product.stock += item.quantity
+            item.product.save()
+
+            # Log restock movement
+            InventoryLog.objects.create(
+                product=item.product,
+                user=request.user,
+                quantity=item.quantity,
+                movement_type=InventoryLog.MovementType.IN,
+                reason=f"Devolución de stock por cancelación de pedido #{order.id} por Administrador"
+            )
+            
+        # Log to OrderLog
+        OrderLog.objects.create(
+            order=order,
+            estado_anterior=old_status,
+            estado_nuevo=Order.Status.CANCELLED,
+            changed_by=request.user,
+            nota=f"Pedido cancelado por el Administrador. Motivo: {motivo}"
+        )
+        
+        messages.success(request, f"Pedido #{order.id} cancelado correctamente.")
+        
+    next_url = request.POST.get('next') or request.META.get('HTTP_REFERER') or 'admin_orders'
+    return redirect(next_url)
+
+@login_required
+@role_required('admin', 'vendedor')
+def admin_print_ticket(request, pk):
+    order = get_object_or_404(Order, pk=pk)
+    if order.tipo_pedido == 'agencia':
+        return render(request, 'agency/ticket.html', {
+            'order': order,
+            'agency': order.agency
+        })
+    else:
+        return render(request, 'client/ticket.html', {
+            'order': order
+        })
+
+@login_required
+@role_required('admin', 'vendedor')
+def api_nuevos_pedidos_contador(request):
+    pending_orders = Order.objects.filter(status=Order.Status.PENDING)
+    unseen_count = pending_orders.filter(visto_admin=False).count()
+    latest_pending = pending_orders.order_by('-created_at')[:5]
+    
+    orders_data = []
+    for order in latest_pending:
+        orders_data.append({
+            'id': order.id,
+            'client': order.client.get_full_name() or order.client.username,
+            'total': float(order.total_amount),
+            'created_at': order.created_at.strftime('%d %b %H:%M'),
+        })
+        
+    return JsonResponse({
+        'count': unseen_count,
+        'orders': orders_data
+    })
+
+@login_required
+@role_required('admin', 'vendedor')
+@csrf_exempt
+def api_nuevos_pedidos_marcar_vistos(request):
+    if request.method == 'POST':
+        Order.objects.filter(status=Order.Status.PENDING, visto_admin=False).update(visto_admin=True)
+        return JsonResponse({'status': 'success'})
+    return JsonResponse({'status': 'error', 'message': 'Invalid method'}, status=400)
 
 # =====================================================================
 # REPORTS

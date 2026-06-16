@@ -31,6 +31,12 @@ urlpatterns = [
     path('pedidos/', views.admin_orders, name='admin_orders'),
     path('pedidos/detalle/<int:pk>/', views.admin_order_detail, name='admin_order_detail'),
     path('pedidos/asignar-repartidor/<int:pk>/', views.admin_assign_driver, name='admin_assign_driver'),
+    path('pedidos/cancelar/<int:pk>/', views.admin_cancel_order, name='admin_cancel_order'),
+    path('pedidos/ticket/<int:pk>/', views.admin_print_ticket, name='admin_print_ticket'),
+    
+    # Notifications APIs
+    path('api/nuevos-pedidos/contador/', views.api_nuevos_pedidos_contador, name='api_nuevos_pedidos_contador'),
+    path('api/nuevos-pedidos/marcar-vistos/', views.api_nuevos_pedidos_marcar_vistos, name='api_nuevos_pedidos_marcar_vistos'),
     
     # Reports
     path('reportes/', views.admin_reports, name='admin_reports'),

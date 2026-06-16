@@ -27,6 +27,8 @@ urlpatterns = [
     path('api/agencies/', core_views.api_agencies, name='api_agencies'),
     path('api/inventory/', core_views.api_inventory, name='api_inventory'),
     path('api/deliveries/', core_views.api_deliveries, name='api_deliveries'),
+    path('api/nuevos-pedidos/contador/', core_views.api_nuevos_pedidos_contador),
+    path('api/nuevos-pedidos/marcar-vistos/', core_views.api_nuevos_pedidos_marcar_vistos),
     
     # Client Panel & Public Catalogue
     path('catalogo/', include('products.urls')),

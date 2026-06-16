@@ -13,4 +13,10 @@ def cart_count(request):
         count = cart.items.count()
     except Exception:
         count = 0
-    return {'cart_count': count}
+    
+    from django.conf import settings
+    return {
+        'cart_count': count,
+        'pusher_key': getattr(settings, 'PUSHER_KEY', ''),
+        'pusher_cluster': getattr(settings, 'PUSHER_CLUSTER', 'mt1'),
+    }

@@ -65,9 +65,33 @@
                             </td>
                             <td>{{ order.created_at|date:"d M Y, H:i" }}</td>
                             <td>
-                                <a href="{% url 'admin_order_detail' order.id %}" class="btn btn-primary-light btn-sm" title="Ver Detalle">
-                                    <i class="fa-solid fa-eye"></i>
-                                </a>
+                                <div style="display: flex; gap: 6px; flex-wrap: nowrap;">
+                                    <a href="{% url 'admin_order_detail' order.id %}" class="btn btn-primary-light btn-sm" title="Ver Detalle">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </a>
+                                    {% if order.status == 'pending' %}
+                                        <button onclick="openDriverModal('{{ order.id }}', false)" class="btn btn-success-light btn-sm" title="Asignar Repartidor">
+                                            <i class="fa-solid fa-user-plus"></i>
+                                        </button>
+                                        <button onclick="openCancelModal('{{ order.id }}')" class="btn btn-danger-light btn-sm" title="Cancelar Pedido">
+                                            <i class="fa-solid fa-xmark"></i>
+                                        </button>
+                                    {% elif order.status == 'accepted' %}
+                                        <button onclick="openDriverModal('{{ order.id }}', true, '{{ order.driver.id|default:'' }}')" class="btn btn-warning-light btn-sm" title="Reasignar Repartidor">
+                                            <i class="fa-solid fa-user-pen"></i>
+                                        </button>
+                                        <button onclick="openCancelModal('{{ order.id }}')" class="btn btn-danger-light btn-sm" title="Cancelar Pedido">
+                                            <i class="fa-solid fa-xmark"></i>
+                                        </button>
+                                        <a href="{% url 'admin_print_ticket' order.id %}" target="_blank" class="btn btn-secondary-light btn-sm" title="Imprimir Ticket">
+                                            <i class="fa-solid fa-print"></i>
+                                        </a>
+                                    {% elif order.status == 'delivered' %}
+                                        <a href="{% url 'admin_print_ticket' order.id %}" target="_blank" class="btn btn-secondary-light btn-sm" title="Imprimir Ticket">
+                                            <i class="fa-solid fa-print"></i>
+                                        </a>
+                                    {% endif %}
+                                </div>
                             </td>
                         </tr>
                     {% empty %}
@@ -80,108 +104,116 @@
         </div>
     </div>
 </div>
+
+<!-- Driver Assignment Modal -->
+<div class="modal fade" id="driverModal" style="display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center;">
+    <div class="modal-dialog" style="background: var(--bg-surface); border-radius: 12px; max-width: 500px; width: 90%; margin: auto; padding: 24px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); border: 1px solid var(--border-color);">
+        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+            <h4 class="modal-title" id="driverModalTitle" style="margin: 0; color: var(--text-primary); font-weight: 600;">Asignar Repartidor</h4>
+            <button class="close-modal" onclick="closeModal('driverModal')" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-secondary);">&times;</button>
+        </div>
+        <form id="driverForm" method="POST" action="">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label for="driverSelect" style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-primary);">Seleccionar Repartidor Activo</label>
+                <select name="driver" id="driverSelect" class="form-control" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--bg-primary); color: var(--text-primary);">
+                    <option value="">-- Seleccionar --</option>
+                    {% for driver in drivers %}
+                        <option value="{{ driver.id }}">{{ driver.get_full_name|default:driver.username }}</option>
+                    {% empty %}
+                        <option value="" disabled>No hay repartidores activos disponibles</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 12px;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('driverModal')">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Cancellation Modal -->
+<div class="modal fade" id="cancelModal" style="display: none; position: fixed; z-index: 1050; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center;">
+    <div class="modal-dialog" style="background: var(--bg-surface); border-radius: 12px; max-width: 500px; width: 90%; margin: auto; padding: 24px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); border: 1px solid var(--border-color);">
+        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+            <h4 class="modal-title" style="margin: 0; color: var(--text-primary); font-weight: 600;">Cancelar Pedido</h4>
+            <button class="close-modal" onclick="closeModal('cancelModal')" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-secondary);">&times;</button>
+        </div>
+        <form id="cancelForm" method="POST" action="">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label for="cancelMotivo" style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-primary);">Motivo de Cancelación</label>
+                <textarea name="motivo" id="cancelMotivo" class="form-control" required rows="3" placeholder="Escriba el motivo aquí..." style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--bg-primary); color: var(--text-primary); resize: vertical;"></textarea>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 12px;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('cancelModal')">Cerrar</button>
+                <button type="submit" class="btn btn-danger">Confirmar Cancelación</button>
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://js.pusher.com/8.0.1/pusher.min.js"></script>
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const PUSHER_KEY = "{{ pusher_key }}";
-        const PUSHER_CLUSTER = "{{ pusher_cluster }}";
-
-        function showToast(type, text) {
-            let container = document.querySelector(".messages-container");
-            if (!container) {
-                container = document.createElement("div");
-                container.className = "messages-container";
-                container.style.position = "fixed";
-                container.style.top = "20px";
-                container.style.right = "20px";
-                container.style.zIndex = "9999";
-                container.style.width = "320px";
-                document.body.appendChild(container);
-            }
-            const alertDiv = document.createElement("div");
-            alertDiv.className = `alert alert-${type}`;
-            alertDiv.style.marginBottom = "10px";
-            alertDiv.style.boxShadow = "0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)";
-            alertDiv.style.borderRadius = "8px";
-            alertDiv.style.border = "none";
-            alertDiv.style.color = "#fff";
-            alertDiv.style.display = "flex";
-            alertDiv.style.alignItems = "center";
-            alertDiv.style.gap = "10px";
-            alertDiv.style.padding = "16px";
-            
-            if (type === 'success') {
-                alertDiv.style.backgroundColor = "#10B981";
-            } else {
-                alertDiv.style.backgroundColor = "#6366f1"; // Indigo for info/new orders
-            }
-            
-            let icon = '<i class="fa-solid fa-bell"></i>';
-            alertDiv.innerHTML = `${icon} <span style="flex-grow:1;font-weight:500;">${text}</span> <button class="alert-close" style="color:#fff;background:none;border:none;font-size:1.2rem;cursor:pointer;" onclick="this.parentElement.remove()">&times;</button>`;
-            container.appendChild(alertDiv);
-            
-            setTimeout(() => {
-                alertDiv.style.transition = "opacity 0.5s ease-out";
-                alertDiv.style.opacity = '0';
-                setTimeout(() => alertDiv.remove(), 500);
-            }, 5000);
+    function openDriverModal(orderId, isReassign, currentDriverId) {
+        const modal = document.getElementById("driverModal");
+        const title = document.getElementById("driverModalTitle");
+        const select = document.getElementById("driverSelect");
+        const form = document.getElementById("driverForm");
+        
+        form.action = `/administrador/pedidos/asignar-repartidor/${orderId}/`;
+        title.innerText = isReassign ? "Reasignar Repartidor" : "Asignar Repartidor";
+        
+        if (currentDriverId) {
+            select.value = currentDriverId;
+        } else {
+            select.value = "";
         }
+        
+        modal.style.display = "flex";
+    }
 
-        if (PUSHER_KEY) {
-            const pusher = new Pusher(PUSHER_KEY, {
-                cluster: PUSHER_CLUSTER,
-                forceTLS: true
-            });
+    function openCancelModal(orderId) {
+        const modal = document.getElementById("cancelModal");
+        const form = document.getElementById("cancelForm");
+        const textarea = document.getElementById("cancelMotivo");
+        
+        form.action = `/administrador/pedidos/cancelar/${orderId}/`;
+        textarea.value = "";
+        
+        modal.style.display = "flex";
+    }
 
-            const channel = pusher.subscribe('pedidos');
-            channel.bind('nuevo-pedido', function(data) {
-                showToast('info', `¡Nuevo Pedido #${data.order_id}! Total: Bs. ${parseFloat(data.total).toFixed(2)} - Cliente: ${data.client}`);
-                
-                // Play chime sound
-                try {
-                    const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-84.wav');
-                    audio.play();
-                } catch (e) {}
+    function closeModal(modalId) {
+        document.getElementById(modalId).style.display = "none";
+    }
 
-                // Dynamically prepend new order to table
-                const tbody = document.querySelector(".data-table tbody");
-                if (tbody) {
-                    // Check if empty state row exists
-                    const emptyRow = tbody.querySelector("td.text-center");
-                    if (emptyRow && emptyRow.parentElement) {
-                        emptyRow.parentElement.remove();
-                    }
-
-                    const tr = document.createElement("tr");
-                    tr.style.backgroundColor = "#eef9ff";
-                    tr.style.fontWeight = "bold";
-                    
-                    // Format date
-                    const now = new Date();
-                    const dateStr = now.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }) + `, ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-
-                    tr.innerHTML = `
-                        <td><strong>#${data.order_id}</strong></td>
-                        <td>${data.client}</td>
-                        <td>Sin asignar</td>
-                        <td>-</td>
-                        <td>Bs. ${parseFloat(data.total).toFixed(2)}</td>
-                        <td><span class="text-muted">-</span></td>
-                        <td><span class="badge badge-warning">Pendiente</span></td>
-                        <td>${dateStr}</td>
-                        <td>
-                            <a href="/administrador/pedidos/detalle/${data.order_id}/" class="btn btn-primary-light btn-sm" title="Ver Detalle">
-                                <i class="fa-solid fa-eye"></i>
-                            </a>
-                        </td>
-                    `;
-                    tbody.insertBefore(tr, tbody.firstChild);
+    // Auto-refresh the order list table partially every 30 seconds
+    function refreshOrderTable() {
+        const driverModal = document.getElementById("driverModal");
+        const cancelModal = document.getElementById("cancelModal");
+        if ((driverModal && driverModal.style.display === "flex") || (cancelModal && cancelModal.style.display === "flex")) {
+            return;
+        }
+        
+        fetch(window.location.href)
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newTbody = doc.querySelector('.data-table tbody');
+                const currentTbody = document.querySelector('.data-table tbody');
+                if (newTbody && currentTbody) {
+                    currentTbody.innerHTML = newTbody.innerHTML;
                 }
-            });
-        }
-    });
+            })
+            .catch(err => console.error("Error refreshing table:", err));
+    }
+
+    setInterval(refreshOrderTable, 30000);
 </script>
 {% endblock %}
