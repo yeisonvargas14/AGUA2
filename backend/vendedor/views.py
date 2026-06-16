@@ -394,3 +394,191 @@ def vendedor_catalog(request):
     if q:
         products = products.filter(name__icontains=q)
     return render(request, 'vendedor/catalogo.html', {'products': products, 'q': q})
+
+
+@vendedor_required
+def registrar_venta(request):
+    from django.http import JsonResponse
+    from django.db import transaction
+    from django.db.models import Q
+    import json
+
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({'success': False, 'error': 'Datos JSON inválidos.'}, status=400)
+
+        client_id = data.get('client_id')
+        metodo_pago = data.get('metodo_pago')
+        items = data.get('items', [])
+
+        if not client_id:
+            return JsonResponse({'success': False, 'error': 'Debe seleccionar un cliente.'}, status=400)
+        if not items:
+            return JsonResponse({'success': False, 'error': 'Debe agregar al menos un producto.'}, status=400)
+
+        client = get_object_or_404(User, pk=client_id, role=User.Roles.CLIENT)
+
+        try:
+            with transaction.atomic():
+                order = Order.objects.create(
+                    client=client,
+                    status=Order.Status.DELIVERED,
+                    origen='venta_directa',
+                    vendedor=request.user,
+                    metodo_pago=metodo_pago,
+                    delivery_address=client.address or 'Planta / Venta Presencial',
+                    total_amount=Decimal('0.00'),
+                )
+
+                total = Decimal('0.00')
+                for item in items:
+                    pid = item.get('product_id')
+                    qty = int(item.get('quantity', 0))
+                    if qty <= 0:
+                        continue
+
+                    product = Product.objects.select_for_update().get(pk=pid, is_active=True)
+                    if product.stock < qty:
+                        raise ValueError(f"Stock insuficiente para '{product.name}' (Disponible: {product.stock})")
+
+                    OrderItem.objects.create(
+                        order=order,
+                        product=product,
+                        quantity=qty,
+                        unit_price=product.price
+                    )
+
+                    product.stock -= qty
+                    product.save()
+
+                    InventoryLog.objects.create(
+                        product=product,
+                        user=request.user,
+                        quantity=qty,
+                        movement_type=InventoryLog.MovementType.OUT,
+                        reason=f"Venta directa #{order.id} en planta"
+                    )
+
+                    total += product.price * qty
+
+                if total == Decimal('0.00'):
+                    raise ValueError("El total de la venta no puede ser 0.")
+
+                order.total_amount = total
+                order.save()
+
+                OrderLog.objects.create(
+                    order=order,
+                    estado_anterior=None,
+                    estado_nuevo=Order.Status.DELIVERED,
+                    changed_by=request.user,
+                    nota=f"Venta presencial registrada y entregada por vendedor {request.user.get_full_name() or request.user.username}"
+                )
+
+            return JsonResponse({'success': True, 'order_id': order.id, 'message': 'Venta registrada con éxito.'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+    # GET: render form and show latest 10 sales
+    products = Product.objects.filter(is_active=True).order_by('name')
+    
+    # 10 recent delivered sales: registered by this vendedor or driver-delivered (vendedor is null/office)
+    recent_sales = Order.objects.filter(
+        status=Order.Status.DELIVERED
+    ).filter(
+        Q(vendedor=request.user) | Q(vendedor__isnull=True)
+    ).order_by('-created_at')[:10]
+
+    return render(request, 'vendedor/registrar_venta.html', {
+        'products': products,
+        'recent_sales': recent_sales,
+    })
+
+
+@vendedor_required
+def buscar_clientes_venta(request):
+    from django.http import JsonResponse
+    q = request.GET.get('q', '').strip()
+    if not q:
+        return JsonResponse({'clients': []})
+
+    clients = User.objects.filter(role=User.Roles.CLIENT).filter(
+        Q(first_name__icontains=q) |
+        Q(last_name__icontains=q) |
+        Q(telefono__icontains=q)
+    )[:10]
+
+    client_list = []
+    for u in clients:
+        client_list.append({
+            'id': u.id,
+            'name': u.get_full_name() or u.username,
+            'telefono': u.telefono or 'Sin celular',
+            'address': u.address or ''
+        })
+    return JsonResponse({'clients': client_list})
+
+
+@vendedor_required
+def crear_cliente_rapido_venta(request):
+    from django.http import JsonResponse
+    import json
+    import secrets
+
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({'success': False, 'error': 'Datos JSON inválidos.'}, status=400)
+
+        first_name = data.get('first_name', '').strip()
+        last_name = data.get('last_name', '').strip()
+        telefono = data.get('telefono', '').strip()
+        address = data.get('address', '').strip()
+
+        if not first_name:
+            return JsonResponse({'success': False, 'error': 'El nombre es obligatorio.'}, status=400)
+        if not telefono:
+            return JsonResponse({'success': False, 'error': 'El celular es obligatorio.'}, status=400)
+
+        # Check if username/phone already exists
+        username = telefono
+        if User.objects.filter(username=username).exists():
+            return JsonResponse({'success': False, 'error': 'Ya existe un usuario con este número de celular/usuario.'}, status=400)
+
+        try:
+            user = User.objects.create(
+                username=username,
+                first_name=first_name,
+                last_name=last_name,
+                telefono=telefono,
+                address=address,
+                role=User.Roles.CLIENT
+            )
+            user.set_password(User.objects.make_random_password())
+            user.save()
+
+            return JsonResponse({
+                'success': True,
+                'client': {
+                    'id': user.id,
+                    'name': user.get_full_name() or user.username,
+                    'telefono': user.telefono,
+                    'address': user.address
+                }
+            })
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+    return JsonResponse({'success': False, 'error': 'Método no permitido.'}, status=405)
+
+
+@vendedor_required
+def vendedor_order_ticket(request, pk):
+    order = get_object_or_404(Order, pk=pk)
+    return render(request, 'vendedor/ticket.html', {
+        'order': order
+    })
+

@@ -12,4 +12,8 @@ urlpatterns = [
     path('pedidos/<int:pk>/cancelar/', views.vendedor_order_cancel, name='vendedor_order_cancel'),
     path('pedidos/<int:pk>/asignar/', views.vendedor_assign_driver, name='vendedor_assign_driver'),
     path('catalogo/', views.vendedor_catalog, name='vendedor_catalog'),
+    path('registrar-venta/', views.registrar_venta, name='registrar_venta'),
+    path('buscar-clientes/', views.buscar_clientes_venta, name='buscar_clientes_venta'),
+    path('crear-cliente-rapido/', views.crear_cliente_rapido_venta, name='crear_cliente_rapido_venta'),
+    path('pedidos/<int:pk>/ticket/', views.vendedor_order_ticket, name='vendedor_order_ticket'),
 ]

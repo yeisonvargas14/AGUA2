@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Comprobante de Venta #{{ order.id }} - Agua de Mesa Santiago{% endblock %}
+{% block page_title %}Ticket de Venta{% endblock %}
+
+{% block extra_css %}
+<style>
+    @media print {
+        body * {
+            visibility: hidden;
+        }
+        #print-area, #print-area * {
+            visibility: visible;
+        }
+        #print-area {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+        }
+        .no-print {
+            display: none !important;
+        }
+        @page { size: auto;  margin: 0mm; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto" style="max-width: 800px; margin: 0 auto; padding: 20px;">
+    <div class="mb-4 d-flex justify-content-between align-items-center no-print" style="margin-bottom: 20px; display: flex; justify-content: space-between;">
+        <a href="{% url 'registrar_venta' %}" class="btn btn-secondary text-decoration-none">
+            <i class="fa-solid fa-arrow-left"></i> Volver a Registrar Ventas
+        </a>
+        <button onclick="window.print()" class="btn btn-primary" style="background-color: #1f2937; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">
+            <i class="fa-solid fa-print"></i> Imprimir Ticket
+        </button>
+    </div>
+
+    <!-- TICKET AREA -->
+    <div id="print-area" style="background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: 1px solid #e5e7eb; color: #1f2937;">
+        <div style="text-align: center; margin-bottom: 30px; border-bottom: 1px solid #e5e7eb; padding-bottom: 20px;">
+            <div style="display: flex; justify-content: center; margin-bottom: 10px;">
+                <img src="{% static 'images/logo.jpg' %}" alt="Agua de Mesa Santiago" style="max-height: 80px; width: auto; object-fit: contain;">
+            </div>
+            <h1 style="font-size: 28px; font-weight: bold; color: #1e3a8a; margin: 0 0 5px 0;">Agua de Mesa Santiago</h1>
+            <p style="font-size: 14px; color: #4b5563; margin: 0 0 10px 0; font-weight: 600;">Calle Comercio #123, Comarapa | Tel: 71234567</p>
+            <h2 style="font-size: 20px; color: #4b5563; margin: 0;">Comprobante de Venta</h2>
+        </div>
+        
+        <div style="display: flex; justify-content: space-between; margin-bottom: 30px; font-size: 14px;">
+            <div>
+                <p style="font-weight: bold; color: #1f2937; margin: 0 0 5px 0;">Datos del Cliente:</p>
+                <p style="margin: 0;">{{ order.client.get_full_name|default:order.client.username }}</p>
+                <p style="margin: 0;">Cel: {{ order.client.telefono|default:"Sin celular" }}</p>
+                <p style="margin: 0;">Dirección: {{ order.delivery_address|default:"Planta / Venta Presencial" }}</p>
+            </div>
+            <div style="text-align: right;">
+                <p style="margin: 0 0 5px 0;"><span style="font-weight: bold; color: #1f2937;">Venta #:</span> {{ order.id }}</p>
+                <p style="margin: 0 0 5px 0;"><span style="font-weight: bold; color: #1f2937;">Fecha de Emisión:</span> {{ order.created_at|date:"d/m/Y H:i" }}</p>
+                <p style="margin: 0 0 5px 0;"><span style="font-weight: bold; color: #1f2937;">Método de Pago:</span> {{ order.get_metodo_pago_display|default:"No especificado" }}</p>
+                <p style="margin: 0;"><span style="font-weight: bold; color: #1f2937;">Estado:</span> {{ order.get_status_display }}</p>
+            </div>
+        </div>
+        
+        <table style="width: 100%; text-align: left; margin-bottom: 30px; border-collapse: collapse; font-size: 14px;">
+            <thead>
+                <tr style="border-top: 2px solid #d1d5db; border-bottom: 2px solid #d1d5db; color: #1f2937; text-transform: uppercase;">
+                    <th style="padding: 10px 0; text-align: center;">Cant</th>
+                    <th style="padding: 10px 0;">Descripción</th>
+                    <th style="padding: 10px 0; text-align: right;">P. Unit</th>
+                    <th style="padding: 10px 0; text-align: right;">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in order.items.all %}
+                <tr style="border-bottom: 1px solid #f3f4f6;">
+                    <td style="padding: 10px 0; text-align: center;">{{ item.quantity }}</td>
+                    <td style="padding: 10px 0;">{{ item.product.name }}</td>
+                    <td style="padding: 10px 0; text-align: right;">Bs {{ item.unit_price }}</td>
+                    <td style="padding: 10px 0; text-align: right; font-weight: 500;">Bs {{ item.subtotal }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <div style="display: flex; flex-direction: column; align-items: flex-end; margin-bottom: 30px; border-top: 2px solid #d1d5db; padding-top: 10px; text-align: right;">
+            {% if order.discount_amount > 0 %}
+            <p style="font-size: 14px; color: #4b5563; margin: 0 0 5px 0;">Subtotal: Bs {{ order.subtotal }}</p>
+            <p style="font-size: 14px; color: #10b981; font-weight: 600; margin: 0 0 5px 0;">Descuento: -Bs {{ order.discount_amount }}</p>
+            {% endif %}
+            <p style="font-size: 20px; font-weight: bold; color: #1f2937; margin: 0;">Total: Bs {{ order.total_amount }}</p>
+        </div>
+        
+        <div style="text-align: center; font-size: 12px; color: #6b7280; margin-top: 40px; font-style: italic; border-top: 1px solid #e5e7eb; padding-top: 20px;">
+            Este documento es un comprobante de venta presencial.<br>
+            ¡Gracias por preferir Agua de Mesa Santiago!
+        </div>
+    </div>
+</div>
+{% endblock %}

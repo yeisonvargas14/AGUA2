@@ -136,6 +136,27 @@ class Order(models.Model):
         default='cliente'
     )
     visto_admin = models.BooleanField(default=False)
+    
+    # Presencial / Venta Directa Fields
+    origen = models.CharField(
+        max_length=20,
+        choices=[('venta_directa', 'Venta Directa'), ('pedido_online', 'Pedido Online')],
+        default='pedido_online'
+    )
+    vendedor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='vendedor_sales',
+        limit_choices_to={'role': 'vendedor'}
+    )
+    metodo_pago = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        choices=[('efectivo', 'Efectivo'), ('transferencia', 'Transferencia'), ('tarjeta', 'Tarjeta')]
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
