@@ -9,13 +9,13 @@
         <div class="section-header flex-header">
             <h3>Todos los Pedidos del Sistema</h3>
             <!-- Status Filters -->
-            <div class="filter-pills">
-                <a href="{% url 'admin_orders' %}" class="filter-pill {% if not status_filter %}active{% endif %}">Todos</a>
-                <a href="?status=pending" class="filter-pill {% if status_filter == 'pending' %}active{% endif %}">Pendientes</a>
-                <a href="?status=accepted" class="filter-pill {% if status_filter == 'accepted' %}active{% endif %}">Aceptados</a>
-                <a href="?status=on_way" class="filter-pill {% if status_filter == 'on_way' %}active{% endif %}">En Camino</a>
-                <a href="?status=delivered" class="filter-pill {% if status_filter == 'delivered' %}active{% endif %}">Entregados</a>
-                <a href="?status=cancelled" class="filter-pill {% if status_filter == 'cancelled' %}active{% endif %}">Cancelados</a>
+            <div class="btn-group btn-group-sm flex-wrap gap-1" role="group" aria-label="Status Filters">
+                <a href="{% url 'admin_orders' %}" class="btn {% if not status_filter %}btn-primary{% else %}btn-outline-secondary{% endif %}" style="border-radius: 20px; padding: 6px 16px; font-weight: 500;">Todos</a>
+                <a href="?status=pending" class="btn {% if status_filter == 'pending' %}btn-warning{% else %}btn-outline-secondary{% endif %}" style="border-radius: 20px; padding: 6px 16px; font-weight: 500;">Pendientes</a>
+                <a href="?status=accepted" class="btn {% if status_filter == 'accepted' %}btn-info text-white{% else %}btn-outline-secondary{% endif %}" style="border-radius: 20px; padding: 6px 16px; font-weight: 500;">Aceptados</a>
+                <a href="?status=on_way" class="btn {% if status_filter == 'on_way' %}btn-primary{% else %}btn-outline-secondary{% endif %}" style="border-radius: 20px; padding: 6px 16px; font-weight: 500;">En Camino</a>
+                <a href="?status=delivered" class="btn {% if status_filter == 'delivered' %}btn-success{% else %}btn-outline-secondary{% endif %}" style="border-radius: 20px; padding: 6px 16px; font-weight: 500;">Entregados</a>
+                <a href="?status=cancelled" class="btn {% if status_filter == 'cancelled' %}btn-danger{% else %}btn-outline-secondary{% endif %}" style="border-radius: 20px; padding: 6px 16px; font-weight: 500;">Cancelados</a>
             </div>
         </div>
         <hr class="divider">
