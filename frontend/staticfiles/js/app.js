@@ -104,7 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
     menuItems.forEach(item => {
         item.addEventListener('click', (e) => {
             const menuText = item.querySelector('span').innerText.trim().toLowerCase();
-            const spaRoutes = ['dashboard', 'productos', 'pedidos', 'inventario', 'agencias', 'distribución'];
+            const spaRoutes = ['dashboard', 'productos', 'inventario', 'agencias', 'distribución'];
             
             if (spaRoutes.includes(menuText)) {
                 e.preventDefault();

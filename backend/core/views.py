@@ -299,10 +299,20 @@ def admin_orders(request):
     if status_filter:
         orders = orders.filter(status=status_filter)
         
+    # Prefetch items and select related to optimize N+1 queries
+    orders = orders.select_related('client', 'driver', 'agency').prefetch_related('items__product')
+    
+    # Pagination
+    from django.core.paginator import Paginator
+    paginator = Paginator(orders, 10) # 10 orders per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
     drivers = User.objects.filter(role=User.Roles.DRIVER, is_active=True)
     from django.conf import settings as django_settings
     return render(request, 'admin_panel/pedidos.html', {
-        'orders': orders,
+        'orders': page_obj,
+        'page_obj': page_obj,
         'status_filter': status_filter,
         'pusher_key': django_settings.PUSHER_KEY,
         'pusher_cluster': django_settings.PUSHER_CLUSTER,
