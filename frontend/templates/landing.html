@@ -51,6 +51,54 @@
         </div>
     </section>
 
+    <!-- Promotions Carousel Section -->
+    <section class="landing-promotions">
+        <div class="promotions-title-group">
+            <h2>✨ Promociones y Ofertas Especiales</h2>
+            <p>Disfruta de nuestros combos exclusivos y participa de beneficios pensados para tu bienestar.</p>
+        </div>
+        
+        <div class="promo-carousel-wrapper">
+            <button class="carousel-control prev-btn" aria-label="Anterior"><i class="fa-solid fa-chevron-left"></i></button>
+            <div class="promo-carousel-container">
+                <div class="promo-carousel-track">
+                    <div class="promo-slide active">
+                        <img src="{% static 'images/promo_combo_hogar.jpg' %}" alt="Combo Hogar Agua Santiago" class="promo-banner-img">
+                        <div class="promo-slide-overlay">
+                            <h3>Combo Hogar</h3>
+                            <p>1 Botellón de 20L + 1 Dispensador Manual a precio de lanzamiento.</p>
+                            <a href="#catalogo" class="btn btn-primary">Pedir Ahora</a>
+                        </div>
+                    </div>
+                    <div class="promo-slide">
+                        <img src="{% static 'images/promo_diez_gratis.jpg' %}" alt="Promoción 10 Gratis Agua Santiago" class="promo-banner-img">
+                        <div class="promo-slide-overlay">
+                            <h3>10° Botellón Gratis</h3>
+                            <p>Premia tu fidelidad: Compra 9 botellones de 20L y el 10° es completamente gratis.</p>
+                            <a href="#catalogo" class="btn btn-primary">Pedir Bidones</a>
+                        </div>
+                    </div>
+                    <div class="promo-slide">
+                        <img src="{% static 'images/promo_cliente_mes.jpg' %}" alt="Cliente del Mes Agua Santiago" class="promo-banner-img">
+                        <div class="promo-slide-overlay">
+                            <h3>Cliente del Mes</h3>
+                            <p>Compra con nosotros, recomienda el servicio y participa para ganar botellones y sorpresas.</p>
+                            <a href="{% url 'register' %}" class="btn btn-primary">Registrarme para Participar</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button class="carousel-control next-btn" aria-label="Siguiente"><i class="fa-solid fa-chevron-right"></i></button>
+            
+            <!-- Dots Indicators -->
+            <div class="carousel-indicators">
+                <span class="dot active" data-index="0"></span>
+                <span class="dot" data-index="1"></span>
+                <span class="dot" data-index="2"></span>
+            </div>
+        </div>
+    </section>
+
     <!-- Catalog Section -->
     <section id="catalogo" class="landing-catalog">
         <div class="catalog-header">
@@ -376,6 +424,63 @@
                 });
             });
         });
+
+        // Promotions Carousel Logic
+        const track = document.querySelector(".promo-carousel-track");
+        const slides = Array.from(document.querySelectorAll(".promo-slide"));
+        const dots = Array.from(document.querySelectorAll(".carousel-indicators .dot"));
+        const nextButton = document.querySelector(".next-btn");
+        const prevButton = document.querySelector(".prev-btn");
+        let currentIndex = 0;
+        let slideInterval;
+
+        function updateCarousel(index) {
+            if (!track || slides.length === 0) return;
+            if (index < 0) index = slides.length - 1;
+            if (index >= slides.length) index = 0;
+            currentIndex = index;
+            
+            track.style.transform = `translateX(-${currentIndex * 100}%)`;
+            
+            // Update dots
+            dots.forEach(dot => dot.classList.remove("active"));
+            if (dots[currentIndex]) {
+                dots[currentIndex].classList.add("active");
+            }
+        }
+
+        function startAutoPlay() {
+            slideInterval = setInterval(() => {
+                updateCarousel(currentIndex + 1);
+            }, 5000);
+        }
+
+        function resetAutoPlay() {
+            clearInterval(slideInterval);
+            startAutoPlay();
+        }
+
+        if (nextButton && prevButton && track) {
+            nextButton.addEventListener("click", () => {
+                updateCarousel(currentIndex + 1);
+                resetAutoPlay();
+            });
+
+            prevButton.addEventListener("click", () => {
+                updateCarousel(currentIndex - 1);
+                resetAutoPlay();
+            });
+
+            dots.forEach(dot => {
+                dot.addEventListener("click", (e) => {
+                    const targetIndex = parseInt(e.target.dataset.index);
+                    updateCarousel(targetIndex);
+                    resetAutoPlay();
+                });
+            });
+
+            startAutoPlay();
+        }
     });
 </script>
 {% endblock %}
