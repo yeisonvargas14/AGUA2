@@ -143,6 +143,11 @@ class Order(models.Model):
         choices=[('venta_directa', 'Venta Directa'), ('pedido_online', 'Pedido Online')],
         default='pedido_online'
     )
+    tipo_venta = models.CharField(
+        max_length=20,
+        choices=[('presencial', 'Presencial'), ('online', 'Online')],
+        default='online'
+    )
     vendedor = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,

@@ -426,6 +426,7 @@ def registrar_venta(request):
                     client=client,
                     status=Order.Status.DELIVERED,
                     origen='venta_directa',
+                    tipo_venta='presencial',
                     vendedor=request.user,
                     metodo_pago=metodo_pago,
                     delivery_address=client.address or 'Planta / Venta Presencial',
@@ -580,5 +581,83 @@ def vendedor_order_ticket(request, pk):
     order = get_object_or_404(Order, pk=pk)
     return render(request, 'vendedor/ticket.html', {
         'order': order
+    })
+
+
+@vendedor_required
+def ticket_venta(request, pk):
+    order = get_object_or_404(Order, pk=pk)
+    return render(request, 'vendedor/ticket.html', {
+        'order': order
+    })
+
+
+@vendedor_required
+def listado_ventas(request):
+    import csv
+    from django.http import HttpResponse
+    from django.db.models import Q
+    from django.utils.timezone import make_aware
+    from datetime import datetime
+
+    # Get query parameters
+    start_date_str = request.GET.get('start_date', '')
+    end_date_str = request.GET.get('end_date', '')
+    metodo_pago = request.GET.get('metodo_pago', '')
+    tipo_venta_filter = request.GET.get('tipo_venta', '')
+
+    # Base query: delivered online orders OR any direct presencial sale
+    orders = Order.objects.filter(
+        Q(tipo_venta='presencial') | Q(tipo_venta='online', status=Order.Status.DELIVERED)
+    ).order_by('-created_at')
+
+    # Apply filters
+    if start_date_str:
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+            orders = orders.filter(created_at__date__gte=start_date.date())
+        except ValueError:
+            pass
+
+    if end_date_str:
+        try:
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+            orders = orders.filter(created_at__date__lte=end_date.date())
+        except ValueError:
+            pass
+
+    if metodo_pago:
+        orders = orders.filter(metodo_pago=metodo_pago)
+
+    if tipo_venta_filter:
+        orders = orders.filter(tipo_venta=tipo_venta_filter)
+
+    # Export to CSV option
+    if request.GET.get('export') == 'csv':
+        response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
+        response['Content-Disposition'] = 'attachment; filename="planilla_ventas.csv"'
+        
+        writer = csv.writer(response)
+        writer.writerow(['ID Venta', 'Tipo de Venta', 'Cliente', 'Celular', 'Fecha', 'Método Pago', 'Estado', 'Total (Bs)'])
+        
+        for o in orders:
+            writer.writerow([
+                o.id,
+                o.get_tipo_venta_display() if hasattr(o, 'get_tipo_venta_display') else o.tipo_venta,
+                o.client.get_full_name() or o.client.username,
+                o.client.telefono or '—',
+                o.created_at.strftime('%d/%m/%Y %H:%M'),
+                o.get_metodo_pago_display() or '—',
+                o.get_status_display(),
+                o.total_amount
+            ])
+        return response
+
+    return render(request, 'vendedor/listado_ventas.html', {
+        'orders': orders,
+        'start_date': start_date_str,
+        'end_date': end_date_str,
+        'metodo_pago': metodo_pago,
+        'tipo_venta': tipo_venta_filter,
     })
 

@@ -614,7 +614,7 @@
     .then(data => {
       if (data.success) {
         // Set up print ticket link and show modal
-        const ticketUrl = `{% url "vendedor_orders" %}${data.order_id}/ticket/`;
+        const ticketUrl = `/vendedor/ventas/${data.order_id}/ticket/`;
         document.getElementById('modal-ticket-btn').href = ticketUrl;
         
         const successModal = new bootstrap.Modal(document.getElementById('saleSuccessModal'));

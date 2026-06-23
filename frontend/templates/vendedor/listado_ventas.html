@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% block title %}Planilla de Ventas — Panel Vendedor{% endblock %}
+{% block page_title %}Planilla de Ventas{% endblock %}
+
+{% block content %}
+<div class="content-body">
+  <div class="card" style="padding: 24px;">
+    <div class="section-header flex-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; margin-bottom:16px;">
+      <h3 class="section-title m-0"><i class="fa-solid fa-receipt text-primary me-2"></i>Historial y Planilla de Ventas</h3>
+      
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <a href="{% url 'registrar_venta' %}" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 8px;">
+          <i class="fa-solid fa-plus-circle"></i> Nueva Venta en Planta
+        </a>
+        <a href="?export=csv{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}{% if metodo_pago %}&metodo_pago={{ metodo_pago }}{% endif %}{% if tipo_venta %}&tipo_venta={{ tipo_venta }}{% endif %}" class="btn btn-outline-primary" style="display: inline-flex; align-items: center; gap: 8px;">
+          <i class="fa-solid fa-file-csv"></i> Exportar a CSV
+        </a>
+      </div>
+    </div>
+    
+    <hr class="divider mb-4">
+
+    <!-- Filters Section -->
+    <div class="bg-light p-3 rounded-3 border mb-4">
+      <form method="get" class="row g-3 align-items-end">
+        <div class="col-12 col-md-3">
+          <label class="form-label fw-bold small text-muted">Desde</label>
+          <input type="date" name="start_date" value="{{ start_date }}" class="form-control">
+        </div>
+        <div class="col-12 col-md-3">
+          <label class="form-label fw-bold small text-muted">Hasta</label>
+          <input type="date" name="end_date" value="{{ end_date }}" class="form-control">
+        </div>
+        <div class="col-12 col-md-2">
+          <label class="form-label fw-bold small text-muted">Método de Pago</label>
+          <select name="metodo_pago" class="form-select">
+            <option value="">Todos</option>
+            <option value="efectivo" {% if metodo_pago == 'efectivo' %}selected{% endif %}>Efectivo</option>
+            <option value="transferencia" {% if metodo_pago == 'transferencia' %}selected{% endif %}>Transferencia</option>
+            <option value="tarjeta" {% if metodo_pago == 'tarjeta' %}selected{% endif %}>Tarjeta</option>
+          </select>
+        </div>
+        <div class="col-12 col-md-2">
+          <label class="form-label fw-bold small text-muted">Tipo de Venta</label>
+          <select name="tipo_venta" class="form-select">
+            <option value="">Todos</option>
+            <option value="presencial" {% if tipo_venta == 'presencial' %}selected{% endif %}>Presencial (Planta)</option>
+            <option value="online" {% if tipo_venta == 'online' %}selected{% endif %}>Online (Entregados)</option>
+          </select>
+        </div>
+        <div class="col-12 col-md-2 d-grid">
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+            <a href="{% url 'listado_ventas' %}" class="btn btn-secondary" title="Limpiar Filtros">
+              <i class="fa-solid fa-arrow-rotate-left"></i>
+            </a>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Table -->
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Venta #</th>
+            <th>Tipo/Origen</th>
+            <th>Cliente</th>
+            <th>Celular</th>
+            <th>Fecha</th>
+            <th>Método de Pago</th>
+            <th>Estado</th>
+            <th class="text-end">Total</th>
+            <th class="text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for o in orders %}
+          <tr>
+            <td><strong>#{{ o.id }}</strong></td>
+            <td>
+              {% if o.tipo_venta == 'presencial' or o.origen == 'venta_directa' %}
+                <span class="badge badge-success" style="background-color: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2);">
+                  <i class="fa-solid fa-shop me-1"></i> Presencial
+                </span>
+              {% else %}
+                <span class="badge badge-info" style="background-color: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.2);">
+                  <i class="fa-solid fa-globe me-1"></i> Online
+                </span>
+              {% endif %}
+            </td>
+            <td>
+              <strong>{{ o.client.get_full_name|default:o.client.username }}</strong>
+            </td>
+            <td style="color: var(--text-secondary); font-size: 13px;">
+              {{ o.client.telefono|default:"—" }}
+            </td>
+            <td style="color: var(--text-secondary); font-size: 13px;">
+              {{ o.created_at|date:"d/m/Y H:i" }}
+            </td>
+            <td class="text-capitalize small">
+              {{ o.get_metodo_pago_display|default:"—" }}
+            </td>
+            <td>
+              <span class="badge {% if o.status == 'delivered' %}badge-success{% else %}badge-warning{% endif %}">
+                {{ o.get_status_display }}
+              </span>
+            </td>
+            <td class="text-end fw-bold text-dark">
+              Bs. {{ o.total_amount|floatformat:2 }}
+            </td>
+            <td class="text-center">
+              <div class="d-inline-flex gap-2">
+                <a href="{% url 'vendedor_order_detail' o.id %}" class="btn btn-secondary btn-sm" title="Ver Detalle">
+                  <i class="fa-solid fa-eye"></i> Detalle
+                </a>
+                <a href="{% url 'ticket_venta' o.id %}" class="btn btn-outline-primary btn-sm" title="Imprimir Ticket">
+                  <i class="fa-solid fa-print"></i> Ticket
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="9" style="text-align:center; padding:40px; color:var(--text-secondary);">
+              <i class="fa-solid fa-receipt" style="font-size:32px; margin-bottom:12px; display:block; color:var(--text-muted);"></i>
+              No se encontraron registros de ventas.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
