@@ -1,118 +1,272 @@
-﻿{% extends 'base.html' %}
+{% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Panel de Repartidor - Agua de Mesa Santiago{% endblock %}
 {% block page_title %}Panel del Repartidor{% endblock %}
 
-{% block content %}
-<div class="driver-dashboard-container">
-    <!-- Active deliveries -->
-    <div class="card mb-4">
-        <h3><i class="fa-solid fa-truck-ramp-box text-primary"></i> Tus Entregas Activas</h3>
-        <p class="text-muted small">Pedidos asignados que debes procesar.</p>
-        <hr class="divider">
+{% block extra_css %}
+<!-- Bootstrap 5 CSS for grid and structure -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+  .driver-dashboard-container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
 
-        <div class="active-deliveries-list mt-3">
-            {% for order in active_orders %}
-                <div class="card delivery-card p-3 mb-3 border-primary">
-                    <div class="row align-items-center">
-                        <div class="col">
-                            <strong>Pedido #{{ order.id }}</strong>
-                            <div class="text-muted small mt-1">
-                                <strong>Cliente:</strong> {{ order.client.get_full_name|default:order.client.username }} <br>
-                                <strong>Dirección:</strong> {{ order.delivery_address }} <br>
-                                <strong>Total:</strong> Bs. {{ order.total_amount|floatformat:2 }} <br>
-                                <strong>Fecha:</strong> {{ order.created_at|date:"d M Y, H:i" }}
-                            </div>
-                            <div class="mt-2">
-                                {% for item in order.items.all %}
-                                    <span class="badge badge-light">{{ item.quantity }} x {{ item.product.name }}</span>
-                                {% endfor %}
-                            </div>
-                        </div>
-                        <div class="col text-right">
-                            <span class="badge badge-primary mb-2 d-inline-block">{{ order.get_status_display }}</span>
-                            
-                            <form method="post" action="{% url 'driver_update_status' order.id %}" class="mt-2">
-                                {% csrf_token %}
-                                {% if order.status == 'accepted' %}
-                                    <input type="hidden" name="status" value="on_way">
-                                    <div class="form-group mb-2">
-                                        <input type="text" name="notes" placeholder="Notas de ruta (opcional)..." class="form-control form-control-sm">
-                                    </div>
-                                    <button type="submit" class="btn btn-primary btn-sm">
-                                        <i class="fa-solid fa-road"></i> Iniciar Ruta ("En Camino")
-                                    </button>
-                                {% elif order.status == 'on_way' %}
-                                    <input type="hidden" name="status" value="delivered">
-                                    <div class="form-group mb-2">
-                                        <input type="text" name="notes" placeholder="Notas de entrega (opcional)..." class="form-control form-control-sm">
-                                    </div>
-                                    <button type="submit" class="btn btn-success btn-sm">
-                                        <i class="fa-solid fa-house-chimney-user"></i> Marcar como "Entregado"
-                                    </button>
-                                {% endif %}
-                            </form>
-                        </div>
-                    </div>
+  .delivery-card {
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 16px;
+    background-color: #ffffff;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+  }
+
+  .delivery-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+  }
+
+  .delivery-header {
+    background-color: #f8fafc;
+    padding: 14px 20px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .delivery-body {
+    padding: 20px;
+  }
+
+  .info-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .info-icon {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary, #0056b3);
+    flex-shrink: 0;
+    font-size: 14px;
+  }
+
+  .info-text {
+    font-size: 14px;
+    color: var(--text-secondary, #475569);
+    line-height: 1.4;
+  }
+
+  .product-badge-pill {
+    background-color: #f1f5f9;
+    color: #334155;
+    font-weight: 500;
+    padding: 5px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    display: inline-block;
+    margin-right: 6px;
+    margin-bottom: 6px;
+  }
+
+  .action-container {
+    background-color: #f8fafc;
+    padding: 16px 20px;
+    border-top: 1px solid #f1f5f9;
+  }
+
+  .btn-action-large {
+    padding: 12px 24px;
+    font-size: 15px;
+    font-weight: 700;
+    border-radius: 12px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s;
+  }
+
+  .btn-action-large:hover {
+    transform: scale(1.01);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-body">
+  <div class="driver-dashboard-container">
+    
+    <!-- Active deliveries -->
+    <div class="card mb-4 p-4" style="border-radius: 16px;">
+      <h3 class="section-title mb-1"><i class="fa-solid fa-truck-ramp-box text-primary me-2"></i>Tus Entregas Activas</h3>
+      <p class="text-muted small mb-3">Pedidos asignados que debes procesar y entregar en ruta.</p>
+      <hr class="divider mb-4">
+
+      <div class="row g-3">
+        {% for order in active_orders %}
+          <div class="col-md-6 col-lg-6">
+            <div class="delivery-card">
+              <!-- Header -->
+              <div class="delivery-header d-flex justify-content-between align-items-center">
+                <span class="fw-bold text-dark fs-5">Pedido #{{ order.id }}</span>
+                <span class="badge {% if order.status == 'accepted' %}bg-info text-dark{% else %}bg-warning text-dark{% endif %} px-3 py-2 fw-bold" style="font-size: 0.8rem; border-radius: 20px;">
+                  <i class="fa-solid {% if order.status == 'accepted' %}fa-check-circle{% else %}fa-truck{% endif %} me-1"></i>
+                  {{ order.get_status_display }}
+                </span>
+              </div>
+              
+              <!-- Body -->
+              <div class="delivery-body">
+                <div class="info-row">
+                  <div class="info-icon"><i class="fa-solid fa-user"></i></div>
+                  <div class="info-text">
+                    <strong class="text-dark d-block" style="font-size: 15px;">{{ order.client.get_full_name|default:order.client.username }}</strong>
+                    {% if order.client.telefono %}
+                      <span class="small text-muted"><i class="fa-solid fa-phone me-1"></i>{{ order.client.telefono }}</span>
+                    {% endif %}
+                  </div>
                 </div>
-            {% empty %}
-                <p class="text-muted text-center p-3">No tienes entregas activas en este momento. Acepta pedidos pendientes abajo.</p>
-            {% endfor %}
-        </div>
+
+                <div class="info-row">
+                  <div class="info-icon"><i class="fa-solid fa-location-dot"></i></div>
+                  <div class="info-text">
+                    <strong class="text-dark">Dirección de Entrega:</strong>
+                    <span class="d-block text-secondary mt-1">{{ order.delivery_address }}</span>
+                  </div>
+                </div>
+
+                <div class="info-row">
+                  <div class="info-icon"><i class="fa-solid fa-clock"></i></div>
+                  <div class="info-text">
+                    <strong>Fecha Registro:</strong> {{ order.created_at|date:"d M Y, H:i" }}
+                  </div>
+                </div>
+
+                <div class="info-row mb-1">
+                  <div class="info-icon"><i class="fa-solid fa-receipt"></i></div>
+                  <div class="info-text">
+                    <strong>Total a Cobrar:</strong> <span class="fw-bold text-primary fs-5">Bs. {{ order.total_amount|floatformat:2 }}</span>
+                  </div>
+                </div>
+
+                <div class="mt-3 pt-3 border-top">
+                  <h6 class="fw-bold text-dark mb-2" style="font-size: 0.9rem;">Productos a Entregar:</h6>
+                  <div>
+                    {% for item in order.items.all %}
+                      <span class="product-badge-pill">
+                        <i class="fa-solid fa-bottle-water text-primary me-1"></i>
+                        {{ item.quantity }} x {{ item.product.name }}
+                      </span>
+                    {% endfor %}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Action form -->
+              <div class="action-container">
+                <form method="post" action="{% url 'driver_update_status' order.id %}">
+                  {% csrf_token %}
+                  {% if order.status == 'accepted' %}
+                    <input type="hidden" name="status" value="on_way">
+                    <div class="mb-3">
+                      <input type="text" name="notes" placeholder="Notas de ruta (ej: Retraso, salida en 5 min...)" class="form-control">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-action-large">
+                      <i class="fa-solid fa-road"></i> Iniciar Ruta ("En Camino")
+                    </button>
+                  {% elif order.status == 'on_way' %}
+                    <input type="hidden" name="status" value="delivered">
+                    <div class="mb-3">
+                      <input type="text" name="notes" placeholder="Notas de entrega (ej: Recibido por el cliente...)" class="form-control">
+                    </div>
+                    <button type="submit" class="btn btn-success btn-action-large text-white" style="background-color: #10b981; border: none;">
+                      <i class="fa-solid fa-circle-check"></i> Marcar como "Entregado"
+                    </button>
+                  {% endif %}
+                </form>
+              </div>
+            </div>
+          </div>
+        {% empty %}
+          <div class="col-12 text-center py-5 text-muted">
+            <i class="fa-solid fa-circle-info fs-1 mb-3 text-secondary opacity-50"></i>
+            <p class="fs-5 fw-medium">No tienes entregas activas en este momento.</p>
+            <p class="small">Acepta alguno de los pedidos pendientes disponibles abajo para iniciar la ruta.</p>
+          </div>
+        {% endfor %}
+      </div>
     </div>
 
     <!-- Available pending orders -->
-    <div class="card">
-        <div class="section-header flex-header">
-            <h3><i class="fa-solid fa-bell text-warning"></i> Pedidos Pendientes Disponibles</h3>
-            <span class="badge badge-alert" id="toast-notify" style="display:none; animation: pulse 1.5s infinite;">¡Nuevo pedido en tiempo real!</span>
-        </div>
-        <p class="text-muted small">Cualquier repartidor puede aceptar estos pedidos pendientes.</p>
-        <hr class="divider">
+    <div class="card p-4" style="border-radius: 16px;">
+      <div class="section-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h3 class="section-title m-0"><i class="fa-solid fa-bell text-warning me-2"></i>Pedidos Pendientes Disponibles</h3>
+        <span class="badge bg-danger animate__animated animate__pulse animate__infinite" id="toast-notify" style="display:none; padding: 8px 12px;">¡Nuevo pedido en tiempo real!</span>
+      </div>
+      <p class="text-muted small mt-1">Cualquier repartidor puede aceptar libremente estos pedidos para tomarlos a su cargo.</p>
+      <hr class="divider mb-3">
 
-        <div class="table-responsive mt-3">
-            <table class="data-table" id="pending-orders-table">
-                <thead>
-                    <tr>
-                        <th>Pedido #</th>
-                        <th>Cliente</th>
-                        <th>Productos</th>
-                        <th>Total</th>
-                        <th>Dirección</th>
-                        <th>Acción</th>
-                    </tr>
-                </thead>
-                <tbody id="pending-orders-tbody">
-                    {% for order in pending_orders %}
-                        <tr id="order-row-{{ order.id }}">
-                            <td><strong>#{{ order.id }}</strong></td>
-                            <td>{{ order.client.get_full_name|default:order.client.username }}</td>
-                            <td>
-                                {% for item in order.items.all %}
-                                    <span class="badge badge-light">{{ item.quantity }} x {{ item.product.name }}</span>
-                                {% endfor %}
-                            </td>
-                            <td>Bs. {{ order.total_amount|floatformat:2 }}</td>
-                            <td>{{ order.delivery_address }}</td>
-                            <td>
-                                <a href="{% url 'driver_accept_order' order.id %}" class="btn btn-success-light btn-sm font-weight-bold">
-                                    <i class="fa-solid fa-check"></i> Aceptar Pedido
-                                </a>
-                            </td>
-                        </tr>
-                    {% empty %}
-                        <tr id="no-orders-row">
-                            <td colspan="6" class="text-center text-muted p-4">No hay pedidos pendientes disponibles en este momento.</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle" id="pending-orders-table">
+          <thead class="table-light">
+            <tr>
+              <th>Pedido #</th>
+              <th>Cliente</th>
+              <th>Productos</th>
+              <th class="text-end">Total</th>
+              <th>Dirección</th>
+              <th class="text-center">Acción</th>
+            </tr>
+          </thead>
+          <tbody id="pending-orders-tbody">
+            {% for order in pending_orders %}
+              <tr id="order-row-{{ order.id }}">
+                <td><strong>#{{ order.id }}</strong></td>
+                <td>
+                  <div class="fw-bold text-dark">{{ order.client.get_full_name|default:order.client.username }}</div>
+                  {% if order.client.telefono %}
+                    <small class="text-muted"><i class="fa-solid fa-phone me-1"></i>{{ order.client.telefono }}</small>
+                  {% endif %}
+                </td>
+                <td>
+                  {% for item in order.items.all %}
+                    <span class="badge bg-light text-dark border me-1 mb-1">{{ item.quantity }} x {{ item.product.name }}</span>
+                  {% endfor %}
+                </td>
+                <td class="text-end fw-bold text-primary">Bs. {{ order.total_amount|floatformat:2 }}</td>
+                <td style="max-width: 250px; white-space: normal;">{{ order.delivery_address }}</td>
+                <td class="text-center">
+                  <a href="{% url 'driver_accept_order' order.id %}" class="btn btn-outline-success btn-sm fw-bold px-3 rounded-pill">
+                    <i class="fa-solid fa-check me-1"></i> Aceptar Pedido
+                  </a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr id="no-orders-row">
+                <td colspan="6" class="text-center text-muted py-5">
+                  <i class="fa-solid fa-inbox fs-2 mb-2 d-block text-muted opacity-50"></i>
+                  No hay pedidos pendientes disponibles en este momento.
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
+    
+  </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
+<!-- Bootstrap 5 JS Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <!-- Include Pusher Library -->
 <script src="https://js.pusher.com/8.0.1/pusher.min.js"></script>
 <script>
@@ -151,17 +305,19 @@
             
             const tr = document.createElement('tr');
             tr.id = `order-row-${data.order_id}`;
-            tr.style.backgroundColor = '#eef9ff';
+            tr.className = 'table-info';
             
             tr.innerHTML = `
                 <td><strong>#${data.order_id}</strong></td>
-                <td>${data.client}</td>
-                <td><span class="badge badge-light">${data.items_count} prod.</span></td>
-                <td>Bs. ${parseFloat(data.total).toFixed(2)}</td>
-                <td>${data.address}</td>
                 <td>
-                    <a href="/repartidor/aceptar/${data.order_id}/" class="btn btn-success-light btn-sm font-weight-bold">
-                        <i class="fa-solid fa-check"></i> Aceptar Pedido
+                  <div class="fw-bold text-dark">${data.client}</div>
+                </td>
+                <td><span class="badge bg-light text-dark border">${data.items_count} prod.</span></td>
+                <td class="text-end fw-bold text-primary">Bs. ${parseFloat(data.total).toFixed(2)}</td>
+                <td style="max-width: 250px; white-space: normal;">${data.address}</td>
+                <td class="text-center">
+                    <a href="/repartidor/aceptar/${data.order_id}/" class="btn btn-outline-success btn-sm fw-bold px-3 rounded-pill">
+                        <i class="fa-solid fa-check me-1"></i> Aceptar Pedido
                     </a>
                 </td>
             `;
