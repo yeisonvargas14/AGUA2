@@ -137,7 +137,7 @@ def vendedor_client_create(request):
             if password:
                 user.set_password(password)
             else:
-                user.set_password(User.objects.make_random_password())
+                user.set_password(secrets.token_urlsafe(10))
             
             # Auto-generate a username if not provided
             if not user.username:
@@ -558,7 +558,7 @@ def crear_cliente_rapido_venta(request):
                 address=address,
                 role=User.Roles.CLIENT
             )
-            user.set_password(User.objects.make_random_password())
+            user.set_password(secrets.token_urlsafe(10))
             user.save()
 
             return JsonResponse({
