@@ -229,82 +229,119 @@ def checkout_paso1(request):
         request.session['delivery_lng'] = str(lng)
         request.session['location_valid'] = True
 
-        if request.user.is_authenticated:
-            # Authenticated user, create order immediately (skip Step 2)
-            try:
-                with transaction.atomic():
-                    # Double check stock
-                    for item in cart.items.all():
-                        if item.product.stock < item.quantity:
-                            messages.error(request, f"Stock insuficiente para {item.product.name}. Solo quedan {item.product.stock} unidades.")
-                            return redirect('view_cart')
+        # Guest user details or authenticated user checkout
+        if not request.user.is_authenticated:
+            nombre_completo = request.POST.get('guest_name', '').strip()
+            telefono = request.POST.get('guest_phone', '').strip()
 
-                    order = Order.objects.create(
-                        client=request.user,
-                        total_amount=total,
-                        discount_amount=discount,
-                        coupon=coupon,
-                        delivery_address=address,
-                        delivery_lat=Decimal(lat),
-                        delivery_lng=Decimal(lng),
-                        status=Order.Status.PENDING
-                    )
-                    
-                    # Log state change
-                    OrderLog.objects.create(
-                        order=order,
-                        estado_anterior=None,
-                        estado_nuevo=Order.Status.PENDING,
-                        changed_by=request.user,
-                        nota="Pedido creado por el cliente."
-                    )
-
-                    for item in cart.items.all():
-                        OrderItem.objects.create(
-                            order=order,
-                            product=item.product,
-                            quantity=item.quantity,
-                            unit_price=item.price if item.price > 0 else item.price_at_time,
-                        )
-                        item.product.stock -= item.quantity
-                        item.product.save()
-
-                        InventoryLog.objects.create(
-                            product=item.product,
-                            user=request.user,
-                            quantity=item.quantity,
-                            movement_type=InventoryLog.MovementType.OUT,
-                            reason=f"Descuento automático por pedido #{order.id}"
-                        )
-
-                    if coupon:
-                        coupon.used = True
-                        coupon.save()
-                        del request.session['applied_coupon_id']
-
-                    # Clear cart
-                    cart.items.all().delete()
-                    
-                    # Clean session keys
-                    request.session.pop('delivery_address', None)
-                    request.session.pop('delivery_instructions', None)
-                    request.session.pop('delivery_lat', None)
-                    request.session.pop('delivery_lng', None)
-
-                    # Pusher notification
-                    notify_new_order(order)
-                    
-                    # Simulate WhatsApp in console
-                    print(f"[SIMULACIÓN WHATSAPP] Notificación de nuevo pedido #{order.id} enviada al cliente {request.user.telefono}")
-
-                    messages.success(request, f"¡Pedido #{order.id} registrado exitosamente!")
-                    return redirect('client_ticket', order_id=order.id)
-            except Exception as e:
-                messages.error(request, f"Error al procesar el pedido: {str(e)}")
+            if not nombre_completo:
+                messages.error(request, "Por favor ingresa tu nombre completo.")
                 return render(request, 'client/checkout_paso1.html', {'cart': cart, 'total': total, 'coupon': coupon})
-        else:
-            # Anonymous, redirect to login/register step
-            return redirect('checkout_paso2')
+            if not telefono:
+                messages.error(request, "Por favor ingresa tu número de celular.")
+                return render(request, 'client/checkout_paso1.html', {'cart': cart, 'total': total, 'coupon': coupon})
+
+            # Check if user already exists
+            try:
+                user = User.objects.get(telefono=telefono)
+            except User.DoesNotExist:
+                # Create a new user silently
+                parts = nombre_completo.split(' ', 1)
+                first_name = parts[0]
+                last_name = parts[1] if len(parts) > 1 else ''
+                import secrets
+                random_pass = secrets.token_urlsafe(10)
+                user = User.objects.create(
+                    username=telefono,
+                    telefono=telefono,
+                    first_name=first_name,
+                    last_name=last_name,
+                    role=User.Roles.CLIENT,
+                    address=address,
+                    municipio="Comarapa"
+                )
+                user.set_password(random_pass)
+                user.save()
+                Cart.objects.get_or_create(user=user)
+
+            # Silently login
+            login(request, user, backend='accounts.backends.TelefonoBackend')
+            transfer_cart(request, user)
+            # Re-fetch the cart for the logged-in user to ensure we are ordering from the merged cart
+            cart = _get_or_create_cart(request)
+
+        # Now, create order for the (now authenticated) user
+        try:
+            with transaction.atomic():
+                # Double check stock
+                for item in cart.items.all():
+                    if item.product.stock < item.quantity:
+                        messages.error(request, f"Stock insuficiente para {item.product.name}. Solo quedan {item.product.stock} unidades.")
+                        return redirect('view_cart')
+
+                order = Order.objects.create(
+                    client=request.user,
+                    total_amount=total,
+                    discount_amount=discount,
+                    coupon=coupon,
+                    delivery_address=address,
+                    delivery_lat=Decimal(lat),
+                    delivery_lng=Decimal(lng),
+                    status=Order.Status.PENDING
+                )
+                
+                # Log state change
+                OrderLog.objects.create(
+                    order=order,
+                    estado_anterior=None,
+                    estado_nuevo=Order.Status.PENDING,
+                    changed_by=request.user,
+                    nota="Pedido creado por el cliente."
+                )
+
+                for item in cart.items.all():
+                    OrderItem.objects.create(
+                        order=order,
+                        product=item.product,
+                        quantity=item.quantity,
+                        unit_price=item.price if item.price > 0 else item.price_at_time,
+                    )
+                    item.product.stock -= item.quantity
+                    item.product.save()
+
+                    InventoryLog.objects.create(
+                        product=item.product,
+                        user=request.user,
+                        quantity=item.quantity,
+                        movement_type=InventoryLog.MovementType.OUT,
+                        reason=f"Descuento automático por pedido #{order.id}"
+                    )
+
+                if coupon:
+                    coupon.used = True
+                    coupon.save()
+                    del request.session['applied_coupon_id']
+
+                # Clear cart
+                cart.items.all().delete()
+                
+                # Clean session keys
+                request.session.pop('delivery_address', None)
+                request.session.pop('delivery_instructions', None)
+                request.session.pop('delivery_lat', None)
+                request.session.pop('delivery_lng', None)
+
+                # Pusher notification
+                notify_new_order(order)
+                
+                # Simulate WhatsApp in console
+                print(f"[SIMULACIÓN WHATSAPP] Notificación de nuevo pedido #{order.id} enviada al cliente {request.user.telefono}")
+
+                messages.success(request, f"¡Pedido #{order.id} registrado exitosamente!")
+                return redirect('client_ticket', order_id=order.id)
+        except Exception as e:
+            messages.error(request, f"Error al procesar el pedido: {str(e)}")
+            return render(request, 'client/checkout_paso1.html', {'cart': cart, 'total': total, 'coupon': coupon})
 
     from django.conf import settings as django_settings
     # Default values for fields from session
@@ -332,234 +369,8 @@ def checkout_paso1(request):
 
 
 def checkout_paso2(request):
-    """Step 2: Force login/register for anonymous users to finalize the order."""
-    cart = _get_or_create_cart(request)
-    if not cart.items.exists():
-        messages.error(request, "Tu carrito está vacío.")
-        return redirect('view_cart')
-
-    address = request.session.get('delivery_address')
-    instructions = request.session.get('delivery_instructions', '')
-    lat = request.session.get('delivery_lat')
-    lng = request.session.get('delivery_lng')
-
-    if not address or not lat or not lng:
-        messages.error(request, "Por favor primero ingresa tu dirección y marca tu ubicación en el mapa.")
-        return redirect('checkout_paso1')
-
-    if request.user.is_authenticated:
-        return redirect('checkout_paso1')
-
-    if request.method == 'POST':
-        action = request.POST.get('action') # 'login' or 'register'
-        
-        if action == 'login':
-            telefono = request.POST.get('telefono', '').strip()
-            password = request.POST.get('password', '')
-            
-            user = authenticate(request, username=telefono, password=password, backend='accounts.backends.TelefonoBackend')
-            if user is not None:
-                login(request, user, backend='accounts.backends.TelefonoBackend')
-                transfer_cart(request, user)
-                
-                # Recalculate with coupon if any
-                coupon_id = request.session.get('applied_coupon_id')
-                coupon = None
-                discount = Decimal('0.00')
-                if coupon_id:
-                    try:
-                        coupon = Coupon.objects.get(id=coupon_id, user_client=user, used=False)
-                        discount = cart.total_amount * (Decimal(str(coupon.discount_percentage)) / Decimal('100.00'))
-                    except Coupon.DoesNotExist:
-                        del request.session['applied_coupon_id']
-                
-                total = cart.total_amount - discount
-                if total < 0:
-                    total = Decimal('0.00')
-                
-                # Create Order
-                try:
-                    with transaction.atomic():
-                        # Double check stock
-                        for item in cart.items.all():
-                            if item.product.stock < item.quantity:
-                                messages.error(request, f"Stock insuficiente para {item.product.name}. Solo quedan {item.product.stock} unidades.")
-                                return redirect('view_cart')
-
-                        order = Order.objects.create(
-                            client=user,
-                            total_amount=total,
-                            discount_amount=discount,
-                            coupon=coupon,
-                            delivery_address=address,
-                            delivery_lat=Decimal(lat),
-                            delivery_lng=Decimal(lng),
-                            status=Order.Status.PENDING
-                        )
-                        
-                        # Log state change
-                        OrderLog.objects.create(
-                            order=order,
-                            estado_anterior=None,
-                            estado_nuevo=Order.Status.PENDING,
-                            changed_by=user,
-                            nota="Pedido creado por el cliente tras iniciar sesión."
-                        )
-
-                        for item in cart.items.all():
-                            OrderItem.objects.create(
-                                order=order,
-                                product=item.product,
-                                quantity=item.quantity,
-                                unit_price=item.price if item.price > 0 else item.price_at_time,
-                            )
-                            item.product.stock -= item.quantity
-                            item.product.save()
-
-                            InventoryLog.objects.create(
-                                product=item.product,
-                                user=user,
-                                quantity=item.quantity,
-                                movement_type=InventoryLog.MovementType.OUT,
-                                reason=f"Descuento automático por pedido #{order.id}"
-                            )
-
-                        if coupon:
-                            coupon.used = True
-                            coupon.save()
-                            del request.session['applied_coupon_id']
-
-                        # Clear cart
-                        cart.items.all().delete()
-
-                        # Clean session keys
-                        request.session.pop('delivery_address', None)
-                        request.session.pop('delivery_instructions', None)
-                        request.session.pop('delivery_lat', None)
-                        request.session.pop('delivery_lng', None)
-
-                        # Pusher notification
-                        notify_new_order(order)
-                        
-                        # Simulate WhatsApp in console
-                        print(f"[SIMULACIÓN WHATSAPP] Notificación de nuevo pedido #{order.id} enviada al cliente {user.telefono}")
-
-                        messages.success(request, f"¡Pedido #{order.id} registrado exitosamente!")
-                        return redirect('client_ticket', order_id=order.id)
-                except Exception as e:
-                    messages.error(request, f"Error al procesar el pedido: {str(e)}")
-            else:
-                messages.error(request, "Celular o contraseña incorrectos.")
-                
-        elif action == 'register':
-            nombre_completo = request.POST.get('nombre_completo', '').strip()
-            telefono = request.POST.get('telefono', '').strip()
-            password = request.POST.get('password', '')
-            password_confirm = request.POST.get('password_confirm', '')
-            
-            if not nombre_completo or not telefono or not password or not password_confirm:
-                messages.error(request, "Todos los campos de registro son requeridos.")
-            elif password != password_confirm:
-                messages.error(request, "Las contraseñas no coinciden.")
-            elif User.objects.filter(telefono=telefono).exists():
-                messages.error(request, "Ya existe una cuenta con este número de celular.")
-            else:
-                try:
-                    # Split full name
-                    parts = nombre_completo.split(' ', 1)
-                    first_name = parts[0]
-                    last_name = parts[1] if len(parts) > 1 else ''
-                    
-                    user = User.objects.create(
-                        username=telefono,
-                        telefono=telefono,
-                        first_name=first_name,
-                        last_name=last_name,
-                        role=User.Roles.CLIENT,
-                        address=address,
-                        municipio="Comarapa"
-                    )
-                    user.set_password(password)
-                    user.save()
-                    
-                    # Authenticate and login
-                    user = authenticate(request, username=telefono, password=password, backend='accounts.backends.TelefonoBackend')
-                    login(request, user, backend='accounts.backends.TelefonoBackend')
-                    
-                    # Create Cart and transfer
-                    Cart.objects.get_or_create(user=user)
-                    transfer_cart(request, user)
-                    
-                    total = cart.total_amount
-                    
-                    # Create Order
-                    with transaction.atomic():
-                        # Double check stock
-                        for item in cart.items.all():
-                            if item.product.stock < item.quantity:
-                                messages.error(request, f"Stock insuficiente para {item.product.name}. Solo quedan {item.product.stock} unidades.")
-                                return redirect('view_cart')
-
-                        order = Order.objects.create(
-                            client=user,
-                            total_amount=total,
-                            discount_amount=Decimal('0.00'),
-                            delivery_address=address,
-                            delivery_lat=Decimal(lat),
-                            delivery_lng=Decimal(lng),
-                            status=Order.Status.PENDING
-                        )
-                        
-                        # Log state change
-                        OrderLog.objects.create(
-                            order=order,
-                            estado_anterior=None,
-                            estado_nuevo=Order.Status.PENDING,
-                            changed_by=user,
-                            nota="Pedido creado por el cliente tras registrarse."
-                        )
-
-                        for item in cart.items.all():
-                            OrderItem.objects.create(
-                                order=order,
-                                product=item.product,
-                                quantity=item.quantity,
-                                unit_price=item.price if item.price > 0 else item.price_at_time,
-                            )
-                            item.product.stock -= item.quantity
-                            item.product.save()
-
-                            InventoryLog.objects.create(
-                                product=item.product,
-                                user=user,
-                                quantity=item.quantity,
-                                movement_type=InventoryLog.MovementType.OUT,
-                                reason=f"Descuento automático por pedido #{order.id}"
-                            )
-
-                        # Clear cart
-                        cart.items.all().delete()
-
-                        # Clean session keys
-                        request.session.pop('delivery_address', None)
-                        request.session.pop('delivery_instructions', None)
-                        request.session.pop('delivery_lat', None)
-                        request.session.pop('delivery_lng', None)
-
-                        # Pusher notification
-                        notify_new_order(order)
-                        
-                        # Simulate WhatsApp in console
-                        print(f"[SIMULACIÓN WHATSAPP] Notificación de nuevo pedido #{order.id} enviada al cliente {user.telefono}")
-
-                        messages.success(request, f"¡Bienvenido! Tu cuenta ha sido creada y tu pedido #{order.id} registrado exitosamente.")
-                        return redirect('client_ticket', order_id=order.id)
-                except Exception as e:
-                    messages.error(request, f"Error al crear la cuenta/pedido: {str(e)}")
-
-    return render(request, 'client/checkout_paso2.html', {
-        'cart': cart,
-    })
+    """Step 2: Redundant, redirecting to one-step checkout."""
+    return redirect('checkout')
 
 
 @login_required

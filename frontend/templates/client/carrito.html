@@ -1,4 +1,4 @@
-﻿{% extends 'base.html' %}
+{% extends 'base.html' %}
 
 {% block title %}Mi Carrito de Compras - Agua de Mesa Santiago{% endblock %}
 {% block page_title %}Mi Carrito de Compras{% endblock %}
@@ -102,19 +102,22 @@
                         </a>
                         <a href="{% url 'client_dashboard' %}" class="btn btn-text btn-block text-center mt-2">Seguir comprando</a>
                     </div>
-                {% else %}
                     <!-- CTA for anonymous users -->
                     <div class="checkout-button-container mt-4">
-                        <p class="text-muted small mb-3">
-                            <i class="fa-solid fa-circle-info"></i>
-                            Para finalizar tu pedido debes iniciar sesión o crear una cuenta. ¡Tu carrito se conservará!
+                        <a href="{% url 'checkout' %}" class="btn btn-primary btn-block text-center" style="margin-bottom: 12px; background: linear-gradient(135deg, var(--success), #059669); border: none; font-weight: bold; padding: 14px;">
+                            <i class="fa-solid fa-truck-fast"></i> Realizar Pedido Rápido (Express)
+                        </a>
+                        <p class="text-muted small mb-3" style="text-align: center; font-size: 13px;">
+                            &mdash; o &mdash;
                         </p>
-                        <a href="{% url 'login' %}?next={% url 'checkout' %}" class="btn btn-primary btn-block text-center">
-                            <i class="fa-solid fa-right-to-bracket"></i> Iniciar Sesión y Pagar
-                        </a>
-                        <a href="{% url 'register' %}" class="btn btn-secondary btn-block text-center mt-2">
-                            <i class="fa-solid fa-user-plus"></i> Crear Cuenta
-                        </a>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                            <a href="{% url 'login' %}?next={% url 'checkout' %}" class="btn btn-secondary text-center" style="padding: 10px; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                <i class="fa-solid fa-right-to-bracket"></i> Iniciar Sesión
+                            </a>
+                            <a href="{% url 'register' %}" class="btn btn-secondary text-center" style="padding: 10px; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                <i class="fa-solid fa-user-plus"></i> Crear Cuenta
+                            </a>
+                        </div>
                         <a href="{% url 'landing' %}" class="btn btn-text btn-block text-center mt-2">Seguir comprando</a>
                     </div>
                 {% endif %}

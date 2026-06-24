@@ -46,15 +46,17 @@
 <div class="checkout-container" style="max-width: 1200px; margin: 0 auto; padding: 20px;">
     
     <!-- Progress Indicator -->
-    <div class="checkout-progress">
-        <div class="progress-step active">
-            <i class="fa-solid fa-location-dot"></i> 1. Envío y Ubicación
+    <div class="checkout-progress" style="background: linear-gradient(135deg, #e0f2fe, #f0f9ff); border: 1px solid #bae6fd; padding: 15px; border-radius: 12px; margin-bottom: 25px;">
+        <div style="display: flex; align-items: center; gap: 10px; color: var(--primary); font-weight: 600;">
+            <i class="fa-solid fa-truck-fast" style="font-size: 1.25rem;"></i>
+            <span>
+                {% if user.is_authenticated %}
+                    Confirmar Envío y Realizar Pedido
+                {% else %}
+                    Compra Express — Pedido Rápido sin Registrarse
+                {% endif %}
+            </span>
         </div>
-        {% if not user.is_authenticated %}
-            <div class="progress-step">
-                <i class="fa-solid fa-lock"></i> 2. Registro / Identificación
-            </div>
-        {% endif %}
     </div>
 
     <div class="cart-grid" style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px;">
@@ -68,6 +70,18 @@
                 {% csrf_token %}
                 <input type="hidden" name="lat" id="id_lat" value="{{ lat }}">
                 <input type="hidden" name="lng" id="id_lng" value="{{ lng }}">
+
+                {% if not user.is_authenticated %}
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label for="id_guest_name" style="display: block; font-weight: 600; margin-bottom: 8px;"><i class="fa-solid fa-user"></i> Nombre Completo *</label>
+                        <input type="text" name="guest_name" id="id_guest_name" class="form-control" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1;" placeholder="Ej: Juan Pérez" required>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label for="id_guest_phone" style="display: block; font-weight: 600; margin-bottom: 8px;"><i class="fa-solid fa-phone"></i> Número de Celular (Para contacto de entrega) *</label>
+                        <input type="tel" name="guest_phone" id="id_guest_phone" class="form-control" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1;" placeholder="Ej: 71234567" required>
+                    </div>
+                {% endif %}
 
                 <div class="form-group" style="margin-bottom: 20px;">
                     <label for="id_delivery_address" style="display: block; font-weight: 600; margin-bottom: 8px;"><i class="fa-solid fa-map-location-dot"></i> Dirección de Entrega Detallada *</label>
@@ -90,11 +104,7 @@
                 </div>
 
                 <button type="submit" id="btn-submit" class="btn btn-primary btn-block mt-4" style="width: 100%; padding: 14px; border-radius: 8px; font-weight: bold;" disabled>
-                    {% if user.is_authenticated %}
-                        <i class="fa-solid fa-circle-check"></i> Realizar Pedido
-                    {% else %}
-                        <i class="fa-solid fa-arrow-right"></i> Siguiente: Registrarse / Iniciar Sesión
-                    {% endif %}
+                    <i class="fa-solid fa-circle-check"></i> Realizar Pedido
                 </button>
             </form>
         </div>
