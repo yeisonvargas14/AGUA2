@@ -596,10 +596,13 @@ body {
     z-index: 99;
     opacity: 0;
     transition: opacity 0.3s ease;
+    pointer-events: none;
 }
 
 .sidebar-overlay.active {
+    display: block;
     opacity: 1;
+    pointer-events: auto;
 }
 
 /* Close button inside sidebar on mobile */
@@ -667,9 +670,7 @@ body {
         display: flex;
     }
 
-    .sidebar-overlay {
-        display: block;
-    }
+
 
     /* Sidebar slides in from left */
     .sidebar {
