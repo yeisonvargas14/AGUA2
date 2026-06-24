@@ -2,7 +2,7 @@ import os
 import secrets
 from decimal import Decimal
 from django import forms
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib import messages
