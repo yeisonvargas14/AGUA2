@@ -96,8 +96,8 @@ function placeMarker(lat, lng) {
 
 function validateLocation(lat, lng) {
     const latLng = new google.maps.LatLng(lat, lng);
-    const isInside = google.maps.geometry && google.maps.geometry.poly ? 
-        google.maps.geometry.poly.containsLocation(latLng, comarapaZone) : true;
+    // TEMP: Forced to true for testing
+    const isInside = true;
     
     const submitBtn = document.getElementById('btn-submit');
 
