@@ -49,44 +49,11 @@
                 {% endif %}
             </div>
 
-            <!-- Hidden rol field, updated by JS when clicking role buttons -->
-            <input type="hidden" name="rol" id="rol-input" value="">
-
             <!-- Primary login button -->
             <button type="submit" class="btn btn-primary btn-block" id="btn-login-normal"
-                    onclick="document.getElementById('rol-input').value=''"
-                    style="margin-bottom: 1rem;">
+                    style="margin-bottom: 0.5rem;">
                 <i class="fa-solid fa-right-to-bracket"></i> Iniciar Sesión
             </button>
-
-            <!-- Role Access Divider -->
-            <div style="text-align: center; margin: 1rem 0 0.5rem; font-size: 13px; color: var(--text-secondary); font-weight: 600;">
-                Accesos Directos por Rol
-            </div>
-
-            <!-- Role-specific buttons grid -->
-            <div class="role-btn-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 0.5rem;">
-                <button type="submit" class="btn btn-secondary btn-block"
-                        onclick="document.getElementById('rol-input').value='admin'"
-                        style="background: linear-gradient(135deg, #b91c1c, #7f1d1d); color: #fff; border: none; padding: 10px; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                    <i class="fa-solid fa-screwdriver-wrench"></i> Como Admin
-                </button>
-                <button type="submit" class="btn btn-secondary btn-block"
-                        onclick="document.getElementById('rol-input').value='agency'"
-                        style="background: linear-gradient(135deg, #1e3a8a, #172554); color: #fff; border: none; padding: 10px; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                    <i class="fa-solid fa-shop"></i> Como Agencia
-                </button>
-                <button type="submit" class="btn btn-secondary btn-block"
-                        onclick="document.getElementById('rol-input').value='vendedor'"
-                        style="background: linear-gradient(135deg, #166534, #14532d); color: #fff; border: none; padding: 10px; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                    <i class="fa-solid fa-user-tie"></i> Como Vendedor
-                </button>
-                <button type="submit" class="btn btn-secondary btn-block"
-                        onclick="document.getElementById('rol-input').value='driver'"
-                        style="background: linear-gradient(135deg, #d97706, #7c2d12); color: #fff; border: none; padding: 10px; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                    <i class="fa-solid fa-truck"></i> Como Repartidor
-                </button>
-            </div>
         </form>
 
         <div class="auth-footer">

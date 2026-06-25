@@ -59,6 +59,32 @@
       </form>
     </div>
 
+    <!-- Summary Stats Card -->
+    <div class="row g-3 mb-4">
+      <div class="col-12 col-sm-6 col-md-4">
+        <div class="card p-3 d-flex flex-row align-items-center gap-3" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+          <div style="background: rgba(255,255,255,0.2); padding: 12px; border-radius: 10px; display: flex; align-items: center; justify-content: center; width: 48px; height: 48px;">
+            <i class="fa-solid fa-sack-dollar" style="font-size: 20px;"></i>
+          </div>
+          <div>
+            <p class="m-0 small text-white-50 fw-bold">Total Ventas Filtradas</p>
+            <h3 class="m-0 fw-bold" style="font-size: 1.5rem; line-height: 1.2;">Bs. {{ total_ventas|floatformat:2 }}</h3>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-md-4">
+        <div class="card p-3 d-flex flex-row align-items-center gap-3" style="background: white; border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);">
+          <div class="bg-light text-primary" style="padding: 12px; border-radius: 10px; display: flex; align-items: center; justify-content: center; width: 48px; height: 48px;">
+            <i class="fa-solid fa-receipt" style="font-size: 20px;"></i>
+          </div>
+          <div>
+            <p class="m-0 small text-muted fw-bold">Cantidad de Ventas</p>
+            <h3 class="m-0 fw-bold text-dark" style="font-size: 1.5rem; line-height: 1.2;">{{ orders|length }}</h3>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Table -->
     <div class="table-responsive">
       <table class="data-table">
@@ -130,6 +156,15 @@
           </tr>
           {% endfor %}
         </tbody>
+        {% if orders %}
+        <tfoot>
+          <tr style="background-color: #f8fafc; font-weight: bold; border-top: 2px solid #e2e8f0;">
+            <td colspan="7" class="text-end py-3">Total General:</td>
+            <td class="text-end py-3 text-dark fw-bold" style="font-size: 15px;">Bs. {{ total_ventas|floatformat:2 }}</td>
+            <td></td>
+          </tr>
+        </tfoot>
+        {% endif %}
       </table>
     </div>
   </div>

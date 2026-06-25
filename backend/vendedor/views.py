@@ -23,6 +23,12 @@ vendedor_required = user_passes_test(
     login_url='login'
 )
 
+# Decorator to restrict access to users with role 'vendedor' or 'admin'
+vendedor_o_admin_required = user_passes_test(
+    lambda u: u.is_authenticated and u.role in [User.Roles.VENDEDOR, User.Roles.ADMIN],
+    login_url='login'
+)
+
 
 class ClienteRapidoForm(forms.ModelForm):
     """Form to create or edit a client quickly from the seller panel."""
@@ -317,7 +323,7 @@ def vendedor_order_create(request):
     return render(request, 'vendedor/pedido_nuevo.html', {'form': form, 'products': products})
 
 
-@vendedor_required
+@vendedor_o_admin_required
 def vendedor_order_detail(request, pk):
     order = get_object_or_404(Order, pk=pk)
     drivers = User.objects.filter(role=User.Roles.DRIVER, is_active=True)
@@ -576,7 +582,7 @@ def crear_cliente_rapido_venta(request):
     return JsonResponse({'success': False, 'error': 'Método no permitido.'}, status=405)
 
 
-@vendedor_required
+@vendedor_o_admin_required
 def vendedor_order_ticket(request, pk):
     order = get_object_or_404(Order, pk=pk)
     return render(request, 'vendedor/ticket.html', {
@@ -584,7 +590,7 @@ def vendedor_order_ticket(request, pk):
     })
 
 
-@vendedor_required
+@vendedor_o_admin_required
 def ticket_venta(request, pk):
     order = get_object_or_404(Order, pk=pk)
     return render(request, 'vendedor/ticket.html', {
@@ -592,7 +598,7 @@ def ticket_venta(request, pk):
     })
 
 
-@vendedor_required
+@vendedor_o_admin_required
 def listado_ventas(request):
     import csv
     from django.http import HttpResponse
@@ -653,11 +659,14 @@ def listado_ventas(request):
             ])
         return response
 
+    total_ventas = sum(o.total_amount for o in orders)
+
     return render(request, 'vendedor/listado_ventas.html', {
         'orders': orders,
         'start_date': start_date_str,
         'end_date': end_date_str,
         'metodo_pago': metodo_pago,
         'tipo_venta': tipo_venta_filter,
+        'total_ventas': total_ventas,
     })
 
