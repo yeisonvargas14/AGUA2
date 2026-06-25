@@ -102,6 +102,7 @@
                         </a>
                         <a href="{% url 'client_dashboard' %}" class="btn btn-text btn-block text-center mt-2">Seguir comprando</a>
                     </div>
+                {% else %}
                     <!-- CTA for anonymous users -->
                     <div class="checkout-button-container mt-4">
                         <a href="{% url 'checkout' %}" class="btn btn-primary btn-block text-center" style="margin-bottom: 12px; background: linear-gradient(135deg, var(--success), #059669); border: none; font-weight: bold; padding: 14px;">
