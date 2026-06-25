@@ -2121,5 +2121,128 @@ html, body {
     margin-top: 6px;
 }
 
+/* Cart Page Styles */
+.cart-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px 0;
+}
+
+.cart-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 30px;
+}
+
+@media (max-width: 992px) {
+    .cart-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.cart-product-cell {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.cart-product-img {
+    width: 80px;
+    height: 80px;
+    min-width: 80px;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cart-product-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.cart-product-img i {
+    font-size: 32px;
+    color: var(--primary);
+}
+
+.qty-form {
+    display: flex;
+    align-items: center;
+}
+
+.input-group-qty {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background-color: var(--bg-secondary);
+}
+
+.qty-input-small {
+    width: 60px;
+    height: 36px;
+    text-align: center;
+    border: none !important;
+    background: transparent;
+    font-weight: 600;
+}
+
+.qty-input-small:focus {
+    outline: none;
+    box-shadow: none !important;
+}
+
+.input-group-qty button {
+    height: 36px;
+    width: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background-color: var(--bg-primary);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.input-group-qty button:hover {
+    background-color: var(--primary-light);
+    color: var(--primary);
+}
+
+/* Cart Summary */
+.cart-summary-card h3 {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 16px;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.summary-row.total-row {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-top: 16px;
+}
+
+.total-price {
+    font-size: 22px;
+    font-weight: 800;
+}
+
 
 
