@@ -271,9 +271,10 @@ def checkout_paso1(request):
                 user.save()
                 Cart.objects.get_or_create(user=user)
 
+            # Transfer cart first before session key is cycled by login
+            transfer_cart(request, user)
             # Silently login
             login(request, user, backend='accounts.backends.TelefonoBackend')
-            transfer_cart(request, user)
             # Re-fetch the cart for the logged-in user to ensure we are ordering from the merged cart
             cart = _get_or_create_cart(request)
 
