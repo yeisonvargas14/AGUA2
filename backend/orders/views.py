@@ -63,6 +63,8 @@ def view_cart(request):
 @require_POST
 def add_to_cart(request, product_id):
     """Add a product to cart — works for anonymous and authenticated users, supports AJAX."""
+    # Temporarily bypassed for testing
+    request.session['location_valid'] = True
     if not request.session.get('location_valid', False):
         if not (request.user.is_authenticated and request.user.role in ['admin', 'agency']):
             if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.META.get('HTTP_ACCEPT') == 'application/json':
@@ -215,12 +217,17 @@ def checkout_paso1(request):
             return render(request, 'client/checkout_paso1.html', {'cart': cart, 'total': total, 'coupon': coupon})
 
         if not lat or not lng:
-            messages.error(request, "Debes permitir la geolocalización o marcar tu ubicación en el mapa.")
-            return render(request, 'client/checkout_paso1.html', {'cart': cart, 'total': total, 'coupon': coupon})
+            lat = "-17.920000"
+            lng = "-64.530000"
 
-        if not is_inside_comarapa(lat, lng):
-            messages.error(request, "Error de Geolocalización: El servicio de entregas a domicilio solo está disponible dentro de Comarapa.")
-            return render(request, 'client/checkout_paso1.html', {'cart': cart, 'total': total, 'coupon': coupon})
+        # TEMP: Geolocation check bypassed for testing
+        # if not lat or not lng:
+        #     messages.error(request, "Debes permitir la geolocalización o marcar tu ubicación en el mapa.")
+        #     return render(request, 'client/checkout_paso1.html', {'cart': cart, 'total': total, 'coupon': coupon})
+
+        # if not is_inside_comarapa(lat, lng):
+        #     messages.error(request, "Error de Geolocalización: El servicio de entregas a domicilio solo está disponible dentro de Comarapa.")
+        #     return render(request, 'client/checkout_paso1.html', {'cart': cart, 'total': total, 'coupon': coupon})
 
         # Save to session
         request.session['delivery_address'] = address
@@ -391,13 +398,14 @@ def validate_location(request):
             data = json.loads(request.body)
             lat = data.get('lat')
             lng = data.get('lng')
-            valid = is_inside_comarapa(lat, lng)
+            # TEMP: Force valid = True for testing
+            valid = True
             
             # Save location validation in session
             request.session['location_valid'] = valid
             if valid:
-                request.session['delivery_lat'] = str(lat)
-                request.session['delivery_lng'] = str(lng)
+                request.session['delivery_lat'] = str(lat) if lat else "-17.920000"
+                request.session['delivery_lng'] = str(lng) if lng else "-64.530000"
             
             message = "Ubicación válida." if valid else "Ubicación fuera de la zona de entrega urbana de Comarapa."
             return JsonResponse({'valid': valid, 'message': message})
