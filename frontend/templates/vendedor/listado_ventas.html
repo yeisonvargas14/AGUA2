@@ -2,6 +2,153 @@
 {% block title %}Planilla de Ventas — Panel Vendedor{% endblock %}
 {% block page_title %}Planilla de Ventas{% endblock %}
 
+{% block extra_css %}
+<style>
+  .custom-filters-container {
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+  .custom-filters-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    align-items: end;
+  }
+  @media (max-width: 768px) {
+    .custom-filters-form {
+      grid-template-columns: 1fr;
+    }
+  }
+  .custom-filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .custom-filter-group label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #64748b;
+  }
+  .custom-filter-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background-color: #fff;
+    color: #1e293b;
+    font-size: 14px;
+    font-family: inherit;
+    box-sizing: border-box;
+    height: 42px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .custom-filter-input:focus {
+    border-color: #3b82f6;
+  }
+  .custom-filter-buttons {
+    display: flex;
+    gap: 8px;
+  }
+  .custom-filter-buttons button, .custom-filter-buttons a {
+    height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    text-decoration: none;
+    box-sizing: border-box;
+  }
+  .custom-btn-filter {
+    background-color: #3b82f6;
+    color: white;
+    border: none;
+    flex: 1;
+    transition: background-color 0.2s;
+  }
+  .custom-btn-filter:hover {
+    background-color: #2563eb;
+  }
+  .custom-btn-clear {
+    background-color: #e2e8f0;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+    width: 42px;
+    transition: background-color 0.2s;
+  }
+  .custom-btn-clear:hover {
+    background-color: #cbd5e1;
+  }
+
+  /* Summary cards styling */
+  .custom-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .custom-summary-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
+    box-sizing: border-box;
+  }
+  .custom-summary-card.sales-total {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border: none;
+  }
+  .custom-card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+  .custom-summary-card.sales-total .custom-card-icon {
+    background: rgba(255, 255, 255, 0.2);
+  }
+  .custom-summary-card.sales-count .custom-card-icon {
+    background-color: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+  }
+  .custom-card-info {
+    display: flex;
+    flex-direction: column;
+  }
+  .custom-card-info span {
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .custom-summary-card.sales-total .custom-card-info span {
+    color: rgba(255, 255, 255, 0.8);
+  }
+  .custom-summary-card.sales-count .custom-card-info span {
+    color: #64748b;
+  }
+  .custom-card-info h3 {
+    margin: 4px 0 0 0;
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="content-body">
   <div class="card" style="padding: 24px;">
@@ -21,66 +168,60 @@
     <hr class="divider mb-4">
 
     <!-- Filters Section -->
-    <div class="bg-light p-3 rounded-3 border mb-4">
-      <form method="get" class="row g-3 align-items-end">
-        <div class="col-12 col-md-3">
-          <label class="form-label fw-bold small text-muted">Desde</label>
-          <input type="date" name="start_date" value="{{ start_date }}" class="form-control">
+    <div class="custom-filters-container">
+      <form method="get" class="custom-filters-form">
+        <div class="custom-filter-group">
+          <label>Desde</label>
+          <input type="date" name="start_date" value="{{ start_date }}" class="custom-filter-input">
         </div>
-        <div class="col-12 col-md-3">
-          <label class="form-label fw-bold small text-muted">Hasta</label>
-          <input type="date" name="end_date" value="{{ end_date }}" class="form-control">
+        <div class="custom-filter-group">
+          <label>Hasta</label>
+          <input type="date" name="end_date" value="{{ end_date }}" class="custom-filter-input">
         </div>
-        <div class="col-12 col-md-2">
-          <label class="form-label fw-bold small text-muted">Método de Pago</label>
-          <select name="metodo_pago" class="form-select">
+        <div class="custom-filter-group">
+          <label>Método de Pago</label>
+          <select name="metodo_pago" class="custom-filter-input">
             <option value="">Todos</option>
             <option value="efectivo" {% if metodo_pago == 'efectivo' %}selected{% endif %}>Efectivo</option>
             <option value="transferencia" {% if metodo_pago == 'transferencia' %}selected{% endif %}>Transferencia</option>
             <option value="tarjeta" {% if metodo_pago == 'tarjeta' %}selected{% endif %}>Tarjeta</option>
           </select>
         </div>
-        <div class="col-12 col-md-2">
-          <label class="form-label fw-bold small text-muted">Tipo de Venta</label>
-          <select name="tipo_venta" class="form-select">
+        <div class="custom-filter-group">
+          <label>Tipo de Venta</label>
+          <select name="tipo_venta" class="custom-filter-input">
             <option value="">Todos</option>
             <option value="presencial" {% if tipo_venta == 'presencial' %}selected{% endif %}>Presencial (Planta)</option>
             <option value="online" {% if tipo_venta == 'online' %}selected{% endif %}>Online (Entregados)</option>
           </select>
         </div>
-        <div class="col-12 col-md-2 d-grid">
-          <div class="d-flex gap-2">
-            <button type="submit" class="btn btn-primary w-100">Filtrar</button>
-            <a href="{% url 'listado_ventas' %}" class="btn btn-secondary" title="Limpiar Filtros">
-              <i class="fa-solid fa-arrow-rotate-left"></i>
-            </a>
-          </div>
+        <div class="custom-filter-buttons">
+          <button type="submit" class="custom-btn-filter">Filtrar</button>
+          <a href="{% url 'listado_ventas' %}" class="custom-btn-clear" title="Limpiar Filtros">
+            <i class="fa-solid fa-arrow-rotate-left"></i>
+          </a>
         </div>
       </form>
     </div>
 
     <!-- Summary Stats Card -->
-    <div class="row g-3 mb-4">
-      <div class="col-12 col-sm-6 col-md-4">
-        <div class="card p-3 d-flex flex-row align-items-center gap-3" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
-          <div style="background: rgba(255,255,255,0.2); padding: 12px; border-radius: 10px; display: flex; align-items: center; justify-content: center; width: 48px; height: 48px;">
-            <i class="fa-solid fa-sack-dollar" style="font-size: 20px;"></i>
-          </div>
-          <div>
-            <p class="m-0 small text-white-50 fw-bold">Total Ventas Filtradas</p>
-            <h3 class="m-0 fw-bold" style="font-size: 1.5rem; line-height: 1.2;">Bs. {{ total_ventas|floatformat:2 }}</h3>
-          </div>
+    <div class="custom-summary-grid">
+      <div class="custom-summary-card sales-total">
+        <div class="custom-card-icon">
+          <i class="fa-solid fa-sack-dollar"></i>
+        </div>
+        <div class="custom-card-info">
+          <span>Total Ventas Filtradas</span>
+          <h3>Bs. {{ total_ventas|floatformat:2 }}</h3>
         </div>
       </div>
-      <div class="col-12 col-sm-6 col-md-4">
-        <div class="card p-3 d-flex flex-row align-items-center gap-3" style="background: white; border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);">
-          <div class="bg-light text-primary" style="padding: 12px; border-radius: 10px; display: flex; align-items: center; justify-content: center; width: 48px; height: 48px;">
-            <i class="fa-solid fa-receipt" style="font-size: 20px;"></i>
-          </div>
-          <div>
-            <p class="m-0 small text-muted fw-bold">Cantidad de Ventas</p>
-            <h3 class="m-0 fw-bold text-dark" style="font-size: 1.5rem; line-height: 1.2;">{{ orders|length }}</h3>
-          </div>
+      <div class="custom-summary-card sales-count">
+        <div class="custom-card-icon">
+          <i class="fa-solid fa-receipt"></i>
+        </div>
+        <div class="custom-card-info">
+          <span>Cantidad de Ventas</span>
+          <h3 class="text-dark">{{ orders|length }}</h3>
         </div>
       </div>
     </div>
