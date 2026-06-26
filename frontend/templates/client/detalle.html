@@ -1,7 +1,195 @@
-﻿{% extends 'base.html' %}
+{% extends 'base.html' %}
 
 {% block title %}{{ product.name }} - Agua de Mesa Santiago{% endblock %}
 {% block page_title %}{{ product.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .product-detail-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    .detail-card {
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05);
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        padding: 30px;
+        overflow: hidden;
+    }
+    
+    .detail-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 40px;
+        align-items: center;
+    }
+    
+    .detail-image-section {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 20px;
+        border: 1px solid #f1f5f9;
+        height: 100%;
+        min-height: 300px;
+        max-height: 450px;
+    }
+    
+    .detail-img {
+        max-width: 100%;
+        max-height: 380px;
+        object-fit: contain;
+        border-radius: 8px;
+        transition: transform 0.3s ease;
+    }
+    
+    .detail-img:hover {
+        transform: scale(1.02);
+    }
+    
+    .detail-placeholder {
+        font-size: 5rem;
+        color: var(--primary);
+        opacity: 0.3;
+    }
+    
+    .detail-info-section h2 {
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-top: 10px;
+        line-height: 1.2;
+    }
+    
+    .description {
+        color: #64748b;
+        font-size: 1.05rem;
+        line-height: 1.6;
+        margin: 20px 0;
+    }
+    
+    .price-stock-box {
+        display: flex;
+        gap: 30px;
+        background: #f8fafc;
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid #f1f5f9;
+    }
+    
+    .price-box, .stock-box {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    
+    .price-box .label, .stock-box .label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .price-val {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--primary);
+    }
+    
+    .flex-price {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+    }
+    
+    .old-price {
+        font-size: 1.1rem;
+        text-decoration: line-through;
+        color: #94a3b8;
+    }
+    
+    .qty-selector {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .qty-selector label {
+        font-weight: 600;
+        color: #475569;
+    }
+    
+    .qty-input {
+        width: 80px;
+        padding: 8px 12px;
+        border-radius: 8px;
+        border: 1px solid #cbd5e1;
+        font-weight: 600;
+        text-align: center;
+    }
+    
+    .add-cart-form button {
+        width: 100%;
+        padding: 14px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.2);
+    }
+
+    .review-card {
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        background: #fff;
+    }
+
+    .review-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    /* Mobile Responsive Overrides */
+    @media (max-width: 768px) {
+        .detail-grid {
+            grid-template-columns: 1fr;
+            gap: 25px;
+        }
+        
+        .detail-image-section {
+            min-height: 250px;
+            max-height: 350px;
+            padding: 10px;
+        }
+        
+        .detail-img {
+            max-height: 300px;
+        }
+        
+        .detail-info-section h2 {
+            font-size: 1.8rem;
+        }
+        
+        .detail-card {
+            padding: 20px;
+        }
+        
+        .price-stock-box {
+            flex-direction: column;
+            gap: 15px;
+            padding: 15px;
+        }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="product-detail-container">
