@@ -335,7 +335,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             </span>
                         </div>
                         <div class="product-stock-list">
-                            ${products.slice(0, 3).map(p => {
+                            ${products.map(p => {
                                 const percentage = Math.min(100, Math.max(0, (p.stock / 400) * 100));
                                 const isLow = p.stock <= 20;
                                 return `
