@@ -481,10 +481,21 @@ def admin_reports(request):
         avg_score=Avg('score'), count=Count('id')
     ).order_by('-avg_score')
 
+    # Top buying clients
+    top_clients = Order.objects.filter(
+        status=Order.Status.DELIVERED
+    ).values(
+        'client__first_name', 'client__last_name', 'client__username', 'client__telefono'
+    ).annotate(
+        total_spent=Sum('total_amount'),
+        orders_count=Count('id')
+    ).order_by('-total_spent')[:10]
+
     return render(request, 'admin_panel/reportes.html', {
         'sales_by_day': sales_by_day,
         'top_products': top_products,
-        'driver_ratings': driver_ratings
+        'driver_ratings': driver_ratings,
+        'top_clients': top_clients,
     })
 
 # =====================================================================
