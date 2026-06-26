@@ -89,13 +89,11 @@
                 </div>
 
                 <div class="form-group" style="margin-bottom: 20px;">
-                    <label style="display: block; font-weight: 600; margin-bottom: 8px;"><i class="fa-solid fa-location-crosshairs"></i> Geolocalización en el Mapa</label>
-                    <p class="text-muted small" style="color: #64748b; font-size: 0.85rem; margin-bottom: 10px;">Haz clic en el mapa para marcar tu ubicación exacta de entrega. También intentaremos detectar tu ubicación por GPS.</p>
+                    <label style="display: block; font-weight: 600; margin-bottom: 8px;"><i class="fa-solid fa-location-crosshairs"></i> Geolocalización por GPS</label>
+                    <p class="text-muted small" style="color: #64748b; font-size: 0.85rem; margin-bottom: 10px;">Intentaremos detectar automáticamente tu ubicación de entrega a través del GPS de tu dispositivo.</p>
                     
                     <!-- Feedback notification -->
-                    <div id="geo-status" class="geo-feedback"></div>
-                    
-                    <div id="map"></div>
+                    <div id="geo-status" class="geo-feedback" style="display: block; padding: 12px; border-radius: 8px;"></div>
                 </div>
 
                 <div class="form-group" style="margin-bottom: 20px;">
@@ -156,16 +154,64 @@
 
 {% block extra_js %}
 <script>
-    // Global parameters for maps.js
-    const GOOGLE_MAPS_API_KEY = "{{ google_maps_api_key }}";
-    const CSRF_TOKEN = "{{ csrf_token }}";
-    const VALIDATE_LOC_URL = "{% url 'api_validar_ubicacion' %}";
-    
-    // Vallegrande default center
-    const DEFAULT_LAT = -18.489500;
-    const DEFAULT_LNG = -64.108100;
+    document.addEventListener("DOMContentLoaded", function() {
+        const latInput = document.getElementById('id_lat');
+        const lngInput = document.getElementById('id_lng');
+        const geoStatus = document.getElementById('geo-status');
+        
+        function setCoordinates(lat, lng, successMsg) {
+            latInput.value = lat.toFixed(6);
+            lngInput.value = lng.toFixed(6);
+            
+            geoStatus.style.display = 'block';
+            geoStatus.style.backgroundColor = '#d1fae5';
+            geoStatus.style.color = '#065f46';
+            geoStatus.style.border = '1px solid #6ee7b7';
+            geoStatus.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${successMsg}`;
+        }
+        
+        function setFallback(reason) {
+            const fallbackLat = -18.489500;
+            const fallbackLng = -64.108100;
+            latInput.value = fallbackLat.toFixed(6);
+            lngInput.value = fallbackLng.toFixed(6);
+            
+            geoStatus.style.display = 'block';
+            geoStatus.style.backgroundColor = '#fef3c7';
+            geoStatus.style.color = '#92400e';
+            geoStatus.style.border = '1px solid #fcd34d';
+            geoStatus.innerHTML = `<i class="fa-solid fa-circle-info"></i> Ubicación fijada por defecto en Vallegrande (GPS: ${reason})`;
+        }
+
+        if (navigator.geolocation) {
+            geoStatus.style.display = 'block';
+            geoStatus.style.backgroundColor = '#dbeafe';
+            geoStatus.style.color = '#1e3a8a';
+            geoStatus.style.border = '1px solid #93c5fd';
+            geoStatus.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Detectando tu ubicación por GPS...`;
+
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    setCoordinates(lat, lng, "Ubicación detectada con éxito por tu GPS.");
+                },
+                function(error) {
+                    let reason = "Permiso denegado o error de señal";
+                    if (error.code === error.PERMISSION_DENIED) {
+                        reason = "Permiso denegado por el usuario";
+                    } else if (error.code === error.POSITION_UNAVAILABLE) {
+                        reason = "Ubicación no disponible";
+                    } else if (error.code === error.TIMEOUT) {
+                        reason = "Tiempo de espera agotado";
+                    }
+                    setFallback(reason);
+                },
+                { timeout: 8000 }
+            );
+        } else {
+            setFallback("El navegador no soporta geolocalización");
+        }
+    });
 </script>
-<script src="/static/js/maps.js"></script>
-<!-- Dynamically load Google Maps JS API script -->
-<script async defer src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=geometry&callback=initMap"></script>
 {% endblock %}
