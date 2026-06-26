@@ -187,6 +187,7 @@ def aplicar_cupon(request):
 
 def checkout_paso1(request):
     """Step 1: Collect shipping details, delivery instructions, and geolocate."""
+    from django.conf import settings as django_settings
     cart = _get_or_create_cart(request)
     if not cart.items.exists():
         messages.error(request, "Tu carrito está vacío.")
@@ -206,28 +207,37 @@ def checkout_paso1(request):
     if total < 0:
         total = Decimal('0.00')
 
+    # Helper function to render step 1 with full context (prevent maps API load errors)
+    def render_step1(address_val='', instructions_val='', lat_val='', lng_val='', guest_name_val='', guest_phone_val=''):
+        return render(request, 'client/checkout_paso1.html', {
+            'cart': cart,
+            'coupon': coupon,
+            'discount': discount,
+            'total': total,
+            'google_maps_api_key': django_settings.GOOGLE_MAPS_API_KEY,
+            'delivery_address': address_val,
+            'delivery_instructions': instructions_val,
+            'lat': lat_val,
+            'lng': lng_val,
+            'guest_name': guest_name_val,
+            'guest_phone': guest_phone_val,
+        })
+
     if request.method == 'POST':
         address = request.POST.get('delivery_address', '').strip()
         instructions = request.POST.get('delivery_instructions', '').strip()
         lat = request.POST.get('lat')
         lng = request.POST.get('lng')
+        guest_name = request.POST.get('guest_name', '').strip()
+        guest_phone = request.POST.get('guest_phone', '').strip()
 
         if not address:
             messages.error(request, "Por favor ingresa una dirección de entrega.")
-            return render(request, 'client/checkout_paso1.html', {'cart': cart, 'total': total, 'coupon': coupon})
+            return render_step1(address, instructions, lat, lng, guest_name, guest_phone)
 
         if not lat or not lng:
             lat = "-18.489500"
             lng = "-64.108100"
-
-        # TEMP: Geolocation check bypassed for testing
-        # if not lat or not lng:
-        #     messages.error(request, "Debes permitir la geolocalización o marcar tu ubicación en el mapa.")
-        #     return render(request, 'client/checkout_paso1.html', {'cart': cart, 'total': total, 'coupon': coupon})
-
-        # if not is_inside_comarapa(lat, lng):
-        #     messages.error(request, "Error de Geolocalización: El servicio de entregas a domicilio solo está disponible dentro de Comarapa.")
-        #     return render(request, 'client/checkout_paso1.html', {'cart': cart, 'total': total, 'coupon': coupon})
 
         # Save to session
         request.session['delivery_address'] = address
@@ -238,34 +248,31 @@ def checkout_paso1(request):
 
         # Guest user details or authenticated user checkout
         if not request.user.is_authenticated:
-            nombre_completo = request.POST.get('guest_name', '').strip()
-            telefono = request.POST.get('guest_phone', '').strip()
-
-            if not nombre_completo:
+            if not guest_name:
                 messages.error(request, "Por favor ingresa tu nombre completo.")
-                return render(request, 'client/checkout_paso1.html', {'cart': cart, 'total': total, 'coupon': coupon})
-            if not telefono:
+                return render_step1(address, instructions, lat, lng, guest_name, guest_phone)
+            if not guest_phone:
                 messages.error(request, "Por favor ingresa tu número de celular.")
-                return render(request, 'client/checkout_paso1.html', {'cart': cart, 'total': total, 'coupon': coupon})
+                return render_step1(address, instructions, lat, lng, guest_name, guest_phone)
 
             # Check if user already exists
             try:
-                user = User.objects.get(telefono=telefono)
+                user = User.objects.get(telefono=guest_phone)
             except User.DoesNotExist:
                 # Create a new user silently
-                parts = nombre_completo.split(' ', 1)
+                parts = guest_name.split(' ', 1)
                 first_name = parts[0]
                 last_name = parts[1] if len(parts) > 1 else ''
                 import secrets
                 random_pass = secrets.token_urlsafe(10)
                 user = User.objects.create(
-                    username=telefono,
-                    telefono=telefono,
+                    username=guest_phone,
+                    telefono=guest_phone,
                     first_name=first_name,
                     last_name=last_name,
                     role=User.Roles.CLIENT,
                     address=address,
-                    municipio="Comarapa"
+                    municipio="Vallegrande"
                 )
                 user.set_password(random_pass)
                 user.save()
@@ -349,9 +356,8 @@ def checkout_paso1(request):
                 return redirect('client_ticket', order_id=order.id)
         except Exception as e:
             messages.error(request, f"Error al procesar el pedido: {str(e)}")
-            return render(request, 'client/checkout_paso1.html', {'cart': cart, 'total': total, 'coupon': coupon})
+            return render_step1(address, instructions, lat, lng, guest_name, guest_phone)
 
-    from django.conf import settings as django_settings
     # Default values for fields from session
     session_address = request.session.get('delivery_address', '')
     session_instructions = request.session.get('delivery_instructions', '')
@@ -363,17 +369,7 @@ def checkout_paso1(request):
         if not session_address:
             session_address = request.user.address
 
-    return render(request, 'client/checkout_paso1.html', {
-        'cart': cart,
-        'coupon': coupon,
-        'discount': discount,
-        'total': total,
-        'google_maps_api_key': django_settings.GOOGLE_MAPS_API_KEY,
-        'delivery_address': session_address,
-        'delivery_instructions': session_instructions,
-        'lat': session_lat,
-        'lng': session_lng
-    })
+    return render_step1(session_address, session_instructions, session_lat, session_lng)
 
 
 def checkout_paso2(request):
