@@ -27,7 +27,7 @@
         <!-- Delivery info -->
         <div class="card checkout-card">
             <h3>Detalles de Entrega</h3>
-            <p class="text-muted small">Por políticas de logística, tu ubicación debe estar estrictamente dentro del municipio de Comarapa.</p>
+            <p class="text-muted small">Por políticas de logística, tu ubicación debe estar estrictamente dentro del municipio de Vallegrande.</p>
             <hr class="divider">
 
             <form method="post" id="checkout-form" class="mt-4">
@@ -106,9 +106,9 @@
     const CSRF_TOKEN = "{{ csrf_token }}";
     const VALIDATE_LOC_URL = "{% url 'api_validar_ubicacion' %}";
     
-    // Comarapa default center
-    const DEFAULT_LAT = -17.920000;
-    const DEFAULT_LNG = -64.530000;
+    // Vallegrande default center
+    const DEFAULT_LAT = -18.489500;
+    const DEFAULT_LNG = -64.108100;
 </script>
 <script src="/static/js/maps.js"></script>
 <!-- Dynamically load Google Maps JS API script -->

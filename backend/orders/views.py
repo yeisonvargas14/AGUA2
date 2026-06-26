@@ -217,8 +217,8 @@ def checkout_paso1(request):
             return render(request, 'client/checkout_paso1.html', {'cart': cart, 'total': total, 'coupon': coupon})
 
         if not lat or not lng:
-            lat = "-17.920000"
-            lng = "-64.530000"
+            lat = "-18.489500"
+            lng = "-64.108100"
 
         # TEMP: Geolocation check bypassed for testing
         # if not lat or not lng:
@@ -405,10 +405,10 @@ def validate_location(request):
             # Save location validation in session
             request.session['location_valid'] = valid
             if valid:
-                request.session['delivery_lat'] = str(lat) if lat else "-17.920000"
-                request.session['delivery_lng'] = str(lng) if lng else "-64.530000"
+                request.session['delivery_lat'] = str(lat) if lat else "-18.489500"
+                request.session['delivery_lng'] = str(lng) if lng else "-64.108100"
             
-            message = "Ubicación válida." if valid else "Ubicación fuera de la zona de entrega urbana de Comarapa."
+            message = "Ubicación válida." if valid else "Ubicación fuera de la zona de entrega urbana de Vallegrande."
             return JsonResponse({'valid': valid, 'message': message})
         except Exception as e:
             return JsonResponse({'valid': False, 'message': str(e)}, status=400)

@@ -23,18 +23,18 @@ function initMap() {
         ]
     });
 
-    // Draw the delivery zone polygon on the map
+    // Draw the delivery zone polygon on the map (Vallegrande zone)
     comarapaZone = new google.maps.Polygon({
         paths: [
-            { lat: -17.905, lng: -64.545 },
-            { lat: -17.905, lng: -64.515 },
-            { lat: -17.935, lng: -64.515 },
-            { lat: -17.935, lng: -64.545 }
+            { lat: -18.477, lng: -64.116 },
+            { lat: -18.483, lng: -64.093 },
+            { lat: -18.502, lng: -64.099 },
+            { lat: -18.496, lng: -64.122 }
         ],
-        strokeColor: '#6366f1',
+        strokeColor: '#10b981',
         strokeOpacity: 0.8,
-        strokeWeight: 2,
-        fillColor: '#6366f1',
+        strokeWeight: 3,
+        fillColor: '#10b981',
         fillOpacity: 0.1
     });
     comarapaZone.setMap(map);
@@ -103,7 +103,7 @@ function validateLocation(lat, lng) {
 
     if (!isInside) {
         showGeoFeedback(
-            '<i class="fa-solid fa-circle-exclamation"></i> <strong>Fuera del área de cobertura:</strong> Estás fuera de la zona de entrega. Solo servimos en la zona urbana de Comarapa.',
+            '<i class="fa-solid fa-circle-exclamation"></i> <strong>Fuera del área de cobertura:</strong> Estás fuera de la zona de entrega. Solo servimos en la zona urbana de Vallegrande.',
             'danger'
         );
         if (submitBtn) {
@@ -113,7 +113,7 @@ function validateLocation(lat, lng) {
         return;
     }
 
-    showGeoFeedback('Validando si tu ubicación está dentro de Comarapa...', 'info');
+    showGeoFeedback('Validando si tu ubicación está dentro de Vallegrande...', 'info');
 
     fetch(VALIDATE_LOC_URL, {
         method: 'POST',
@@ -127,7 +127,7 @@ function validateLocation(lat, lng) {
     .then(data => {
         if (data.valid) {
             showGeoFeedback(
-                '<i class="fa-solid fa-circle-check"></i> ¡Ubicación válida! Estás dentro de la zona urbana de Comarapa. Puedes continuar con tu pedido.',
+                '<i class="fa-solid fa-circle-check"></i> ¡Ubicación válida! Estás dentro de la zona urbana de Vallegrande. Puedes continuar con tu pedido.',
                 'success'
             );
             if (submitBtn) {
@@ -136,7 +136,7 @@ function validateLocation(lat, lng) {
             }
         } else {
             showGeoFeedback(
-                '<i class="fa-solid fa-circle-exclamation"></i> <strong>Fuera del área de cobertura:</strong> Tu ubicación no está dentro de la zona comercial de Comarapa. El servicio de entrega a domicilio solo está disponible en este sector.',
+                '<i class="fa-solid fa-circle-exclamation"></i> <strong>Fuera del área de cobertura:</strong> Tu ubicación no está dentro de la zona comercial de Vallegrande. El servicio de entrega a domicilio solo está disponible en este sector.',
                 'danger'
             );
             if (submitBtn) {
