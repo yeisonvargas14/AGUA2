@@ -159,6 +159,10 @@
                         <i class="fa-solid fa-cash-register"></i>
                         <span>Venta en Planta</span>
                     </a>
+                    <a href="{% url 'control_caja' %}" class="menu-item {% if request.resolver_match.url_name == 'control_caja' %}active{% endif %}">
+                        <i class="fa-solid fa-calculator"></i>
+                        <span>Control de Caja</span>
+                    </a>
                     <a href="{% url 'listado_ventas' %}" class="menu-item {% if request.resolver_match.url_name == 'listado_ventas' %}active{% endif %}">
                         <i class="fa-solid fa-receipt"></i>
                         <span>Planilla de Ventas</span>

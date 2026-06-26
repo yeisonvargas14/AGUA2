@@ -156,6 +156,13 @@ class Order(models.Model):
         related_name='vendedor_sales',
         limit_choices_to={'role': 'vendedor'}
     )
+    shift = models.ForeignKey(
+        'orders.CashShift',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='orders'
+    )
     metodo_pago = models.CharField(
         max_length=50,
         blank=True,
@@ -201,3 +208,26 @@ class OrderLog(models.Model):
 
     def __str__(self):
         return f"Pedido #{self.order.id} cambio: {self.estado_anterior} -> {self.estado_nuevo} en {self.timestamp}"
+
+
+class CashShift(models.Model):
+    vendedor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='shifts'
+    )
+    fecha_apertura = models.DateTimeField(auto_now_add=True)
+    fecha_cierre = models.DateTimeField(null=True, blank=True)
+    monto_inicial = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    monto_final_real = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    total_ventas_calculado = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    estado = models.CharField(
+        max_length=10,
+        choices=[('abierto', 'Abierto'), ('cerrado', 'Cerrado')],
+        default='abierto'
+    )
+    observaciones = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"Caja {self.id} - {self.vendedor.username} ({self.estado})"
+

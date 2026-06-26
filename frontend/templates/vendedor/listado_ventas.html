@@ -159,8 +159,8 @@
         <a href="{% url 'registrar_venta' %}" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 8px;">
           <i class="fa-solid fa-plus-circle"></i> Nueva Venta en Planta
         </a>
-        <a href="?export=csv{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}{% if metodo_pago %}&metodo_pago={{ metodo_pago }}{% endif %}{% if tipo_venta %}&tipo_venta={{ tipo_venta }}{% endif %}" class="btn btn-outline-primary" style="display: inline-flex; align-items: center; gap: 8px;">
-          <i class="fa-solid fa-file-csv"></i> Exportar a CSV
+        <a href="{% url 'reporte_ventas' %}?start_date={{ start_date }}&end_date={{ end_date }}&metodo_pago={{ metodo_pago }}&tipo_venta={{ tipo_venta }}" target="_blank" class="btn btn-outline-danger" style="display: inline-flex; align-items: center; gap: 8px;">
+          <i class="fa-solid fa-file-pdf"></i> Exportar a PDF
         </a>
       </div>
     </div>

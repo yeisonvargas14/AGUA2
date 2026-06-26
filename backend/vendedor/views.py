@@ -11,7 +11,7 @@ from django.utils import timezone
 from accounts.models import User, DriverProfile
 from agencies.models import Agency
 from products.models import Product
-from orders.models import Order, OrderItem, OrderLog
+from orders.models import Order, OrderItem, OrderLog, CashShift
 from coupons.models import Coupon
 from promotions.models import Promotion
 from inventory.models import InventoryLog
@@ -410,6 +410,14 @@ def registrar_venta(request):
     import json
 
     if request.method == 'POST':
+        # Check active shift
+        active_shift = CashShift.objects.filter(vendedor=request.user, estado='abierto').first()
+        if not active_shift:
+            return JsonResponse({
+                'success': False,
+                'error': 'Debe abrir caja antes de registrar ventas. Por favor, vaya a la sección "Control de Caja" para realizar la apertura.'
+            }, status=400)
+
         try:
             data = json.loads(request.body)
         except json.JSONDecodeError:
@@ -434,6 +442,7 @@ def registrar_venta(request):
                     origen='venta_directa',
                     tipo_venta='presencial',
                     vendedor=request.user,
+                    shift=active_shift,
                     metodo_pago=metodo_pago,
                     delivery_address=client.address or 'Planta / Venta Presencial',
                     total_amount=Decimal('0.00'),
@@ -676,4 +685,161 @@ def listado_ventas(request):
         'tipo_venta': tipo_venta_filter,
         'total_ventas': total_ventas,
     })
+
+
+@vendedor_o_admin_required
+def reporte_ventas(request):
+    from django.db.models import Q
+    from datetime import datetime
+
+    shift_id = request.GET.get('shift_id', '')
+    if shift_id:
+        shift_obj = get_object_or_404(CashShift, pk=shift_id)
+        # Limit to this shift's orders
+        orders = Order.objects.filter(shift=shift_obj).order_by('-created_at')
+        total_ventas = sum(o.total_amount for o in orders)
+        total_esperado = shift_obj.monto_inicial + total_ventas
+        diferencia = shift_obj.monto_final_real - total_esperado if shift_obj.monto_final_real is not None else Decimal('0.00')
+        return render(request, 'vendedor/reporte_ventas.html', {
+            'orders': orders,
+            'shift': shift_obj,
+            'total_esperado': total_esperado,
+            'diferencia': diferencia,
+            'total_ventas': total_ventas,
+            'fecha_generado': datetime.now(),
+        })
+
+    # Get query parameters
+    start_date_str = request.GET.get('start_date', '')
+    end_date_str = request.GET.get('end_date', '')
+    metodo_pago = request.GET.get('metodo_pago', '')
+    tipo_venta_filter = request.GET.get('tipo_venta', '')
+
+    # Base query: delivered online orders OR any direct presencial sale
+    orders = Order.objects.filter(
+        Q(tipo_venta='presencial') | Q(tipo_venta='online', status=Order.Status.DELIVERED)
+    ).order_by('-created_at')
+
+    # Apply filters
+    if start_date_str:
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+            orders = orders.filter(created_at__date__gte=start_date.date())
+        except ValueError:
+            pass
+
+    if end_date_str:
+        try:
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+            orders = orders.filter(created_at__date__lte=end_date.date())
+        except ValueError:
+            pass
+
+    if metodo_pago:
+        orders = orders.filter(metodo_pago=metodo_pago)
+
+    if tipo_venta_filter:
+        orders = orders.filter(tipo_venta=tipo_venta_filter)
+
+    total_ventas = sum(o.total_amount for o in orders)
+
+    return render(request, 'vendedor/reporte_ventas.html', {
+        'orders': orders,
+        'start_date': start_date_str,
+        'end_date': end_date_str,
+        'metodo_pago': metodo_pago,
+        'tipo_venta': tipo_venta_filter,
+        'total_ventas': total_ventas,
+        'fecha_generado': datetime.now(),
+    })
+
+
+@vendedor_required
+def control_caja(request):
+    # Active open shift
+    active_shift = CashShift.objects.filter(vendedor=request.user, estado='abierto').first()
+    orders = []
+    total_acumulado = Decimal('0.00')
+
+    if active_shift:
+        orders = Order.objects.filter(shift=active_shift).order_by('-created_at')
+        total_acumulado = sum(o.total_amount for o in orders)
+        # Keep calculated sales amount in shift up-to-date
+        active_shift.total_ventas_calculado = total_acumulado
+        active_shift.save(update_fields=['total_ventas_calculado'])
+
+    # Closed shifts history
+    closed_shifts = CashShift.objects.filter(vendedor=request.user, estado='cerrado').order_by('-fecha_cierre')
+    for cs in closed_shifts:
+        cs.total_esperado = cs.monto_inicial + cs.total_ventas_calculado
+        cs.diferencia = cs.monto_final_real - cs.total_esperado
+
+    return render(request, 'vendedor/control_caja.html', {
+        'active_shift': active_shift,
+        'orders': orders,
+        'total_acumulado': total_acumulado,
+        'closed_shifts': closed_shifts
+    })
+
+
+@vendedor_required
+def abrir_caja(request):
+    if request.method == 'POST':
+        # Check if already has an open shift
+        if CashShift.objects.filter(vendedor=request.user, estado='abierto').exists():
+            messages.warning(request, "Ya tienes una caja abierta.")
+            return redirect('control_caja')
+
+        try:
+            monto_inicial_val = request.POST.get('monto_inicial', '0.00').strip()
+            monto_inicial = Decimal(monto_inicial_val) if monto_inicial_val else Decimal('0.00')
+        except ValueError:
+            monto_inicial = Decimal('0.00')
+
+        observaciones = request.POST.get('observaciones', '').strip()
+
+        CashShift.objects.create(
+            vendedor=request.user,
+            monto_inicial=monto_inicial,
+            observaciones=observaciones,
+            estado='abierto'
+        )
+        messages.success(request, "Caja abierta con éxito. ¡Ya puedes registrar ventas!")
+    return redirect('control_caja')
+
+
+@vendedor_required
+def cerrar_caja(request):
+    if request.method == 'POST':
+        active_shift = CashShift.objects.filter(vendedor=request.user, estado='abierto').first()
+        if not active_shift:
+            messages.error(request, "No tienes ninguna caja abierta para cerrar.")
+            return redirect('control_caja')
+
+        try:
+            monto_final_val = request.POST.get('monto_final_real', '0.00').strip()
+            monto_final_real = Decimal(monto_final_val) if monto_final_val else Decimal('0.00')
+        except ValueError:
+            monto_final_real = Decimal('0.00')
+
+        observaciones = request.POST.get('observaciones', '').strip()
+
+        orders = Order.objects.filter(shift=active_shift)
+        total_acumulado = sum(o.total_amount for o in orders)
+
+        active_shift.total_ventas_calculado = total_acumulado
+        active_shift.monto_final_real = monto_final_real
+        if observaciones:
+            if active_shift.observaciones:
+                active_shift.observaciones += f"\n[Cierre]: {observaciones}"
+            else:
+                active_shift.observaciones = f"[Cierre]: {observaciones}"
+        active_shift.estado = 'cerrado'
+        active_shift.fecha_cierre = timezone.now()
+        active_shift.save()
+
+        messages.success(request, f"Caja cerrada con éxito. Total ventas: Bs. {total_acumulado:.2f}")
+    return redirect('control_caja')
+
+
 
