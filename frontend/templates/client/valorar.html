@@ -1,4 +1,4 @@
-﻿{% extends 'base.html' %}
+{% extends 'base.html' %}
 
 {% block title %}Valorar Pedido #{{ order.id }} - Agua de Mesa Santiago{% endblock %}
 {% block page_title %}Valorar Pedido #{{ order.id }}{% endblock %}
@@ -13,18 +13,25 @@
         margin-top: 5px;
     }
     .star-rating input {
-        display: none;
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+        pointer-events: none;
     }
     .star-rating label {
-        font-size: 2rem;
-        color: var(--text-muted);
+        font-size: 2.2rem;
+        color: #cbd5e1;
         cursor: pointer;
-        transition: color 0.2s;
+        transition: color 0.15s ease-in-out, transform 0.1s ease;
+    }
+    .star-rating label:active {
+        transform: scale(0.9);
     }
     .star-rating label:hover,
     .star-rating label:hover ~ label,
     .star-rating input:checked ~ label {
-        color: var(--warning);
+        color: #f59e0b !important;
     }
 </style>
 {% endblock %}
@@ -114,4 +121,50 @@
         </form>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const starRatings = document.querySelectorAll('.star-rating');
+        starRatings.forEach(ratingGroup => {
+            const labels = ratingGroup.querySelectorAll('label');
+            const inputs = ratingGroup.querySelectorAll('input[type="radio"]');
+            
+            // Initial check: if any input is checked, color it and its previous siblings manually
+            inputs.forEach(input => {
+                if (input.checked) {
+                    updateStars(ratingGroup, parseInt(input.value));
+                }
+            });
+
+            labels.forEach(label => {
+                // Ensure touch/click events check the radio and update styling
+                label.addEventListener('click', function(e) {
+                    const targetId = this.getAttribute('for');
+                    const radio = document.getElementById(targetId);
+                    if (radio) {
+                        radio.checked = true;
+                        updateStars(ratingGroup, parseInt(radio.value));
+                    }
+                });
+            });
+        });
+
+        function updateStars(group, clickedValue) {
+            const inputs = group.querySelectorAll('input[type="radio"]');
+            inputs.forEach(input => {
+                const val = parseInt(input.value);
+                const assocLabel = group.querySelector(`label[for="${input.id}"]`);
+                if (assocLabel) {
+                    if (val <= clickedValue) {
+                        assocLabel.style.color = '#f59e0b';
+                    } else {
+                        assocLabel.style.color = '#cbd5e1';
+                    }
+                }
+            });
+        }
+    });
+</script>
 {% endblock %}
