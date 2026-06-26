@@ -2296,7 +2296,11 @@ html, body {
 /* Ocultar valoraciones y opiniones en todo el software */
 .product-rating-inline, 
 .product-rating, 
-.reviews-section {
+.reviews-section,
+.driver-ratings-report-card,
+.driver-rating-col,
+.driver-rating-stat,
+.order-ratings-section-card {
     display: none !important;
 }
 

@@ -1,4 +1,4 @@
-﻿{% extends 'base.html' %}
+{% extends 'base.html' %}
 
 {% block title %}Detalle Pedido #{{ order.id }} - Agua de Mesa Santiago{% endblock %}
 {% block page_title %}Detalle del Pedido #{{ order.id }}{% endblock %}
@@ -108,7 +108,7 @@
 
     <!-- Ratings Section -->
     {% if order.ratings.exists %}
-    <div class="card mt-4">
+    <div class="card mt-4 order-ratings-section-card">
         <h3>Valoraciones de este Pedido</h3>
         <hr class="divider">
         <div class="mt-3">

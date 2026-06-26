@@ -1,4 +1,4 @@
-﻿{% extends 'base.html' %}
+{% extends 'base.html' %}
 
 {% block title %}Historial de Entregas - Agua de Mesa Santiago{% endblock %}
 {% block page_title %}Historial de Entregas{% endblock %}
@@ -17,7 +17,7 @@
             </div>
         </div>
 
-        <div class="stat-card">
+        <div class="stat-card driver-rating-stat">
             <div class="card-icon warning">
                 <i class="fa-solid fa-star"></i>
             </div>
@@ -45,7 +45,7 @@
                         <th>Productos</th>
                         <th>Dirección</th>
                         <th>Fecha Entrega</th>
-                        <th>Valoración</th>
+                        <th class="driver-rating-col">Valoración</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -60,7 +60,7 @@
                             </td>
                             <td>{{ d.order.delivery_address }}</td>
                             <td>{{ d.delivered_at|date:"d M Y, H:i" }}</td>
-                            <td>
+                            <td class="driver-rating-col">
                                 {% if d.rating %}
                                     <div class="stars d-inline-block">
                                         {% for i in "12345" %}
