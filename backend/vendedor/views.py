@@ -547,13 +547,20 @@ def crear_cliente_rapido_venta(request):
 
         if not first_name:
             return JsonResponse({'success': False, 'error': 'El nombre es obligatorio.'}, status=400)
-        if not telefono:
-            return JsonResponse({'success': False, 'error': 'El celular es obligatorio.'}, status=400)
 
-        # Check if username/phone already exists
-        username = telefono
-        if User.objects.filter(username=username).exists():
-            return JsonResponse({'success': False, 'error': 'Ya existe un usuario con este número de celular/usuario.'}, status=400)
+        # Generate a unique username if phone is not provided
+        if not telefono:
+            import time
+            unique_suffix = str(int(time.time() * 1000))[-6:]
+            username = f"cli_{unique_suffix}"
+            while User.objects.filter(username=username).exists():
+                unique_suffix = str(int(time.time() * 1000) + secrets.randbelow(1000))[-6:]
+                username = f"cli_{unique_suffix}"
+            telefono = ""
+        else:
+            username = telefono
+            if User.objects.filter(username=username).exists():
+                return JsonResponse({'success': False, 'error': 'Ya existe un usuario con este número de celular/usuario.'}, status=400)
 
         try:
             user = User.objects.create(

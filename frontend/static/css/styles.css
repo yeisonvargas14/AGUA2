@@ -2304,5 +2304,38 @@ html, body {
     display: none !important;
 }
 
+/* Responsive Cart & Mobile Layout Fixes */
+.cart-auth-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+@media (max-width: 576px) {
+    .cart-container {
+        padding: 15px 10px;
+    }
+    
+    .card {
+        padding: 16px !important;
+    }
+    
+    .cart-auth-buttons {
+        grid-template-columns: 1fr;
+    }
+    
+    .checkout-button-container .btn {
+        white-space: normal !important;
+        height: auto !important;
+        padding: 12px 10px !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        line-height: 1.3;
+    }
+}
+
 
 

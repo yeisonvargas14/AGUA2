@@ -366,8 +366,8 @@
             <input type="text" id="modal-last-name" class="form-control" placeholder="Ej: Pérez">
           </div>
           <div class="mb-3">
-            <label for="modal-phone" class="form-label fw-bold">Celular *</label>
-            <input type="text" id="modal-phone" class="form-control" placeholder="Ej: 70123456" required>
+            <label for="modal-phone" class="form-label fw-bold">Celular (Opcional)</label>
+            <input type="text" id="modal-phone" class="form-control" placeholder="Ej: 70123456">
           </div>
           <div class="mb-3">
             <label for="modal-address" class="form-label fw-bold">Dirección (Opcional)</label>
@@ -511,8 +511,8 @@
     const address = document.getElementById('modal-address').value.trim();
     const alertPlaceholder = document.getElementById('modal-alert-placeholder');
 
-    if (!firstName || !phone) {
-      showAlert('El nombre y el celular son obligatorios.', 'danger', alertPlaceholder);
+    if (!firstName) {
+      showAlert('El nombre es obligatorio.', 'danger', alertPlaceholder);
       return;
     }
 
