@@ -89,6 +89,16 @@
                 </div>
 
                 <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 8px;"><i class="fa-solid fa-location-crosshairs"></i> Geolocalización en el Mapa</label>
+                    <p class="text-muted small" style="color: #64748b; font-size: 0.85rem; margin-bottom: 10px;">Haz clic en el mapa para marcar tu ubicación exacta de entrega. También intentaremos detectar tu ubicación por GPS.</p>
+                    
+                    <!-- Feedback notification -->
+                    <div id="geo-status" class="geo-feedback"></div>
+                    
+                    <div id="map"></div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
                     <label for="id_delivery_instructions" style="display: block; font-weight: 600; margin-bottom: 8px;"><i class="fa-solid fa-circle-info"></i> Instrucciones especiales de entrega (Opcional)</label>
                     <textarea name="delivery_instructions" id="id_delivery_instructions" rows="2" class="form-control" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1;" placeholder="Ej: Tocar timbre fuerte, dejar en recepción, llamar antes de llegar...">{{ delivery_instructions }}</textarea>
                 </div>
@@ -145,4 +155,17 @@
 {% endblock %}
 
 {% block extra_js %}
+<script>
+    // Global parameters for maps.js
+    const GOOGLE_MAPS_API_KEY = "{{ google_maps_api_key }}";
+    const CSRF_TOKEN = "{{ csrf_token }}";
+    const VALIDATE_LOC_URL = "{% url 'api_validar_ubicacion' %}";
+    
+    // Vallegrande default center
+    const DEFAULT_LAT = -18.489500;
+    const DEFAULT_LNG = -64.108100;
+</script>
+<script src="/static/js/maps.js"></script>
+<!-- Dynamically load Google Maps JS API script -->
+<script async defer src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=geometry&callback=initMap"></script>
 {% endblock %}
